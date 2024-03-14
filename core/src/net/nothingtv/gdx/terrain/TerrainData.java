@@ -5,16 +5,12 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.BaseShader;
-import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.RenderContext;
-import com.badlogic.gdx.graphics.g3d.utils.TextureDescriptor;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.GdxRuntimeException;
-import net.nothingtv.gdx.testprojects.BaseMaterials;
 
 public class TerrainData {
 
@@ -80,7 +76,7 @@ public class TerrainData {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 vertices[index++] = x * scale;
-                vertices[index++] = 0;
+                vertices[index++] = (float)Math.sin((x+y)/2f) * 0.5f + (float)Math.sin(x-y) * 0.2f;
                 vertices[index++] = y * scale;
                 vertices[index++] = (float)x / width;
                 vertices[index++] = (float)y / height;

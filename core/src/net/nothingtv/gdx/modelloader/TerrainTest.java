@@ -59,8 +59,8 @@ public class TerrainTest extends ScreenAdapter {
         camera = new PerspectiveCamera(60, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
         camera.far = 2000f;
-        camera.position.set(0,1,-3);
-        camera.direction.set(Vector3.Z);
+        camera.position.set(6,10,0);
+        camera.lookAt(new Vector3(16, 0, 16));
         camera.up.set(Vector3.Y);
         camera.update();
 
