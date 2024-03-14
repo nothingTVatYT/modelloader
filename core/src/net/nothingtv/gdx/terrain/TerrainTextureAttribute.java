@@ -31,6 +31,7 @@ public class TerrainTextureAttribute extends TextureAttribute {
     public static TerrainTextureAttribute createDiffuse4 (final Texture texture) {
         return new TerrainTextureAttribute(Diffuse4, texture);
     }
+
     public TerrainTextureAttribute(long type) {
         super(type);
     }

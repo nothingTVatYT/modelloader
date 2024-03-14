@@ -10,9 +10,11 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.TextureDescriptor;
+import com.badlogic.gdx.math.MathUtils;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
+import net.nothingtv.gdx.tools.Tools;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -79,43 +81,31 @@ public class BaseMaterials {
     }
 
     public static void generateAlphaMap() {
-        BufferedImage image = new BufferedImage(1024, 1024, BufferedImage.TYPE_4BYTE_ABGR);
+        int width = 1024;
+        int height = 1024;
+        int halfWidth = width / 2;
+        int halfHeight = height / 2;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
         byte[] array = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-        //System.out.println("int array size " + array.length);
         int index = 0;
         for (int y = 0; y < image.getHeight(); y++) {
+            float smoothedY = 1f-Tools.smoothStep((float)y, halfHeight * 0.9f, halfHeight * 1.1f);
             for (int x = 0; x < image.getWidth(); x++) {
+                float smoothedX = 1f-Tools.smoothStep((float)x, halfWidth * 0.9f, halfWidth * 1.1f);
                 // alpha
-                array[index++] = (byte)(x < 512 && y < 512 ? 255 : 0);
+                array[index++] = (byte)(Tools.clamp01(smoothedX * smoothedY) * 255);
                 // blue
-                array[index++] = (byte)(x >= 512 && y < 512 ? 255 : 0);
+                array[index++] = (byte)(Tools.clamp01((1f-smoothedX) * smoothedY) * 255);
                 // green
-                array[index++] = (byte)(x < 512 && y >= 512 ? 255 : 0);
+                array[index++] = (byte)(Tools.clamp01(smoothedX * (1f-smoothedY)) * 255);
                 // red
-                array[index++] = (byte)(x >= 512 && y >= 512 ? 255 : 0);
+                array[index++] = (byte)(Tools.clamp01((1f-smoothedX) * (1f-smoothedY)) * 255);
             }
         }
-        /*
-        Graphics g = image.getGraphics();
-        g.clearRect(0, 0, 1024, 1024);
-        java.awt.Color c1 = new java.awt.Color(0, 0, 0, 1f);
-        java.awt.Color c2 = new java.awt.Color(0, 0, 1f, 0);
-        java.awt.Color c3 = new java.awt.Color(0, 1f, 0, 0);
-        java.awt.Color c4 = new java.awt.Color(1f, 0, 0, 0);
-        g.setColor(c1);
-        g.fillRect(0, 0, 512, 512);
-        g.setColor(c2);
-        g.fillRect(512, 0, 512, 512);
-        g.setColor(c3);
-        g.fillRect(0, 512, 512, 512);
-        g.setColor(c4);
-        g.fillRect(512, 512, 512, 512);
-        */
         try {
             ImageIO.write(image, "png", new File("assets/textures/alpha-example.png"));
         } catch (IOException e) {
-            System.err.println("Cannot create image");
-            e.printStackTrace();
+            System.err.println("Cannot create image " + e);
         }
     }
 }

@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.shaders.BaseShader;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.RenderContext;
+import com.badlogic.gdx.graphics.g3d.utils.TextureDescriptor;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.GdxRuntimeException;
@@ -47,10 +48,20 @@ public class TerrainData {
     public ModelInstance createModelInstance() {
         mesh = createMesh();
         Material material = new Material("_terrain");
-        material.set(TextureAttribute.createDiffuse(new Texture("textures/Ground048_2K_Color.jpg")));
-        material.set(TerrainTextureAttribute.createDiffuse2(new Texture("textures/Ground026_2K_Color.jpg")));
-        material.set(TerrainTextureAttribute.createDiffuse3(new Texture("textures/leafy_grass_diff_2k.jpg")));
-        material.set(TerrainTextureAttribute.createDiffuse4(new Texture("textures/cobblestone_floor_07_diff_2k.jpg")));
+        Texture splat1Texture = new Texture("textures/Ground048_2K_Color.jpg");
+        splat1Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        Texture splat2Texture = new Texture("textures/Ground026_2K_Color.jpg");
+        splat2Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        Texture splat3Texture = new Texture("textures/leafy_grass_diff_2k.jpg");
+        splat3Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        Texture splat4Texture = new Texture("textures/cobblestone_floor_07_diff_2k.jpg");
+        splat4Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+        material.set(TerrainTextureAttribute.createDiffuse(splat1Texture));
+        material.set(TerrainTextureAttribute.createDiffuse2(splat2Texture));
+        material.set(TerrainTextureAttribute.createDiffuse3(splat3Texture));
+        material.set(TerrainTextureAttribute.createDiffuse4(splat4Texture));
+        material.set(TerrainFloatAttribute.createUV1Scale(1f));
+        material.set(TerrainFloatAttribute.createUV2Scale(1f));
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
         material.set(TerrainTextureAttribute.createAlpha1(new Texture("textures/alpha-example.png")));
 
