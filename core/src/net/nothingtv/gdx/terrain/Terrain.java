@@ -1,44 +1,26 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g3d.*;
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.graphics.g3d.Material;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
-import com.badlogic.gdx.graphics.g3d.shaders.BaseShader;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.graphics.g3d.utils.RenderContext;
-import com.badlogic.gdx.graphics.glutils.ShaderProgram;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.utils.GdxRuntimeException;
 
 public class Terrain {
 
-    private float scale;
-    private int width, height;
-
+    private final float scale;
+    private final int width, height;
     private float[] vertices;
     private short[] indices;
     private Mesh mesh;
-    private Renderable renderable;
 
     public Terrain(int width, int height, float scale) {
         this.width = width;
         this.height = height;
         this.scale = scale;
-    }
-
-    public Renderable createRenderable(Environment environment) {
-        mesh = createMesh();
-        renderable = new Renderable();
-        renderable.meshPart.set("Terrain", createMesh(), 0, mesh.getNumIndices(), GL20.GL_TRIANGLES);
-        renderable.environment = environment;
-        renderable.worldTransform.idt();
-        renderable.material = new Material();
-        renderable.material.set(ColorAttribute.createDiffuse(Color.WHITE));
-        renderable.shader = createShader();
-        renderable.shader.init();
-        return renderable;
     }
 
     public ModelInstance createModelInstance() {
@@ -105,41 +87,5 @@ public class Terrain {
         mesh.setVertices(vertices);
         mesh.setIndices(indices);
         return mesh;
-    }
-
-    private BaseShader createShader() {
-        return new BaseShader() {
-
-            @Override
-            public void begin(Camera camera, RenderContext context) {
-                program.bind();
-                program.setUniformMatrix("u_projViewTrans", camera.combined);
-                program.setUniformMatrix("u_worldTrans", new Matrix4());
-//                program.setUniformi("u_texture", 0);
-                context.setDepthTest(GL30.GL_LEQUAL);
-            }
-
-            @Override
-            public void init () {
-                //ShaderProgram.prependVertexCode = "#version 330 core\n";
-                //ShaderProgram.prependFragmentCode = "#version 330 core\n";
-                program = new ShaderProgram(Gdx.files.internal("shaders/terrain.vert"),
-                        Gdx.files.internal("shaders/terrain.frag"));
-                if (!program.isCompiled()) {
-                    throw new GdxRuntimeException("Shader compile error: " + program.getLog());
-                }
-                init(program, renderable);
-            }
-
-            @Override
-            public int compareTo (Shader other) {
-                return 0;
-            }
-
-            @Override
-            public boolean canRender (Renderable instance) {
-                return true;
-            }
-        };
     }
 }
