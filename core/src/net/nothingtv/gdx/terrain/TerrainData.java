@@ -60,8 +60,10 @@ public class TerrainData {
         material.set(TerrainTextureAttribute.createDiffuse2(splat2Texture));
         material.set(TerrainTextureAttribute.createDiffuse3(splat3Texture));
         material.set(TerrainTextureAttribute.createDiffuse4(splat4Texture));
-        material.set(TerrainFloatAttribute.createUV1Scale(1f));
-        material.set(TerrainFloatAttribute.createUV2Scale(1f));
+        material.set(TerrainFloatAttribute.createUV1Scale(4f));
+        material.set(TerrainFloatAttribute.createUV2Scale(4f));
+        material.set(TerrainFloatAttribute.createUV3Scale(4f));
+        material.set(TerrainFloatAttribute.createUV4Scale(4f));
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
         material.set(TerrainTextureAttribute.createAlpha1(new Texture("textures/alpha-example.png")));
 

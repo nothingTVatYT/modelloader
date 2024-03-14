@@ -2,6 +2,7 @@ package net.nothingtv.gdx.terrain;
 
 import com.badlogic.gdx.graphics.g3d.Attributes;
 import com.badlogic.gdx.graphics.g3d.Renderable;
+import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.BaseShader;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
@@ -54,25 +55,25 @@ public class TerrainShader extends DefaultShader {
         public final static Setter uv1Scale = new LocalSetter() {
             @Override
             public void set (BaseShader shader, int inputID, Renderable renderable, Attributes combinedAttributes) {
-                shader.set(inputID, ((TerrainFloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV1Scale))).value);
+                shader.set(inputID, ((FloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV1Scale))).value);
             }
         };
         public final static Setter uv2Scale = new LocalSetter() {
             @Override
             public void set (BaseShader shader, int inputID, Renderable renderable, Attributes combinedAttributes) {
-                shader.set(inputID, ((TerrainFloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV2Scale))).value);
+                shader.set(inputID, ((FloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV2Scale))).value);
             }
         };
         public final static Setter uv3Scale = new LocalSetter() {
             @Override
             public void set (BaseShader shader, int inputID, Renderable renderable, Attributes combinedAttributes) {
-                shader.set(inputID, ((TerrainFloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV3Scale))).value);
+                shader.set(inputID, ((FloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV3Scale))).value);
             }
         };
         public final static Setter uv4Scale = new LocalSetter() {
             @Override
             public void set (BaseShader shader, int inputID, Renderable renderable, Attributes combinedAttributes) {
-                shader.set(inputID, ((TerrainFloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV4Scale))).value);
+                shader.set(inputID, ((FloatAttribute)(combinedAttributes.get(TerrainFloatAttribute.UV4Scale))).value);
             }
         };
 

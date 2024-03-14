@@ -69,27 +69,27 @@ uniform sampler2D u_diffuse4Texture;
 #endif
 
 #ifdef uv1ScaleFlag
-uniform float uv1Scale;
+uniform float u_uv1Scale;
 #else
-const float uv1Scale = 1.0;
+const float u_uv1Scale = 1.0;
 #endif
 
 #ifdef uv2ScaleFlag
-uniform float uv2Scale;
+uniform float u_uv2Scale;
 #else
-const float uv2Scale = 1.0;
+const float u_uv2Scale = 1.0;
 #endif
 
 #ifdef uv3ScaleFlag
-uniform float uv3Scale;
+uniform float u_uv3Scale;
 #else
-const float uv3Scale = 1.0;
+const float u_uv3Scale = 1.0;
 #endif
 
 #ifdef uv4ScaleFlag
-uniform float uv4Scale;
+uniform float u_uv4Scale;
 #else
-const float uv4Scale = 1.0;
+const float u_uv4Scale = 1.0;
 #endif
 
 #ifdef specularColorFlag
@@ -165,10 +165,10 @@ void main() {
 		vec4 splat1 = texture2D(u_alpha1Texture, v_diffuseUV);
 	#endif
 	#if defined(diffuseTextureFlag) && defined(diffuse2TextureFlag) && defined(diffuse3TextureFlag) && defined(diffuse4TextureFlag) && defined(alpha1TextureFlag)
-		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV * uv1Scale) * splat1.a
-		+ texture2D(u_diffuse2Texture, v_diffuseUV * uv2Scale) * splat1.b
-		+ texture2D(u_diffuse3Texture, v_diffuseUV * uv3Scale) * splat1.g
-		+ texture2D(u_diffuse4Texture, v_diffuseUV * uv4Scale) * splat1.r;
+		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV * u_uv1Scale) * splat1.a
+		+ texture2D(u_diffuse2Texture, v_diffuseUV * u_uv2Scale) * splat1.b
+		+ texture2D(u_diffuse3Texture, v_diffuseUV * u_uv3Scale) * splat1.g
+		+ texture2D(u_diffuse4Texture, v_diffuseUV * u_uv4Scale) * splat1.r;
 	#elif defined(diffuseTextureFlag) && defined(diffuse2TextureFlag) && defined(diffuse3TextureFlag) && defined(alpha1TextureFlag)
 		vec4 diffuse = texture2D(u_diffuseTexture, v_diffuseUV) * splat1.a
 		+ texture2D(u_diffuse2Texture, v_diffuseUV) * splat1.b
