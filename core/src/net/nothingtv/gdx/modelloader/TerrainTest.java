@@ -6,6 +6,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
@@ -15,6 +16,7 @@ import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.nothingtv.gdx.terrain.Terrain;
+import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TerrainShaderProvider;
 import net.nothingtv.gdx.testprojects.BaseMaterials;
 
@@ -65,7 +67,13 @@ public class TerrainTest extends ScreenAdapter {
         config.numBones = 0;
         batch = new ModelBatch(new TerrainShaderProvider(config));
 
-        Terrain terrain = new Terrain(32, 32, 1);
+        TerrainConfig terrainConfig = new TerrainConfig(256, 256, 1);
+        terrainConfig.addLayer(new Texture("textures/Ground048_2K_Color.jpg"), 16f);
+        terrainConfig.addLayer(new Texture("textures/Ground026_2K_Color.jpg"), 16f);
+        terrainConfig.addLayer(new Texture("textures/leafy_grass_diff_2k.jpg"), 16f);
+        terrainConfig.addLayer(new Texture("textures/cobblestone_floor_07_diff_2k.jpg"), 16f);
+        terrainConfig.splatMap = new Texture("textures/alpha-example.png");
+        Terrain terrain = new Terrain(terrainConfig);
         modelInstance = terrain.createModelInstance();
 
         controller = new FirstPersonCameraController(camera);

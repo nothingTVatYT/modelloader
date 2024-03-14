@@ -11,39 +11,54 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 
 public class Terrain {
 
-    private final float scale;
-    private final int width, height;
-    private float[] vertices;
-    private short[] indices;
     private Mesh mesh;
+    public TerrainConfig config;
 
     public Terrain(int width, int height, float scale) {
-        this.width = width;
-        this.height = height;
-        this.scale = scale;
+        this(new TerrainConfig(width, height, scale));
+    }
+
+    public Terrain(TerrainConfig config) {
+        this.config = config;
     }
 
     public ModelInstance createModelInstance() {
-        mesh = createMesh();
+        if (config.layers.isEmpty() || config.layers.size > 4) {
+            throw new RuntimeException("Cannot create a terrain with " + config.layers.size + " layers.");
+        }
+        mesh = createMesh(config.width, config.height, config.scale);
+
         Material material = new Material("_terrain");
-        Texture splat1Texture = new Texture("textures/Ground048_2K_Color.jpg");
+        int layers = config.layers.size;
+        int layerIndex = 0;
+        TerrainConfig.TerrainLayer layer = config.layers.get(layerIndex);
+        Texture splat1Texture = layer.diffuse;
         splat1Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
-        Texture splat2Texture = new Texture("textures/Ground026_2K_Color.jpg");
-        splat2Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
-        Texture splat3Texture = new Texture("textures/leafy_grass_diff_2k.jpg");
-        splat3Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
-        Texture splat4Texture = new Texture("textures/cobblestone_floor_07_diff_2k.jpg");
-        splat4Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
         material.set(TerrainTextureAttribute.createDiffuse(splat1Texture));
-        material.set(TerrainTextureAttribute.createDiffuse2(splat2Texture));
-        material.set(TerrainTextureAttribute.createDiffuse3(splat3Texture));
-        material.set(TerrainTextureAttribute.createDiffuse4(splat4Texture));
-        material.set(TerrainFloatAttribute.createUV1Scale(4f));
-        material.set(TerrainFloatAttribute.createUV2Scale(4f));
-        material.set(TerrainFloatAttribute.createUV3Scale(4f));
-        material.set(TerrainFloatAttribute.createUV4Scale(4f));
+        material.set(TerrainFloatAttribute.createUV1Scale(layer.scaleUV));
+        if (layers > 1) {
+            layer = config.layers.get(++layerIndex);
+            Texture splat2Texture = layer.diffuse;
+            splat2Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+            material.set(TerrainTextureAttribute.createDiffuse2(splat2Texture));
+            material.set(TerrainFloatAttribute.createUV2Scale(layer.scaleUV));
+            if (layers > 2) {
+                layer = config.layers.get(++layerIndex);
+                Texture splat3Texture = layer.diffuse;
+                splat3Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+                material.set(TerrainTextureAttribute.createDiffuse3(splat3Texture));
+                material.set(TerrainFloatAttribute.createUV3Scale(layer.scaleUV));
+                if (layers > 3) {
+                    layer = config.layers.get(++layerIndex);
+                    Texture splat4Texture = layer.diffuse;
+                    splat4Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
+                    material.set(TerrainTextureAttribute.createDiffuse4(splat4Texture));
+                    material.set(TerrainFloatAttribute.createUV4Scale(layer.scaleUV));
+                }
+            }
+        }
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
-        material.set(TerrainTextureAttribute.createAlpha1(new Texture("textures/alpha-example.png")));
+        material.set(TerrainTextureAttribute.createAlpha1(config.splatMap));
 
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
@@ -51,9 +66,9 @@ public class Terrain {
         return new ModelInstance(modelBuilder.end());
     }
 
-    private Mesh createMesh() {
+    private Mesh createMesh(int width, int height, float scale) {
         // only the position + tex coords
-        vertices = new float[width * height * 5];
+        float[] vertices = new float[width * height * 5];
         int index = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -67,7 +82,7 @@ public class Terrain {
 
         // we create width x height vertices forming width-1 x height-1 quads or 2 x (width-1) x (height-1) triangles
         int triangles = 2 * (width-1) * (height-1);
-        indices = new short[triangles * 3];
+        short[] indices = new short[triangles * 3];
         index = 0;
         short yOffset = (short)width;
         for (int y = 0; y < height-1; y++) {
