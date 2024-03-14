@@ -9,10 +9,8 @@ import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
-import com.badlogic.gdx.graphics.g3d.utils.DefaultShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -25,7 +23,6 @@ public class TerrainTest extends ScreenAdapter {
     private Camera camera;
     private FirstPersonCameraController controller;
     private ModelBatch batch;
-    private Renderable renderable;
     private ModelInstance modelInstance;
 
     @Override
@@ -38,10 +35,7 @@ public class TerrainTest extends ScreenAdapter {
         ScreenUtils.clear(Color.DARK_GRAY, true);
         update(delta);
         batch.begin(camera);
-        if (renderable != null)
-            batch.render(renderable);
-        else
-            batch.render(modelInstance);
+        batch.render(modelInstance, environment);
         batch.end();
     }
 
@@ -49,10 +43,11 @@ public class TerrainTest extends ScreenAdapter {
         controller.update(delta);
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             Gdx.app.exit();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.G) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
+            new Thread(BaseMaterials::generateAlphaMap).start();
     }
 
     private void init() {
-        //BaseMaterials.generateAlphaMap();
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.9f, 0.9f, 0.7f, 1f));
 
@@ -71,7 +66,6 @@ public class TerrainTest extends ScreenAdapter {
         batch = new ModelBatch(new TerrainShaderProvider(config));
 
         TerrainData terrainData = new TerrainData(32, 32, 1);
-        //renderable = terrainData.createRenderable(environment);
         modelInstance = terrainData.createModelInstance();
 
         controller = new FirstPersonCameraController(camera);
