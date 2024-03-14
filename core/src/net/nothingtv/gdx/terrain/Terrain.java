@@ -12,7 +12,7 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
-public class TerrainData {
+public class Terrain {
 
     private float scale;
     private int width, height;
@@ -22,7 +22,7 @@ public class TerrainData {
     private Mesh mesh;
     private Renderable renderable;
 
-    public TerrainData(int width, int height, float scale) {
+    public Terrain(int width, int height, float scale) {
         this.width = width;
         this.height = height;
         this.scale = scale;

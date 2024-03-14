@@ -14,7 +14,7 @@ import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
-import net.nothingtv.gdx.terrain.TerrainData;
+import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainShaderProvider;
 import net.nothingtv.gdx.testprojects.BaseMaterials;
 
@@ -65,8 +65,8 @@ public class TerrainTest extends ScreenAdapter {
         config.numBones = 0;
         batch = new ModelBatch(new TerrainShaderProvider(config));
 
-        TerrainData terrainData = new TerrainData(32, 32, 1);
-        modelInstance = terrainData.createModelInstance();
+        Terrain terrain = new Terrain(32, 32, 1);
+        modelInstance = terrain.createModelInstance();
 
         controller = new FirstPersonCameraController(camera);
         controller.setVelocity(16);
