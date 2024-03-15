@@ -73,8 +73,8 @@ public class TerrainTest extends ScreenAdapter {
         camera = new PerspectiveCamera(60, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
         camera.far = 2000f;
-        camera.position.set(6,10,0);
-        camera.lookAt(new Vector3(16, 0, 16));
+        camera.position.set(-6,20,-6);
+        camera.lookAt(new Vector3(16, 4, 16));
         camera.up.set(Vector3.Y);
         camera.update();
 
@@ -92,7 +92,7 @@ public class TerrainTest extends ScreenAdapter {
         terrainConfig.addLayer(new Texture("textures/leafy_grass_diff_2k.jpg"), 16f);
         terrainConfig.addLayer(new Texture("textures/cobblestone_floor_07_diff_2k.jpg"), 16f);
         terrainConfig.splatMap = new Texture("textures/alpha-example.png");
-        //terrainConfig.heightSampler = new TestHeightSampler();
+        terrainConfig.terrainDivideFactor = 2;
         terrainConfig.setHeightMap(new Pixmap(Gdx.files.internal("textures/heightmap.png")), 50, -40);
         Terrain terrain = new Terrain(terrainConfig);
         modelInstance = terrain.createModelInstance();

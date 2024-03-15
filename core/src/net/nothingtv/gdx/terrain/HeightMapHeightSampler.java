@@ -43,9 +43,9 @@ public class HeightMapHeightSampler extends DefaultHeightSampler {
             int py = (int)Math.floor(z * mapZ);
             float dx = x * mapX - px;
             float dy = z * mapZ - py;
-            if (px > heightMap.getWidth())
+            if (px > heightMap.getWidth()-1)
                 px = heightMap.getWidth()-1;
-            if (py > heightMap.getHeight())
+            if (py > heightMap.getHeight()-1)
                 py = heightMap.getHeight()-1;
             int px1 = Math.min(px + 1, heightMap.getWidth() - 1);
             int py1 = Math.min(py + 1, heightMap.getHeight() - 1);

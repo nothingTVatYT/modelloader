@@ -24,10 +24,6 @@ public class TerrainConfig {
             this.diffuse = diffuse;
             this.scaleUV = scaleUV;
         }
-
-        public TerrainLayer(Texture diffuse) {
-            this(diffuse, 1);
-        }
     }
     /**
      * width and height of the terrain in vertex resolution
@@ -49,22 +45,25 @@ public class TerrainConfig {
     public Texture splatMap;
 
     /**
+     * a factor of 1 will create one mesh, a value of 2 four meshes, etc.
+     */
+    public int terrainDivideFactor;
+
+    /**
      * the layers of the terrain, currently four layers are supported
      */
     public Array<TerrainLayer> layers = new Array<>(4);
-
-    public TerrainConfig() {}
 
     public TerrainConfig(int width, int height, float scale) {
         this.width = width;
         this.height = height;
         this.scale = scale;
+        this.terrainDivideFactor = 1;
     }
 
-    public TerrainLayer addLayer(Texture diffuse, float scale) {
+    public void addLayer(Texture diffuse, float scale) {
         TerrainLayer layer = new TerrainLayer(diffuse, scale);
         layers.add(layer);
-        return layer;
     }
 
     public void setHeightMap(Pixmap heightMap, float heightScale, float heightOffset) {
