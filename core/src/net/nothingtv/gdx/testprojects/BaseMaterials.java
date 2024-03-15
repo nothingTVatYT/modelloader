@@ -80,6 +80,27 @@ public class BaseMaterials {
                 texture.toString(), texture.getUWrap(), texture.getVWrap(), texture.getWidth(), texture.getHeight(), texture.getMagFilter(), texture.getMinFilter(), texture.getAnisotropicFilter());
     }
 
+    public static void writeGrayImage(float[] values, String name) {
+        float max = 0;
+        float min = Float.MAX_VALUE;
+        for (float value : values) { max = Math.max(max, value); min = Math.min(min, value); }
+        int width = (int)Math.sqrt(values.length);
+        BufferedImage image = new BufferedImage(width, width, BufferedImage.TYPE_3BYTE_BGR);
+        byte[] array = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+        int index = 0;
+        for (int i = 0; i < values.length; i++) {
+            int val = Math.round((values[i]-min) / (max-min) * 255f);
+            array[index++] = (byte)val;
+            array[index++] = (byte)val;
+            array[index++] = (byte)val;
+        }
+        try {
+            ImageIO.write(image, "png", new File("assets/textures/" + name));
+        } catch (IOException e) {
+            System.err.println("Cannot create image " + e);
+        }
+    }
+
     public static void generateAlphaMap() {
         int width = 1024;
         int height = 1024;

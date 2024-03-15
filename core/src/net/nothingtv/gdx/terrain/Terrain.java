@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Vector3;
 
 public class Terrain {
 
@@ -20,6 +21,8 @@ public class Terrain {
 
     public Terrain(TerrainConfig config) {
         this.config = config;
+        if (config.heightSampler instanceof DefaultHeightSampler defaultHeightSampler)
+            defaultHeightSampler.terrain = this;
     }
 
     public ModelInstance createModelInstance() {
@@ -67,16 +70,50 @@ public class Terrain {
     }
 
     private Mesh createMesh(int width, int height, float scale) {
-        // only the position + tex coords
-        float[] vertices = new float[width * height * 5];
+        HeightSampler heightSampler = config.heightSampler;
+        if (heightSampler == null) {
+            heightSampler = new DefaultHeightSampler();
+        }
+        heightSampler.init(this);
+        // position + normal + tex coords
+        float[] vertices = new float[width * height * 8];
         int index = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
+                float v = heightSampler.getHeight(x, y);
                 vertices[index++] = x * scale;
-                vertices[index++] = (float)Math.sin((x+y)/2f) * 0.5f + (float)Math.sin(x-y) * 0.2f;
+                vertices[index++] = v;
                 vertices[index++] = y * scale;
+                vertices[index++] = 0;
+                vertices[index++] = 1f;
+                vertices[index++] = 0;
                 vertices[index++] = (float)x / width;
                 vertices[index++] = (float)y / height;
+            }
+        }
+
+        // update normals (normal = Vec3(2*(R-L), 2*(B-T), -4).Normalize())
+        index = 0;
+        float ph;
+        Vector3 p = new Vector3();
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // this vertex
+                ph = vertices[index+1];
+                // the vertex to the right
+                float hr = x < width-1 ? vertices[index+9] : ph;
+                // the vertex above
+                float ha = y > 0 ? vertices[index-8*width+1] : ph;
+                // the vertex to the left
+                float hl = x > 0 ? vertices[index-7] : ph;
+                // the vertex below
+                float hb = y < height-1 ? vertices[index+8*width+1] : ph;
+                p.set(2 * (hr-hl), 4, 2 * (hb-ha)).nor();
+                index += 3;
+                vertices[index++] = p.x;
+                vertices[index++] = p.y;
+                vertices[index++] = p.z;
+                index += 2;
             }
         }
 
@@ -98,7 +135,7 @@ public class Terrain {
             }
         }
         Mesh mesh = new Mesh(true, vertices.length, indices.length,
-                VertexAttribute.Position(), VertexAttribute.TexCoords(0));
+                VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.TexCoords(0));
         mesh.setVertices(vertices);
         mesh.setIndices(indices);
         return mesh;
