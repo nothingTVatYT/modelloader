@@ -2,10 +2,9 @@ package net.nothingtv.gdx.terrain;
 
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
-import com.badlogic.gdx.graphics.g3d.utils.TextureDescriptor;
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 
-public class TerrainTextureAttribute extends TextureAttribute {
+public class TerrainTextureAttribute extends PBRTextureAttribute {
     public final static String Alpha1Alias = "alpha1Texture";
     public final static String Diffuse2Alias = "diffuse2Texture";
     public final static String Diffuse3Alias = "diffuse3Texture";
@@ -36,18 +35,6 @@ public class TerrainTextureAttribute extends TextureAttribute {
         super(type);
     }
 
-    public <T extends Texture> TerrainTextureAttribute(long type, TextureDescriptor<T> textureDescription) {
-        super(type, textureDescription);
-    }
-
-    public <T extends Texture> TerrainTextureAttribute(long type, TextureDescriptor<T> textureDescription, float offsetU, float offsetV, float scaleU, float scaleV, int uvIndex) {
-        super(type, textureDescription, offsetU, offsetV, scaleU, scaleV, uvIndex);
-    }
-
-    public <T extends Texture> TerrainTextureAttribute(long type, TextureDescriptor<T> textureDescription, float offsetU, float offsetV, float scaleU, float scaleV) {
-        super(type, textureDescription, offsetU, offsetV, scaleU, scaleV);
-    }
-
     public TerrainTextureAttribute(long type, Texture texture) {
         super(type, texture);
     }
@@ -56,7 +43,7 @@ public class TerrainTextureAttribute extends TextureAttribute {
         super(type, region);
     }
 
-    public TerrainTextureAttribute(TextureAttribute copyFrom) {
+    public TerrainTextureAttribute(PBRTextureAttribute copyFrom) {
         super(copyFrom);
     }
 }

@@ -40,6 +40,13 @@ public class BaseMaterials {
         return material;
     }
 
+    public static Material whiteColorPBR() {
+        Material material = new Material("_pbr_white");
+        material.set(PBRColorAttribute.createBaseColorFactor(Color.WHITE));
+        material.set(IntAttribute.createCullFace(GL20.GL_BACK));
+        return material;
+    }
+
     public static Material debugMaterial() {
         Material material = new Material();
         material.id = "_base_debug";

@@ -98,6 +98,7 @@ public class ShadowTest extends ScreenAdapter {
         //Gdx.graphics.getBufferFormat().samples = 3;
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | (Gdx.graphics.getBufferFormat().coverageSampling?GL20.GL_COVERAGE_BUFFER_BIT_NV:0));
         //ScreenUtils.clear(Color.BLACK, true);
+        //shadowLight.direction.rotate(Vector3.X, 30 * delta).rotate(Vector3.Y, 45 * delta);
 
         shadowLight.begin();
         shadowBatch.begin(shadowLight.getCamera());

@@ -32,7 +32,7 @@ public class Terrain {
         TerrainConfig.TerrainLayer layer = config.layers.get(layerIndex);
         Texture splat1Texture = layer.diffuse;
         splat1Texture.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat);
-        material.set(TerrainTextureAttribute.createDiffuse(splat1Texture));
+        material.set(TerrainTextureAttribute.createBaseColorTexture(splat1Texture));
         material.set(TerrainFloatAttribute.createUV1Scale(layer.scaleUV));
         if (layers > 1) {
             layer = config.layers.get(++layerIndex);

@@ -1,12 +1,20 @@
 package net.nothingtv.gdx.testprojects;
 
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.model.MeshPart;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 
 public class BaseModels {
+
+    public static Model createSphere(float radius, Material material) {
+        return new ModelBuilder().createSphere(radius, radius, radius, 16, 12, material, VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
 
     public static void dumpModel(Model model, String owner) {
         StringBuilder sb = new StringBuilder();
