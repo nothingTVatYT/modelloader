@@ -6,7 +6,6 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
@@ -14,17 +13,21 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.BoxShapeBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
 import net.mgsx.gltf.scene3d.scene.SceneAsset;
+import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
+import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
-import net.nothingtv.gdx.terrain.TerrainShaderProvider;
 import net.nothingtv.gdx.testprojects.BaseMaterials;
 
 public class TerrainTest extends ScreenAdapter {
@@ -35,7 +38,13 @@ public class TerrainTest extends ScreenAdapter {
     private ModelInstance terrainInstance;
     private ModelInstance testObject;
     private DirectionalShadowLight directionalLight;
-    private Array<ModelInstance> modelInstances = new Array<>();
+    private final Array<RenderableProvider> renderableProviders = new Array<>();
+    private boolean useIBL = true;
+    private Cubemap environmentCubemap;
+    private Cubemap diffuseCubemap;
+    private Cubemap specularCubemap;
+    private Texture brdfLUT;
+    private SceneSkybox skybox;
 
     @Override
     public void show() {
@@ -44,22 +53,23 @@ public class TerrainTest extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-        //ScreenUtils.clear(Color.DARK_GRAY, true);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | (Gdx.graphics.getBufferFormat().coverageSampling?GL20.GL_COVERAGE_BUFFER_BIT_NV:0));
+        ScreenUtils.clear(Color.DARK_GRAY, true);
+        //Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT | (Gdx.graphics.getBufferFormat().coverageSampling?GL20.GL_COVERAGE_BUFFER_BIT_NV:0));
         update(delta);
         directionalLight.begin();
         shadowBatch.begin(directionalLight.getCamera());
-        shadowBatch.render(modelInstances);
+        shadowBatch.render(renderableProviders);
         shadowBatch.end();
         directionalLight.end();
 
         pbrBatch.begin(camera);
-        pbrBatch.render(modelInstances, environment);
+        pbrBatch.render(renderableProviders, environment);
         pbrBatch.end();
     }
 
     private void update(float delta) {
         controller.update(delta);
+        skybox.update(camera,  delta);
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             Gdx.app.exit();
         if (Gdx.input.isKeyJustPressed(Input.Keys.G) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
@@ -69,7 +79,7 @@ public class TerrainTest extends ScreenAdapter {
 
     private void init() {
         Color sunLightColor = Color.WHITE;
-        Color ambientLightColor = Color.BLACK;
+        Color ambientLightColor = Color.GRAY;
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
         int shadowMapSize = 2048;
         float shadowViewportSize = 60;
@@ -77,13 +87,29 @@ public class TerrainTest extends ScreenAdapter {
         float shadowFar = 500;
         directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
         directionalLight.set(sunLightColor, sunDirection);
-        //directionalLight.set(lightIntensity, lightIntensity, lightIntensity, new Vector3(-0.4f, -0.4f, -0.4f));
-        //directionalLight.setCenter(16, 50, 16);
 
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, ambientLightColor));
         environment.add(directionalLight);
         environment.shadowMap = directionalLight;
+
+        if (useIBL) {
+            // setup quick IBL (image based lighting)
+            IBLBuilder iblBuilder = IBLBuilder.createOutdoor(directionalLight);
+            environmentCubemap = iblBuilder.buildEnvMap(1024);
+            diffuseCubemap = iblBuilder.buildIrradianceMap(256);
+            specularCubemap = iblBuilder.buildRadianceMap(10);
+            iblBuilder.dispose();
+
+            // This texture is provided by the library, no need to have it in your assets.
+            brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
+
+            environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
+            environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
+            environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+            skybox = new SceneSkybox(environmentCubemap);
+            renderableProviders.add(skybox);
+        }
 
         camera = new PerspectiveCamera(60, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
@@ -122,9 +148,8 @@ public class TerrainTest extends ScreenAdapter {
         //testObject = new ModelInstance(BaseModels.createSphere(1, BaseMaterials.whiteColorPBR()));
         testObject.transform.setTranslation(17, 5, 17);
 
-        modelInstances.add(terrainInstance);
-        modelInstances.add(testObject);
-        //modelInstances.add(createFloor(10, 0,10f, null));
+        renderableProviders.add(terrainInstance);
+        renderableProviders.add(testObject);
 
         controller = new FirstPersonCameraController(camera);
         controller.setVelocity(16);
@@ -132,20 +157,13 @@ public class TerrainTest extends ScreenAdapter {
         Gdx.input.setInputProcessor(controller);
     }
 
-    private ModelInstance createFloor(float width, float height, float depth, Material material) {
-        if (material == null)
-            material = BaseMaterials.missingMaterial();
-        ModelBuilder modelBuilder = new ModelBuilder();
-        modelBuilder.begin();
-        MeshPartBuilder meshBuilder = modelBuilder.part("floor", GL20.GL_TRIANGLES, VertexAttribute.Position().usage |VertexAttribute.Normal().usage, material);
-
-        BoxShapeBuilder.build(meshBuilder, width, height, depth);
-        Model floor = modelBuilder.end();
-
-        ModelInstance floorInstance = new ModelInstance(floor);
-        floorInstance.materials.first().set(PBRColorAttribute.createBaseColorFactor(Color.BROWN));
-        floorInstance.transform.trn(0, -0.5f, 0f);
-
-        return floorInstance;
+    @Override
+    public void dispose() {
+        super.dispose();
+        environmentCubemap.dispose();
+        diffuseCubemap.dispose();
+        specularCubemap.dispose();
+        brdfLUT.dispose();
+        skybox.dispose();
     }
 }
