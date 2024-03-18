@@ -1,19 +1,37 @@
 package net.nothingtv.gdx.testprojects;
 
-import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.VertexAttribute;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.MeshPart;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
+import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.ArrowShapeBuilder;
 
 public class BaseModels {
 
     public static Model createSphere(float radius, Material material) {
-        return new ModelBuilder().createSphere(radius, radius, radius, 16, 12, material, VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+        return new ModelBuilder().createSphere(radius, radius, radius, 16, 12, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
+
+    public static Model createDownArrow(Color color) {
+        ModelBuilder builder = new ModelBuilder();
+        builder.begin();
+        Node node = builder.node();
+        MeshPartBuilder partBuilder = builder.part("down-arrow", GL20.GL_TRIANGLES,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates, BaseMaterials.emit(color));
+        ArrowShapeBuilder.build(partBuilder, 0,1,0, 0,0,0, 0.1f, 0.5f, 8);
+        node.translation.set(0, -0.05f, 0);
+        return builder.end();
+    }
+
+    public static Model createCoordinates(Material material) {
+        return new ModelBuilder().createXYZCoordinates(1, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
     }
 
     public static void dumpModel(Model model, String owner) {
@@ -46,7 +64,7 @@ public class BaseModels {
     }
 
     private static String nodeInfo(Node node) {
-        return String.format("%s id %s parts %s", node.toString(), node.id, node.parts);
+        return String.format("%s id %s parts %s at %s", node.toString(), node.id, node.parts, node.translation);
     }
 
     private static String nodePartInfo(NodePart nodePart) {

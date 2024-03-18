@@ -11,8 +11,10 @@ import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
@@ -29,6 +31,9 @@ import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
 import net.nothingtv.gdx.testprojects.BaseMaterials;
+import net.nothingtv.gdx.testprojects.BaseModels;
+import net.nothingtv.gdx.testprojects.DebugDraw;
+import net.nothingtv.gdx.tools.ModelIntersector;
 
 public class TerrainTest extends ScreenAdapter {
     private Environment environment;
@@ -37,6 +42,7 @@ public class TerrainTest extends ScreenAdapter {
     private ModelBatch pbrBatch, shadowBatch;
     private ModelInstance terrainInstance;
     private ModelInstance testObject;
+    private ModelInstance marker1, marker2, marker3, coordinates;
     private DirectionalShadowLight directionalLight;
     private final Array<RenderableProvider> renderableProviders = new Array<>();
     private boolean useIBL = true;
@@ -45,6 +51,7 @@ public class TerrainTest extends ScreenAdapter {
     private Cubemap specularCubemap;
     private Texture brdfLUT;
     private SceneSkybox skybox;
+    private DebugDraw debugDraw;
 
     @Override
     public void show() {
@@ -65,15 +72,28 @@ public class TerrainTest extends ScreenAdapter {
         pbrBatch.begin(camera);
         pbrBatch.render(renderableProviders, environment);
         pbrBatch.end();
+
+        debugDraw.render();
     }
 
     private void update(float delta) {
+        //debugDraw.reset();
         controller.update(delta);
         skybox.update(camera,  delta);
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             Gdx.app.exit();
         if (Gdx.input.isKeyJustPressed(Input.Keys.G) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
             new Thread(BaseMaterials::generateAlphaMap).start();
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            Ray ray = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
+            ModelIntersector.IntersectionResult result = ModelIntersector.intersect(ray, terrainInstance);
+            if (result != null) {
+                testObject.transform.setTranslation(result.intersection);
+                System.out.printf("intersect with node %s at %s%n", result.node.id, result.triangle);
+                debugDraw.drawArrow(result.triangle.v1, Color.BLUE);
+            }
+        }
+        directionalLight.setCenter(camera.position);
         directionalLight.direction.rotate(Vector3.X, 30 * delta).rotate(Vector3.Y, 45 * delta);
     }
 
@@ -138,10 +158,12 @@ public class TerrainTest extends ScreenAdapter {
         terrainConfig.addLayer(new Texture("textures/leafy_grass_diff_2k.jpg"), 16f);
         terrainConfig.addLayer(new Texture("textures/cobblestone_floor_07_diff_2k.jpg"), 16f);
         terrainConfig.splatMap = new Texture("textures/alpha-example.png");
-        terrainConfig.terrainDivideFactor = 2;
+        terrainConfig.terrainDivideFactor = 4;
         terrainConfig.setHeightMap(new Pixmap(Gdx.files.internal("textures/heightmap.png")), 50, -40);
         Terrain terrain = new Terrain(terrainConfig);
         terrainInstance = terrain.createModelInstance();
+
+        debugDraw = new DebugDraw(camera, environment);
 
         SceneAsset cubeAsset = new GLTFLoader().load(Gdx.files.internal("models/debug-cube.gltf"));
         testObject = new ModelInstance(cubeAsset.scene.model);
@@ -155,6 +177,8 @@ public class TerrainTest extends ScreenAdapter {
         renderableProviders.add(terrainInstance);
         renderableProviders.add(testObject);
 
+        debugDraw.drawArrow(terrainInstance.transform.getTranslation(new Vector3()), Color.BROWN);
+        BaseModels.dumpModel(terrainInstance.model, "terrain");
         controller = new FirstPersonCameraController(camera);
         controller.setVelocity(16);
         controller.setDegreesPerPixel(0.2f);

@@ -40,6 +40,14 @@ public class BaseMaterials {
         return material;
     }
 
+    public static Material emit(Color color) {
+        Material material = new Material("_base_emit");
+        //material.set(ColorAttribute.createDiffuse(color));
+        material.set(ColorAttribute.createEmissive(color));
+        material.set(IntAttribute.createCullFace(GL20.GL_BACK));
+        return material;
+    }
+
     public static Material whiteColorPBR() {
         Material material = new Material("_pbr_white");
         material.set(PBRColorAttribute.createBaseColorFactor(Color.WHITE));
