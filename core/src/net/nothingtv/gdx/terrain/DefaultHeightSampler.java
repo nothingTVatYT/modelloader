@@ -1,7 +1,5 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.math.Vector3;
-
 public class DefaultHeightSampler implements HeightSampler {
 
     /**
@@ -15,13 +13,7 @@ public class DefaultHeightSampler implements HeightSampler {
     }
 
     @Override
-    public float getHeight(int x, int z) {
+    public float getHeight(float x, float z) {
         return 0;
-    }
-
-    @Override
-    public Vector3 getNormal(int x, int z, Vector3 out) {
-        out.set(Vector3.Y);
-        return out;
     }
 }

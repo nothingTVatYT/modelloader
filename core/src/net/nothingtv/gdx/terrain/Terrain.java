@@ -13,6 +13,10 @@ import com.badlogic.gdx.math.Vector3;
 
 public class Terrain {
 
+    /**
+     * cached height sampler
+     */
+    private HeightSampler heightSampler;
     public TerrainConfig config;
 
     public Terrain(TerrainConfig config) {
@@ -81,11 +85,22 @@ public class Terrain {
         return new ModelInstance(modelBuilder.end());
     }
 
-    private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
-        HeightSampler heightSampler = config.heightSampler;
+    private HeightSampler getHeightSampler() {
         if (heightSampler == null) {
-            heightSampler = new DefaultHeightSampler();
+            heightSampler = config.heightSampler;
+            if (heightSampler == null) {
+                heightSampler = new DefaultHeightSampler();
+            }
         }
+        return heightSampler;
+    }
+
+    public float getHeightAt(float x, float z) {
+        return getHeightSampler().getHeight(x / config.scale, z / config.scale);
+    }
+
+    private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
+        getHeightSampler();
         heightSampler.init(this);
         // position + normal + tex coordinates
         float[] vertices = new float[(width+1) * (height+1) * 8];

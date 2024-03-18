@@ -32,11 +32,14 @@ public class HeightMapHeightSampler extends DefaultHeightSampler {
         if (useScaleSamplePosition) {
             mapX = (float)heightMap.getWidth() / terrainWidth;
             mapZ = (float)heightMap.getHeight() / terrainWidth;
+        } else {
+            mapX = 1;
+            mapZ = 1;
         }
     }
 
     @Override
-    public float getHeight(int x, int z) {
+    public float getHeight(float x, float z) {
         int pixel;
         if (useScaleSamplePosition) {
             int px = (int)Math.floor(x * mapX);
@@ -61,7 +64,11 @@ public class HeightMapHeightSampler extends DefaultHeightSampler {
             float h2 = redB + dx * (redBR - redB);
             float h = h1 + dy * (h2 - h1);
             return h * heightScale + heightOffset;
-        } else pixel = heightMap.getPixel(x, z);
+        } else {
+            int px = (int)Math.floor(x);
+            int py = (int)Math.floor(z);
+            pixel = heightMap.getPixel(px, py);
+        }
         // actually the red channel should be enough if we assume a gray texture in rgba
         // but this could handle colored textures if you really want to
         //return ((pixel >> 8 & 0xff) + (pixel >> 16 & 0xff) + (pixel >> 24 & 0xff)) / 3f / 256f * heightScale + heightOffset;

@@ -1,9 +1,20 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.math.Vector3;
-
+/**
+ * Height sampler that returns heights at certain positions
+ */
 public interface HeightSampler {
+    /**
+     * init is called by the terrain implementation before the height functions are called
+     * @param terrain the terrain object using this sampler
+     */
     void init(Terrain terrain);
-    float getHeight(int x, int z);
-    Vector3 getNormal(int x, int z, Vector3 out);
+
+    /**
+     * Get the height at the location given in vertex space
+     * @param x the x coordinate (0..terrain.width)
+     * @param z the z coordinate (0..terrain.height)
+     * @return the height at this location
+     */
+    float getHeight(float x, float z);
 }
