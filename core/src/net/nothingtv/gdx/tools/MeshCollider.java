@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.collision.Ray;
 import java.nio.ShortBuffer;
 
 public class MeshCollider {
-    class Triangle {
+    static class Triangle {
         short[] indices = new short[3];
         BoundingBox bounds;
         public Triangle() {}
@@ -19,12 +19,12 @@ public class MeshCollider {
         }
     }
 
-    class TriangleRayCastResult extends Octree.RayCastResult<Triangle> {
+    static class TriangleRayCastResult extends Octree.RayCastResult<Triangle> {
         public Triangle geometry;
         public float distance;
         public float maxDistanceSq = Float.MAX_VALUE;
     }
-    class TriangleCollider implements Octree.Collider<Triangle> {
+    static class TriangleCollider implements Octree.Collider<Triangle> {
 
         private final Mesh mesh;
         private final float[] vertices;

@@ -7,12 +7,7 @@ import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
-import com.badlogic.gdx.math.GeometryUtils;
-import com.badlogic.gdx.math.Intersector;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.Array;
@@ -208,7 +203,10 @@ public class ModelIntersector {
     }
 
     private static void intersectNodes(Ray localRay, Iterable<Node> nodes, IntersectionResult result) {
+        Ray nodeLocalRay = new Ray();
         for (Node node : nodes) {
+            nodeLocalRay.set(localRay).mul(node.localTransform);
+            Matrix4 l2w = new Matrix4(node.globalTransform).inv();
             for (NodePart nodePart : node.parts) {
                 if (!nodePart.enabled) continue;
 
@@ -225,15 +223,17 @@ public class ModelIntersector {
                 }
 
                 // Fast Check against bounding box
-                if (!Intersector.intersectRayBounds(localRay, bounds, null)) {
+                if (!Intersector.intersectRayBounds(nodeLocalRay, bounds, null)) {
                     continue;
                 }
 
-                if (intersectRayMesh(localRay, mesh, result)) {
-                    float distance = localRay.origin.dst(result.intersection);
+                if (intersectRayMesh(nodeLocalRay, mesh, result)) {
+                    Vector3 worldIntersection = result.intersection.mul(l2w);
+                    // that is only working when there is no scaling on the node
+                    float distance = localRay.origin.dst(worldIntersection);
                     if (distance < closestDistance && distance > distanceThreshold) {
                         closestDistance = distance;
-                        closestIntersection.set(result.intersection);
+                        closestIntersection.set(worldIntersection);
                         closestNodePart = nodePart;
                         closestNode = node;
                     }
@@ -243,7 +243,7 @@ public class ModelIntersector {
 
             // Check children recursively
             if (node.hasChildren()) {
-                intersectNodes(localRay, node.getChildren(), result);
+                intersectNodes(nodeLocalRay, node.getChildren(), result);
             }
         }
 

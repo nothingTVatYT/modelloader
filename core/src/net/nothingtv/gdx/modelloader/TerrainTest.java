@@ -11,10 +11,11 @@ import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
+import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
@@ -42,7 +43,6 @@ public class TerrainTest extends ScreenAdapter {
     private ModelBatch pbrBatch, shadowBatch;
     private ModelInstance terrainInstance;
     private ModelInstance testObject;
-    private ModelInstance marker1, marker2, marker3, coordinates;
     private DirectionalShadowLight directionalLight;
     private final Array<RenderableProvider> renderableProviders = new Array<>();
     private boolean useIBL = true;
@@ -52,6 +52,10 @@ public class TerrainTest extends ScreenAdapter {
     private Texture brdfLUT;
     private SceneSkybox skybox;
     private DebugDraw debugDraw;
+    private btBroadphaseInterface broadphase;
+    private btCollisionConfiguration collisionConfig;
+    private btDispatcher dispatcher;
+    private btCollisionWorld collisionWorld;
 
     @Override
     public void show() {
@@ -77,20 +81,28 @@ public class TerrainTest extends ScreenAdapter {
     }
 
     private void update(float delta) {
-        //debugDraw.reset();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
+            debugDraw.reset();
         controller.update(delta);
-        skybox.update(camera,  delta);
+        skybox.update(camera, delta);
+        collisionWorld.performDiscreteCollisionDetection();
+
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             Gdx.app.exit();
         if (Gdx.input.isKeyJustPressed(Input.Keys.G) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
             new Thread(BaseMaterials::generateAlphaMap).start();
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             Ray ray = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
+            //btCollisionWorld.ray
             ModelIntersector.IntersectionResult result = ModelIntersector.intersect(ray, terrainInstance);
             if (result != null) {
                 testObject.transform.setTranslation(result.intersection);
                 System.out.printf("intersect with node %s at %s%n", result.node.id, result.triangle);
-                debugDraw.drawArrow(result.triangle.v1, Color.BLUE);
+                debugDraw.drawTriangle(result.triangle.v1, result.triangle.v2, result.triangle.v3, Color.CYAN);
+                debugDraw.drawCoordinates(result.triangle.v1, Color.BLUE);
+                debugDraw.drawCoordinates(result.triangle.v2, Color.BLUE);
+                debugDraw.drawCoordinates(result.triangle.v3, Color.BLUE);
+                debugDraw.drawBox(result.node.calculateBoundingBox(new BoundingBox()), Color.CYAN);
             }
         }
         directionalLight.setCenter(camera.position);
@@ -98,6 +110,9 @@ public class TerrainTest extends ScreenAdapter {
     }
 
     private void init() {
+        Bullet.init();
+        initPhysics();
+
         Color sunLightColor = Color.WHITE;
         Color ambientLightColor = Color.GRAY;
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
@@ -162,6 +177,7 @@ public class TerrainTest extends ScreenAdapter {
         terrainConfig.setHeightMap(new Pixmap(Gdx.files.internal("textures/heightmap.png")), 50, -40);
         Terrain terrain = new Terrain(terrainConfig);
         terrainInstance = terrain.createModelInstance();
+        //terrainInstance.transform.setTranslation(1, -1, 1);
 
         debugDraw = new DebugDraw(camera, environment);
 
@@ -185,6 +201,14 @@ public class TerrainTest extends ScreenAdapter {
         Gdx.input.setInputProcessor(controller);
     }
 
+    private void initPhysics() {
+        broadphase = new btDbvtBroadphase();
+        collisionConfig = new btDefaultCollisionConfiguration();
+        dispatcher = new btCollisionDispatcher(collisionConfig);
+        collisionWorld = new btCollisionWorld(dispatcher, broadphase, collisionConfig);
+        System.out.printf("Bullet %d initialized.%n", Bullet.VERSION);
+    }
+
     @Override
     public void dispose() {
         super.dispose();
@@ -193,5 +217,9 @@ public class TerrainTest extends ScreenAdapter {
         specularCubemap.dispose();
         brdfLUT.dispose();
         skybox.dispose();
+        collisionWorld.dispose();
+        collisionConfig.dispose();
+        broadphase.dispose();
+        dispatcher.dispose();
     }
 }

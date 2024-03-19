@@ -1,15 +1,18 @@
 package net.nothingtv.gdx.testprojects;
 
-import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.model.MeshPart;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.model.NodePart;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.ArrowShapeBuilder;
+import com.badlogic.gdx.math.Vector3;
 
 public class BaseModels {
 
@@ -29,9 +32,30 @@ public class BaseModels {
         return builder.end();
     }
 
+    public static Model createCoordinates(Color color) {
+        return createCoordinates(BaseMaterials.emit(color));
+    }
+
     public static Model createCoordinates(Material material) {
         return new ModelBuilder().createXYZCoordinates(1, material,
                 VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
+
+    public static Model createTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color color) {
+        return createTriangle(v1, v2, v3, BaseMaterials.emit(color));
+    }
+
+    public static Model createTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Material material) {
+        ModelBuilder builder = new ModelBuilder();
+        builder.begin();
+        MeshPartBuilder partBuilder = builder.part("triangle", GL20.GL_TRIANGLES,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates, material);
+        partBuilder.triangle(v1, v2, v3);
+        return builder.end();
+    }
+
+    public static Model createWireBox(float width, float height, float depth, Material material) {
+        return new ModelBuilder().createBox(width, height, depth, GL20.GL_LINES, material, VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
     }
 
     public static void dumpModel(Model model, String owner) {

@@ -9,17 +9,20 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
-import net.nothingtv.gdx.tools.MeshCollider;
+import com.badlogic.gdx.physics.bullet.collision.btHeightfieldTerrainShape;
+import com.badlogic.gdx.utils.Disposable;
 
-public class Terrain {
+import java.nio.FloatBuffer;
+
+public class Terrain implements Disposable {
 
     /**
      * cached height sampler
      */
     private HeightSampler heightSampler;
     public TerrainConfig config;
+    private btHeightfieldTerrainShape collisionShape;
 
     public Terrain(TerrainConfig config) {
         this.config = config;
@@ -101,6 +104,27 @@ public class Terrain {
         return getHeightSampler().getHeight(x / config.scale, z / config.scale);
     }
 
+    public btHeightfieldTerrainShape createCollisionShape() {
+        int width = config.width+1;
+        int height = config.height+1;
+        float vMin = Float.MAX_VALUE;
+        float vMax = Float.MIN_VALUE;
+        FloatBuffer btBuffer = FloatBuffer.allocate((config.height + 1) * (config.width + 1) * 3);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                float v = heightSampler.getHeight(x, y);
+                btBuffer.put(x * config.scale);
+                btBuffer.put(v);
+                btBuffer.put(y * config.scale);
+                vMin = Math.min(vMin, v);
+                vMax = Math.max(vMax, v);
+            }
+        }
+        btBuffer.flip();
+        collisionShape = new btHeightfieldTerrainShape(width, height, btBuffer, 1, vMin, vMax, 1, false);
+        return collisionShape;
+    }
+
     private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
         getHeightSampler();
         heightSampler.init(this);
@@ -168,5 +192,10 @@ public class Terrain {
         mesh.setVertices(vertices);
         mesh.setIndices(indices);
         return mesh;
+    }
+
+    @Override
+    public void dispose() {
+        collisionShape.dispose();
     }
 }
