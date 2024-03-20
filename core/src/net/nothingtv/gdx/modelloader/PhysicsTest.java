@@ -4,13 +4,18 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import net.nothingtv.gdx.terrain.Terrain;
+import net.nothingtv.gdx.terrain.TerrainConfig;
+import net.nothingtv.gdx.terrain.TestHeightSampler;
 import net.nothingtv.gdx.tools.*;
 
 public class PhysicsTest extends BasicScreen {
     private SceneObject floor;
     private SceneObject box;
+    private Terrain terrain;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -29,11 +34,21 @@ public class PhysicsTest extends BasicScreen {
         wrapRigidBody(floor, 10, BaseShapes.createBoxShape(floor.modelInstance));
         floor.setLinearFactor(SceneObject.LockY);
         floor.setAngularFactor(SceneObject.LockAll);
+        floor.moveTo(new Vector3(0, 20, 0));
         System.out.printf("added %s with %s (rigid body: %s)%n", floor.name, floor.boundingBox, floor.physicsBoundingBox);
         box = add("box", BaseModels.createBox(1, 1, 1, BaseMaterials.colorPBR(Color.RED)));
         wrapRigidBody(box, 1, BaseShapes.createBoxShape(box.modelInstance));
-        box.move(new Vector3(0, 3, 0));
-        box.rotate(Vector3.X, 15f);
+        box.move(new Vector3(0, 23, 0));
+        box.rotate(Vector3.X, 25f);
+        TerrainConfig terrainConfig = new TerrainConfig(128, 128, 1);
+        terrainConfig.heightSampler = new TestHeightSampler(6, 0.05f, 0);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 25);
+        terrain = new Terrain(terrainConfig);
+        add("terrain", terrain.createModelInstance());
+        camera.position.set(0, 24, -5);
+        camera.lookAt(0, 23, 0);
+        camera.up.set(Vector3.Y);
+        camera.update();
     }
 
     @Override
