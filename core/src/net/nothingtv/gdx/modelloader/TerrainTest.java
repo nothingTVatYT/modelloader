@@ -16,6 +16,11 @@ import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.*;
+import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
+import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
+import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.loaders.gltf.GLTFLoader;
@@ -31,16 +36,15 @@ import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
-import net.nothingtv.gdx.testprojects.BaseMaterials;
-import net.nothingtv.gdx.testprojects.BaseModels;
-import net.nothingtv.gdx.testprojects.DebugDraw;
-import net.nothingtv.gdx.tools.ModelIntersector;
+import net.nothingtv.gdx.tools.BaseMaterials;
+import net.nothingtv.gdx.tools.DebugDraw;
 
 public class TerrainTest extends ScreenAdapter {
     private Environment environment;
     private Camera camera;
     private FirstPersonCameraController controller;
     private ModelBatch pbrBatch, shadowBatch;
+    private Terrain terrain;
     private ModelInstance terrainInstance;
     private ModelInstance testObject;
     private DirectionalShadowLight directionalLight;
@@ -55,7 +59,9 @@ public class TerrainTest extends ScreenAdapter {
     private btBroadphaseInterface broadphase;
     private btCollisionConfiguration collisionConfig;
     private btDispatcher dispatcher;
-    private btCollisionWorld collisionWorld;
+    private btDiscreteDynamicsWorld physicsWorld;
+    private btConstraintSolver solver;
+    private btRigidBody terrainBody;
 
     @Override
     public void show() {
@@ -85,7 +91,7 @@ public class TerrainTest extends ScreenAdapter {
             debugDraw.reset();
         controller.update(delta);
         skybox.update(camera, delta);
-        collisionWorld.performDiscreteCollisionDetection();
+        physicsWorld.stepSimulation(delta);
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             Gdx.app.exit();
@@ -93,7 +99,41 @@ public class TerrainTest extends ScreenAdapter {
             new Thread(BaseMaterials::generateAlphaMap).start();
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             Ray ray = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
-            //btCollisionWorld.ray
+            Vector3 rayFrom = new Vector3(ray.origin);
+            // rayTo = rayFrom + (direction scaled)
+            Vector3 rayTo = new Vector3(ray.direction).scl(200).add(rayFrom);
+            AllHitsRayResultCallback cba = new AllHitsRayResultCallback(rayFrom, rayTo);
+            ClosestRayResultCallback cb = new ClosestRayResultCallback(rayFrom, rayTo);
+            cb.setCollisionObject(null);
+            cb.setClosestHitFraction(1f);
+            cba.setClosestHitFraction(1f);
+            physicsWorld.rayTest(rayFrom, rayTo, cba);
+            System.out.printf("Checking ray (%s to %s) on the physics world with %d objects.%n", rayFrom, rayTo, physicsWorld.getNumCollisionObjects());
+            if (cba.hasHit()) {
+                Vector3 endPoint = new Vector3();
+                //cb.getHitPointWorld(endPoint);
+                Vector3 boundMin = new Vector3();
+                Vector3 boundMax = new Vector3();
+                ((btRigidBody)cba.getCollisionObject()).getAabb(boundMin, boundMax);
+                btScalarArray fractions = cba.getHitFractions();
+                for (int i = 0; i < fractions.size(); i++)
+                    System.out.printf("Hit Fraction #%d: %f%n", i, fractions.atConst(i));
+                /*
+                endPoint.set(rayFrom).lerp(rayTo, cb.getClosestHitFraction());
+                System.out.printf("We hit something at %s (%f) with bounds %s to %s.%n", endPoint, cb.getClosestHitFraction(), boundMin, boundMax);
+                if (terrain.boundingBox.contains(endPoint))
+                    testObject.transform.setTranslation(endPoint);
+
+                 */
+            } else {
+                Vector3 boundMin = new Vector3();
+                Vector3 boundMax = new Vector3();
+                terrainBody.getAabb(boundMin, boundMax);
+                BoundingBox bounds = new BoundingBox();
+                terrainInstance.calculateBoundingBox(bounds);
+                System.out.printf("Hit nothing. Terrain would be at %s - %s, terrain model is at %s%n", boundMin, boundMax, terrain.boundingBox);
+            }
+            /*
             ModelIntersector.IntersectionResult result = ModelIntersector.intersect(ray, terrainInstance);
             if (result != null) {
                 testObject.transform.setTranslation(result.intersection);
@@ -103,7 +143,7 @@ public class TerrainTest extends ScreenAdapter {
                 debugDraw.drawCoordinates(result.triangle.v2, Color.BLUE);
                 debugDraw.drawCoordinates(result.triangle.v3, Color.BLUE);
                 debugDraw.drawBox(result.node.calculateBoundingBox(new BoundingBox()), Color.CYAN);
-            }
+            }*/
         }
         directionalLight.setCenter(camera.position);
         directionalLight.direction.rotate(Vector3.X, 30 * delta).rotate(Vector3.Y, 45 * delta);
@@ -175,9 +215,12 @@ public class TerrainTest extends ScreenAdapter {
         terrainConfig.splatMap = new Texture("textures/alpha-example.png");
         terrainConfig.terrainDivideFactor = 4;
         terrainConfig.setHeightMap(new Pixmap(Gdx.files.internal("textures/heightmap.png")), 50, -40);
-        Terrain terrain = new Terrain(terrainConfig);
+        terrain = new Terrain(terrainConfig);
         terrainInstance = terrain.createModelInstance();
         //terrainInstance.transform.setTranslation(1, -1, 1);
+        terrain.updateBoundingBox();
+        terrainBody = terrain.createRigidBody();
+        physicsWorld.addCollisionObject(terrainBody);
 
         debugDraw = new DebugDraw(camera, environment);
 
@@ -194,7 +237,7 @@ public class TerrainTest extends ScreenAdapter {
         renderableProviders.add(testObject);
 
         debugDraw.drawArrow(terrainInstance.transform.getTranslation(new Vector3()), Color.BROWN);
-        BaseModels.dumpModel(terrainInstance.model, "terrain");
+        //BaseModels.dumpModel(terrainInstance.model, "terrain");
         controller = new FirstPersonCameraController(camera);
         controller.setVelocity(16);
         controller.setDegreesPerPixel(0.2f);
@@ -204,8 +247,9 @@ public class TerrainTest extends ScreenAdapter {
     private void initPhysics() {
         broadphase = new btDbvtBroadphase();
         collisionConfig = new btDefaultCollisionConfiguration();
+        solver =  new btSequentialImpulseConstraintSolver();
         dispatcher = new btCollisionDispatcher(collisionConfig);
-        collisionWorld = new btCollisionWorld(dispatcher, broadphase, collisionConfig);
+        physicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
         System.out.printf("Bullet %d initialized.%n", Bullet.VERSION);
     }
 
@@ -217,9 +261,11 @@ public class TerrainTest extends ScreenAdapter {
         specularCubemap.dispose();
         brdfLUT.dispose();
         skybox.dispose();
-        collisionWorld.dispose();
+        physicsWorld.dispose();
         collisionConfig.dispose();
         broadphase.dispose();
         dispatcher.dispose();
+        terrainBody.dispose();
+        solver.dispose();
     }
 }

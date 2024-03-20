@@ -1,20 +1,23 @@
 package net.nothingtv.gdx.modelloader;
 
+import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g3d.Environment;
-import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.RenderableProvider;
+import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
+import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
+import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
@@ -26,9 +29,13 @@ import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
-import net.nothingtv.gdx.testprojects.DebugDraw;
+import net.nothingtv.gdx.tools.DebugDraw;
+import net.nothingtv.gdx.tools.PickResult;
+import net.nothingtv.gdx.tools.SceneObject;
 
 public abstract class BasicScreen implements Screen {
+    protected Game game;
+    protected ScreenConfig screenConfig = new ScreenConfig();
     protected btDbvtBroadphase broadphase;
     protected btCollisionConfiguration collisionConfig;
     protected btConstraintSolver solver;
@@ -47,14 +54,21 @@ public abstract class BasicScreen implements Screen {
     protected Texture brdfLUT;
     protected SceneSkybox skybox;
     protected Color backgroundColor = Color.DARK_GRAY;
+    protected float gameTime;
 
+    public BasicScreen(Game game) {
+        this.game = game;
+    }
 
     protected void init() {
-        initPhysics();
+        gameTime = 0;
+        if (screenConfig.usePhysics)
+            initPhysics();
         initEnvironment();
         initCamera();
         initBatches();
         initController();
+        initScene();
     }
 
     protected void initPhysics() {
@@ -64,11 +78,11 @@ public abstract class BasicScreen implements Screen {
         solver =  new btSequentialImpulseConstraintSolver();
         dispatcher = new btCollisionDispatcher(collisionConfig);
         physicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-        System.out.printf("Bullet %d initialized.%n", Bullet.VERSION);
+        System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
     }
 
     protected void updatePhysics(float delta) {
-        physicsWorld.stepSimulation(delta);
+        physicsWorld.stepSimulation(delta, 4, 1f/60);
     }
 
     protected void initEnvironment() {
@@ -99,9 +113,10 @@ public abstract class BasicScreen implements Screen {
         environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
         environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
         environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
-        skybox = new SceneSkybox(environmentCubemap);
-        renderableProviders.add(skybox);
-
+        if (screenConfig.useSkybox) {
+            skybox = new SceneSkybox(environmentCubemap);
+            renderableProviders.add(skybox);
+        }
     }
 
     protected void initBatches() {
@@ -135,23 +150,32 @@ public abstract class BasicScreen implements Screen {
         cameraController = new FirstPersonCameraController(camera);
         cameraController.setVelocity(16);
         cameraController.setDegreesPerPixel(0.2f);
+        cameraController.autoUpdate = true;
         Gdx.input.setInputProcessor(cameraController);
     }
+
+    public void initScene() {}
 
     public void updateController(float delta) {
         if (cameraController != null)
             cameraController.update(delta);
     }
 
-    public void updateScene(float delta) {}
+    public void updateScene(float delta) {
+        if (skybox != null)
+            skybox.update(camera, delta);
+    }
 
     public void update(float delta) {
         updateController(delta);
+        if (screenConfig.usePhysics)
+            updatePhysics(delta);
         updateScene(delta);
     }
 
     @Override
     public void render(float delta) {
+        gameTime += delta;
         update(delta);
         directionalLight.setCenter(camera.position);
         ScreenUtils.clear(backgroundColor, true);
@@ -167,6 +191,72 @@ public abstract class BasicScreen implements Screen {
         pbrBatch.end();
 
         debugDraw.render();
+    }
+
+    /**
+     * Create a new ModelInstance from this model and add it to the scene.
+     * @param model the model to instantiate
+     * @return the model instance created
+     */
+    public SceneObject add(String name, Model model) {
+        ModelInstance instance = new ModelInstance(model);
+        return add(name, instance);
+    }
+
+    /**
+     * Add a model instance to the scene.
+     * @param modelInstance the model instance to be added
+     * @return the model instance added
+     */
+    public SceneObject add(String name, ModelInstance modelInstance) {
+        renderableProviders.add(modelInstance);
+        return new SceneObject(name, modelInstance);
+    }
+
+    public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {
+        btMotionState motionState = new DefaultMotionState(sceneObject.modelInstance);
+        Vector3 localInertia = new Vector3();
+        collisionShape.calculateLocalInertia(mass, localInertia);
+        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia);
+        btRigidBody rigidBody = new btRigidBody(info);
+        //btRigidBody rigidBody = new btRigidBody(mass, motionState, collisionShape);
+        rigidBody.userData = sceneObject;
+        if (physicsWorld != null)
+            physicsWorld.addRigidBody(rigidBody);
+        sceneObject.setRigidBody(rigidBody, motionState);
+    }
+
+    public PickResult pick(float maxDistance) {
+        if (physicsWorld != null) {
+            Ray pickRay = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
+            Vector3 rayFrom = new Vector3(pickRay.origin);
+            Vector3 rayTo = new Vector3(pickRay.direction).scl(maxDistance).add(rayFrom);
+            AllHitsRayResultCallback resultCallback = new AllHitsRayResultCallback(rayFrom, rayTo);
+            PickResult pickResult = new PickResult(resultCallback);
+            physicsWorld.rayTest(rayFrom, rayTo, resultCallback);
+            if (resultCallback.hasHit()) {
+                btScalarArray fractions = resultCallback.getHitFractions();
+                btCollisionObject collisionObject = null;
+                Vector3 hitPosition = new Vector3();
+                float minDist = maxDistance;
+                int n = fractions.size();
+                for (int i = 0; i < fractions.size(); i++) {
+                    float dist = fractions.atConst(i);
+                    if (dist < minDist) {
+                        collisionObject = resultCallback.getCollisionObjects().atConst(i);
+                        hitPosition.set(rayFrom).lerp(rayTo, dist);
+                        System.out.printf("hit fraction %d/%d: %s (%f)%n", i+1, n, hitPosition, dist);
+                        minDist = dist;
+                    }
+                }
+                if (collisionObject != null && collisionObject.userData != null) {
+                    pickResult.pickedObject = (SceneObject) collisionObject.userData;
+                }
+                debugDraw.drawArrow(hitPosition, Color.GREEN);
+            }
+            return pickResult;
+        }
+        return null;
     }
 
     @Override

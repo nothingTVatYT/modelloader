@@ -30,8 +30,8 @@ import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.terrain.SimpleTerrain;
-import net.nothingtv.gdx.testprojects.BaseMaterials;
-import net.nothingtv.gdx.testprojects.BaseModels;
+import net.nothingtv.gdx.tools.BaseMaterials;
+import net.nothingtv.gdx.tools.BaseModels;
 import net.nothingtv.gdx.tools.ModelOptimizer;
 
 public class ModelLoader extends ScreenAdapter {

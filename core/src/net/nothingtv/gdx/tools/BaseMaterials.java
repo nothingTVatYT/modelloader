@@ -1,4 +1,4 @@
-package net.nothingtv.gdx.testprojects;
+package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
@@ -9,19 +9,15 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
-import com.badlogic.gdx.graphics.g3d.utils.TextureDescriptor;
-import com.badlogic.gdx.math.MathUtils;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
-import net.nothingtv.gdx.tools.Tools;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
 
 public class BaseMaterials {
 
@@ -51,6 +47,13 @@ public class BaseMaterials {
     public static Material whiteColorPBR() {
         Material material = new Material("_pbr_white");
         material.set(PBRColorAttribute.createBaseColorFactor(Color.WHITE));
+        material.set(IntAttribute.createCullFace(GL20.GL_BACK));
+        return material;
+    }
+
+    public static Material colorPBR(Color color) {
+        Material material = new Material("_pbr_color_" + color);
+        material.set(PBRColorAttribute.createBaseColorFactor(color));
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
         return material;
     }

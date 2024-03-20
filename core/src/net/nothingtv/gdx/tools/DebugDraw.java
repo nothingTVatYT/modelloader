@@ -1,4 +1,4 @@
-package net.nothingtv.gdx.testprojects;
+package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;

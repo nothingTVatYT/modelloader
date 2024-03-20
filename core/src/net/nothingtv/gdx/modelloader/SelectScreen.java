@@ -3,13 +3,14 @@ package net.nothingtv.gdx.modelloader;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
-import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.ScreenUtils;
 
 public class SelectScreen extends ScreenAdapter {
     private Stage stage;
@@ -60,14 +61,25 @@ public class SelectScreen extends ScreenAdapter {
         });
         table.add(button3);
         table.row();
-        TextButton button4 = new TextButton("Exit", skin);
+
+        TextButton button4 = new TextButton("Physics Test", skin);
         button4.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new PhysicsTest(game));
+            }
+        });
+        table.add(button4);
+        table.row();
+
+        TextButton button5 = new TextButton("Exit", skin);
+        button5.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Gdx.app.exit();
             }
         });
-        table.add(button4).width(100);
+        table.add(button5).width(100);
     }
 
     public void resize (int width, int height) {
@@ -76,8 +88,8 @@ public class SelectScreen extends ScreenAdapter {
 
     @Override
     public void render (float delta) {
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        stage.act(Gdx.graphics.getDeltaTime());
+        ScreenUtils.clear(Color.DARK_GRAY, true);
+        stage.act(delta);
         stage.draw();
     }
 

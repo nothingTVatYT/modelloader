@@ -9,20 +9,43 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.collision.btHeightfieldTerrainShape;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
+import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 import com.badlogic.gdx.utils.Disposable;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 public class Terrain implements Disposable {
 
+    class TerrainMotionState extends btMotionState {
+        @Override
+        public void getWorldTransform(Matrix4 worldTrans) {
+            worldTrans.set(modelInstance.transform).translate(rigidBodyOffset);
+            System.out.printf("getWorldTransform: set translation to %s%n", worldTrans.getTranslation(new Vector3()));
+        }
+
+        @Override
+        public void setWorldTransform(Matrix4 worldTrans) {
+            modelInstance.transform.set(worldTrans);
+            System.out.println("set world transform called on the terrain");
+        }
+    }
     /**
      * cached height sampler
      */
     private HeightSampler heightSampler;
     public TerrainConfig config;
+    private ModelInstance modelInstance;
     private btHeightfieldTerrainShape collisionShape;
+    private Vector3 rigidBodyOffset = new Vector3();
+    public btRigidBody rigidBody;
+
+    public BoundingBox boundingBox = new BoundingBox();
 
     public Terrain(TerrainConfig config) {
         this.config = config;
@@ -87,7 +110,8 @@ public class Terrain implements Disposable {
                 }
         }
 
-        return new ModelInstance(modelBuilder.end());
+        modelInstance = new ModelInstance(modelBuilder.end());
+        return modelInstance;
     }
 
     private HeightSampler getHeightSampler() {
@@ -104,12 +128,16 @@ public class Terrain implements Disposable {
         return getHeightSampler().getHeight(x / config.scale, z / config.scale);
     }
 
+    public void updateBoundingBox() {
+        modelInstance.calculateBoundingBox(boundingBox);
+    }
+
     public btHeightfieldTerrainShape createCollisionShape() {
-        int width = config.width+1;
-        int height = config.height+1;
+        int width = config.width;
+        int height = config.height;
         float vMin = Float.MAX_VALUE;
         float vMax = Float.MIN_VALUE;
-        FloatBuffer btBuffer = FloatBuffer.allocate((config.height + 1) * (config.width + 1) * 3);
+        FloatBuffer btBuffer = ByteBuffer.allocateDirect(width * height * 12).asFloatBuffer();
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 float v = heightSampler.getHeight(x, y);
@@ -122,7 +150,15 @@ public class Terrain implements Disposable {
         }
         btBuffer.flip();
         collisionShape = new btHeightfieldTerrainShape(width, height, btBuffer, 1, vMin, vMax, 1, false);
+        rigidBodyOffset.set(width * config.scale / 2f, -vMax/2f, height * config.scale / 2f);
         return collisionShape;
+    }
+
+    public btRigidBody createRigidBody() {
+        btMotionState motionState = new TerrainMotionState();
+        rigidBody = new btRigidBody(0f, motionState, createCollisionShape());
+        rigidBody.userData = modelInstance;
+        return rigidBody;
     }
 
     private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
@@ -197,5 +233,6 @@ public class Terrain implements Disposable {
     @Override
     public void dispose() {
         collisionShape.dispose();
+        rigidBody.dispose();
     }
 }

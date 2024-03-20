@@ -1,4 +1,4 @@
-package net.nothingtv.gdx.testprojects;
+package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -55,7 +55,13 @@ public class BaseModels {
     }
 
     public static Model createWireBox(float width, float height, float depth, Material material) {
-        return new ModelBuilder().createBox(width, height, depth, GL20.GL_LINES, material, VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+        return new ModelBuilder().createBox(width, height, depth, GL20.GL_LINES, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
+
+    public static Model createBox(float width, float height, float depth, Material material) {
+        return new ModelBuilder().createBox(width, height, depth, GL20.GL_TRIANGLES, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
     }
 
     public static void dumpModel(Model model, String owner) {

@@ -21,8 +21,8 @@ import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
-import net.nothingtv.gdx.testprojects.BaseMaterials;
-import net.nothingtv.gdx.testprojects.BaseModels;
+import net.nothingtv.gdx.tools.BaseMaterials;
+import net.nothingtv.gdx.tools.BaseModels;
 
 import java.util.logging.Logger;
 

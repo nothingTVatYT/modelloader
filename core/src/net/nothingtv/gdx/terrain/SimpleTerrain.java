@@ -11,7 +11,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.Disposable;
-import net.nothingtv.gdx.testprojects.BaseMaterials;
+import net.nothingtv.gdx.tools.BaseMaterials;
 import net.nothingtv.gdx.tools.MeshCollider;
 
 /** Simple test showing how to use a height map. Uses {@link HeightField}.
