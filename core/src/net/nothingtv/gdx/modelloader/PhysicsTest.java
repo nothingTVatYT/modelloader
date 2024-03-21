@@ -15,6 +15,7 @@ import net.nothingtv.gdx.tools.*;
 public class PhysicsTest extends BasicScreen {
     private SceneObject floor;
     private SceneObject box;
+    private SceneObject ball;
     private Terrain terrain;
 
     public PhysicsTest(Game game) {
@@ -40,11 +41,19 @@ public class PhysicsTest extends BasicScreen {
         wrapRigidBody(box, 1, BaseShapes.createBoxShape(box.modelInstance));
         box.move(new Vector3(0, 23, 0));
         box.rotate(Vector3.X, 25f);
+        ball = add("ball", BaseModels.createSphere(1, BaseMaterials.colorPBR(Color.GREEN)));
+        wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
+        ball.moveTo(new Vector3(30, 30, 30));
+
         TerrainConfig terrainConfig = new TerrainConfig(128, 128, 1);
         terrainConfig.heightSampler = new TestHeightSampler(6, 0.05f, 0);
         terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 25);
         terrain = new Terrain(terrainConfig);
-        add("terrain", terrain.createModelInstance());
+        SceneObject terrainObject = add("terrain", terrain.createModelInstance());
+
+        wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
+        System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
+
         camera.position.set(0, 24, -5);
         camera.lookAt(0, 23, 0);
         camera.up.set(Vector3.Y);

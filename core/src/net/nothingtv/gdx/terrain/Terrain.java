@@ -12,13 +12,11 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.physics.bullet.collision.btHeightfieldTerrainShape;
+import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 import com.badlogic.gdx.utils.Disposable;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 
 public class Terrain implements Disposable {
 
@@ -41,7 +39,8 @@ public class Terrain implements Disposable {
     private HeightSampler heightSampler;
     public TerrainConfig config;
     private ModelInstance modelInstance;
-    private btHeightfieldTerrainShape collisionShape;
+    //private btHeightfieldTerrainShape collisionShape;
+    private btCollisionShape collisionShape;
     private Vector3 rigidBodyOffset = new Vector3();
     public btRigidBody rigidBody;
 
@@ -132,25 +131,8 @@ public class Terrain implements Disposable {
         modelInstance.calculateBoundingBox(boundingBox);
     }
 
-    public btHeightfieldTerrainShape createCollisionShape() {
-        int width = config.width;
-        int height = config.height;
-        float vMin = Float.MAX_VALUE;
-        float vMax = Float.MIN_VALUE;
-        FloatBuffer btBuffer = ByteBuffer.allocateDirect(width * height * 12).asFloatBuffer();
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                float v = heightSampler.getHeight(x, y);
-                btBuffer.put(x * config.scale);
-                btBuffer.put(v);
-                btBuffer.put(y * config.scale);
-                vMin = Math.min(vMin, v);
-                vMax = Math.max(vMax, v);
-            }
-        }
-        btBuffer.flip();
-        collisionShape = new btHeightfieldTerrainShape(width, height, btBuffer, 1, vMin, vMax, 1, false);
-        rigidBodyOffset.set(width * config.scale / 2f, -vMax/2f, height * config.scale / 2f);
+    public btCollisionShape createCollisionShape() {
+        collisionShape = Bullet.obtainStaticNodeShape(modelInstance.nodes);
         return collisionShape;
     }
 

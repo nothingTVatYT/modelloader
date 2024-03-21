@@ -11,12 +11,13 @@ import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
-import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -55,6 +56,7 @@ public abstract class BasicScreen implements Screen {
     protected SceneSkybox skybox;
     protected Color backgroundColor = Color.DARK_GRAY;
     protected float gameTime;
+    protected DebugDrawer debugDrawer;
 
     public BasicScreen(Game game) {
         this.game = game;
@@ -78,6 +80,9 @@ public abstract class BasicScreen implements Screen {
         solver =  new btSequentialImpulseConstraintSolver();
         dispatcher = new btCollisionDispatcher(collisionConfig);
         physicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+        debugDrawer = new DebugDrawer();
+        debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
+        physicsWorld.setDebugDrawer(debugDrawer);
         System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
     }
 
@@ -191,6 +196,12 @@ public abstract class BasicScreen implements Screen {
         pbrBatch.end();
 
         debugDraw.render();
+
+        if (debugDrawer != null) {
+            debugDrawer.begin(camera);
+            physicsWorld.debugDrawWorld();
+            debugDrawer.end();
+        }
     }
 
     /**
@@ -214,16 +225,22 @@ public abstract class BasicScreen implements Screen {
     }
 
     public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {
-        btMotionState motionState = new DefaultMotionState(sceneObject.modelInstance);
+        DefaultMotionState motionState = new DefaultMotionState(sceneObject.modelInstance);
         Vector3 localInertia = new Vector3();
         collisionShape.calculateLocalInertia(mass, localInertia);
         btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia);
         btRigidBody rigidBody = new btRigidBody(info);
-        //btRigidBody rigidBody = new btRigidBody(mass, motionState, collisionShape);
         rigidBody.userData = sceneObject;
         if (physicsWorld != null)
             physicsWorld.addRigidBody(rigidBody);
         sceneObject.setRigidBody(rigidBody, motionState);
+        Vector3 vCenter = new Vector3();
+        Vector3 pCenter = new Vector3();
+        sceneObject.boundingBox.getCenter(vCenter);
+        sceneObject.physicsBoundingBox.getCenter(pCenter);
+        motionState.rigidBodyOffset.set(vCenter).sub(pCenter);
+        rigidBody.translate(motionState.rigidBodyOffset);
+        sceneObject.updatePhysicsBoundingBox();
     }
 
     public PickResult pick(float maxDistance) {

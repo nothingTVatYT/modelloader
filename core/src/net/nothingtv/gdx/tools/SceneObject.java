@@ -38,6 +38,10 @@ public class SceneObject implements Disposable {
     public void setRigidBody(btRigidBody rigidBody, btMotionState motionState) {
         this.rigidBody = rigidBody;
         this.motionState = motionState;
+        updatePhysicsBoundingBox();
+    }
+
+    public void updatePhysicsBoundingBox() {
         if (rigidBody != null) {
             if (physicsBoundingBox == null)
                 physicsBoundingBox = new BoundingBox();

@@ -6,6 +6,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
+import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 
 public class BaseShapes {
@@ -16,6 +17,13 @@ public class BaseShapes {
         BoundingBox bounds = new BoundingBox();
         modelInstance.calculateBoundingBox(bounds);
         return new btBoxShape(bounds.getDimensions(halfExtends).scl(0.5f));
+    }
+
+    public static btCollisionShape createSphereShape(ModelInstance modelInstance) {
+        Vector3 halfExtends = new Vector3();
+        BoundingBox bounds = new BoundingBox();
+        modelInstance.calculateBoundingBox(bounds);
+        return new btSphereShape(bounds.getDimensions(halfExtends).scl(0.5f).x);
     }
 
     public static void dumpRigidBody(btRigidBody rigidBody) {
