@@ -197,7 +197,7 @@ public abstract class BasicScreen implements Screen {
 
         debugDraw.render();
 
-        if (debugDrawer != null) {
+        if (debugDrawer != null && !physicsWorld.isDisposed()) {
             debugDrawer.begin(camera);
             physicsWorld.debugDrawWorld();
             debugDrawer.end();
@@ -241,6 +241,7 @@ public abstract class BasicScreen implements Screen {
         motionState.rigidBodyOffset.set(vCenter).sub(pCenter);
         rigidBody.translate(motionState.rigidBodyOffset);
         sceneObject.updatePhysicsBoundingBox();
+        info.dispose();
     }
 
     public PickResult pick(float maxDistance) {
@@ -290,6 +291,7 @@ public abstract class BasicScreen implements Screen {
 
     @Override
     public void hide() {
+        dispose();
     }
 
     @Override
@@ -302,10 +304,10 @@ public abstract class BasicScreen implements Screen {
 
     @Override
     public void dispose() {
+        physicsWorld.dispose();
         dispatcher.dispose();
         broadphase.dispose();
         solver.dispose();
-        physicsWorld.dispose();
         collisionConfig.dispose();
     }
 }
