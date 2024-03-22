@@ -22,6 +22,7 @@ import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
@@ -95,13 +96,14 @@ public abstract class BasicScreen implements Screen {
         Color ambientLightColor = Color.GRAY;
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
         int shadowMapSize = 2048;
-        float shadowViewportSize = 60;
+        float shadowViewportSize = 10;
         float shadowNear = 0.1f;
         float shadowFar = 500;
         directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
         directionalLight.set(sunLightColor, sunDirection);
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, ambientLightColor));
+        environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
         environment.add(directionalLight);
         environment.shadowMap = directionalLight;
 

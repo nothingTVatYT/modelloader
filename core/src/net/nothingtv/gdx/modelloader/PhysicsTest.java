@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
@@ -17,6 +19,7 @@ public class PhysicsTest extends BasicScreen {
     private SceneObject box;
     private SceneObject ball;
     private Terrain terrain;
+    private float shadowBias = 1/512f;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -58,6 +61,13 @@ public class PhysicsTest extends BasicScreen {
         camera.lookAt(0, 23, 0);
         camera.up.set(Vector3.Y);
         camera.update();
+
+        setShadowBias();
+    }
+
+    private void setShadowBias() {
+        environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
+        System.out.printf("shadow bias set to 1/%f%n", 1/shadowBias);
     }
 
     @Override
@@ -65,6 +75,16 @@ public class PhysicsTest extends BasicScreen {
         super.updateScene(delta);
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
             game.setScreen(new SelectScreen(game));
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_ADD)) {
+            shadowBias *= 2;
+            setShadowBias();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_SUBTRACT)) {
+            shadowBias /= 2;
+            setShadowBias();
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
+            debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_MAX_DEBUG_DRAW_MODE);
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             PickResult picked = pick(100);
             if (picked.hasHit() && picked.pickedObject != null) {
