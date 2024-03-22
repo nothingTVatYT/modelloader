@@ -210,7 +210,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
             physicsWorld.debugDrawWorld();
             debugDrawer.end();
         }
+        updatePostRender(delta);
     }
+
+    public void updatePostRender(float delta) {}
 
     /**
      * Create a new ModelInstance from this model and add it to the scene.

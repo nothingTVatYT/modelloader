@@ -73,8 +73,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     public void updateScene(float delta) {
         super.updateScene(delta);
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
-            game.setScreen(new SelectScreen(game));
         if (Gdx.input.isKeyJustPressed(Input.Keys.NUMPAD_ADD)) {
             shadowBias *= 2;
             setShadowBias();
@@ -97,4 +95,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         floor.addForce(diff);
     }
 
+    @Override
+    public void updatePostRender(float delta) {
+        super.update(delta);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
+            game.setScreen(new SelectScreen(game));
+    }
 }
