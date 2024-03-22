@@ -67,6 +67,7 @@ public class GLTFExample extends ApplicationAdapter
         CascadeShadowMap cascadeShadowMap = new CascadeShadowMap(3);
         //cascadeShadowMap.lights.add(directionalLight);
         cascadeShadowMap.setCascades(camera, directionalLight, 0, 4);
+        sceneManager.environment.add(directionalLight);
         sceneManager.setCascadeShadowMap(cascadeShadowMap);
         sceneManager.setAmbientLight(1f);
         sceneManager.environment.add(directionalLight);

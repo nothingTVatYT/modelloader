@@ -26,7 +26,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     protected void init() {
-        screenConfig.useSkybox = false;
+        screenConfig.useSkybox = true;
         super.init();
     }
 
