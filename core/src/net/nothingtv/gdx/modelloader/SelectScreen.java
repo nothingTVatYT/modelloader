@@ -2,6 +2,7 @@ package net.nothingtv.gdx.modelloader;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -91,6 +92,8 @@ public class SelectScreen extends ScreenAdapter {
         ScreenUtils.clear(Color.DARK_GRAY, true);
         stage.act(delta);
         stage.draw();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE))
+            Gdx.app.exit();
     }
 
     public void dispose() {

@@ -2,12 +2,14 @@ package net.nothingtv.gdx.modelloader;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
@@ -19,7 +21,14 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Align;
+import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
+import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
 import net.mgsx.gltf.scene3d.scene.CascadeShadowMap;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
@@ -54,6 +63,13 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Color clearColor = Color.BLACK;
     protected float gameTime;
     protected DebugDrawer debugDrawer;
+    protected Stage stage;
+    protected Skin skin;
+    protected Table table;
+    protected Window lightControls;
+    protected Label fpsLabel;
+    protected InputMultiplexer inputMultiplexer;
+    private float shadowBias = 1/512f;
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -65,6 +81,9 @@ public abstract class BasicSceneManagerScreen implements Screen {
             initPhysics();
         initEnvironment();
         initCamera();
+        inputMultiplexer = new InputMultiplexer();
+        Gdx.input.setInputProcessor(inputMultiplexer);
+        initUI();
         initController();
         initBatches();
         initScene();
@@ -114,20 +133,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
         directionalLight.set(sunLightColor, sunDirection);
 
         sceneManager.environment.add(directionalLight);
-        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
+        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
 
         CascadeShadowMap csm = new CascadeShadowMap(3);
         csm.lights.add(directionalLight);
         sceneManager.setCascadeShadowMap(csm);
-
-        /*
-        environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, ambientLightColor));
-        environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
-        environment.add(directionalLight);
-        environment.shadowMap = directionalLight;
-
-         */
 
         // setup quick IBL (image based lighting)
         IBLBuilder iblBuilder = IBLBuilder.createOutdoor(directionalLight);
@@ -139,12 +149,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
         // This texture is provided by the library, no need to have it in your assets.
         brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
 
-        /*
-        environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
-        environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
-        environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+        sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
+        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
+        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
 
-         */
         if (screenConfig.useSkybox) {
             skybox = new SceneSkybox(environmentCubemap);
             sceneManager.setSkyBox(skybox);
@@ -166,12 +174,101 @@ public abstract class BasicSceneManagerScreen implements Screen {
         sceneManager.setCamera(camera);
     }
 
+    protected void initUI() {
+        stage = new Stage();
+        //stage.setDebugAll(true);
+        skin = new Skin(Gdx.files.internal("data/uiskin.json"));
+        table = new Table(skin);
+        table.setFillParent(true);
+        table.align(Align.topLeft);
+        stage.addActor(table);
+        inputMultiplexer.addProcessor(stage);
+        if (screenConfig.showFPS)
+            showFPS(true);
+    }
+
+    public void showFPS(boolean showIt) {
+        if (showIt) {
+            if (fpsLabel == null) {
+                fpsLabel = new Label("0000", skin) {
+                    @Override
+                    public void act(float delta) {
+                        setText("" + Gdx.graphics.getFramesPerSecond());
+                        super.act(delta);
+                    }
+                };
+            }
+            table.add(fpsLabel);
+        } else {
+            if (fpsLabel != null)
+                table.removeActor(fpsLabel);
+        }
+    }
+
+    public void showLightControls(boolean showIt) {
+        if (showIt) {
+            if (lightControls == null) {
+                lightControls = new Window("Environment", skin);
+                lightControls.defaults().spaceBottom(10);
+                lightControls.row();
+                lightControls.add(new Label("ambient", skin));
+                Slider ambientSlider = new Slider(0, 1, 0.1f, false, skin);
+                Label valueLabel = new Label("0.000", skin);
+                ambientSlider.addListener(new ChangeListener() {
+                    @Override
+                    public void changed(ChangeEvent event, Actor actor) {
+                        valueLabel.setText(""+ambientSlider.getValue());
+                        sceneManager.setAmbientLight(((Slider)actor).getValue());
+                        event.handle();
+                    }
+                });
+                lightControls.add(ambientSlider);
+                lightControls.add(valueLabel);
+                lightControls.row();
+
+                lightControls.add(new Label("directional", skin));
+                Slider directionalSlider = new Slider(0, 1, 0.1f, false, skin);
+                directionalSlider.setValue(directionalLight.intensity);
+                directionalSlider.addListener(new ChangeListener() {
+                    @Override
+                    public void changed(ChangeEvent event, Actor actor) {
+                        directionalLight.intensity = ((Slider)actor).getValue();
+                        directionalLight.updateColor();
+                        event.handle();
+                    }
+                });
+                lightControls.add(directionalSlider);
+                lightControls.row();
+
+                lightControls.add(new Label("shadow bias", skin));
+                Slider shadowBiasSlider = new Slider(1, 10, 1f, false, skin);
+                shadowBiasSlider.setValue(MathUtils.log2(1f/shadowBias));
+                shadowBiasSlider.addListener(new ChangeListener() {
+                    @Override
+                    public void changed(ChangeEvent event, Actor actor) {
+                        float v = ((Slider)actor).getValue();
+                        shadowBias = 1f / (float)(Math.pow(2, v));
+                        setShadowBias(shadowBias);
+                        event.handle();
+                    }
+                });
+                lightControls.add(shadowBiasSlider);
+
+                lightControls.pack();
+            }
+            stage.addActor(lightControls);
+        } else {
+            if (lightControls != null)
+                stage.getRoot().removeActor(lightControls);
+        }
+    }
+
     protected void initController() {
         cameraController = new FirstPersonCameraController(camera);
         cameraController.setVelocity(16);
         cameraController.setDegreesPerPixel(0.2f);
         cameraController.autoUpdate = true;
-        Gdx.input.setInputProcessor(cameraController);
+        inputMultiplexer.addProcessor(cameraController);
     }
 
     public void initScene() {}
@@ -196,7 +293,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public void render(float delta) {
         gameTime += delta;
         update(delta);
-        //ScreenUtils.clear(backgroundColor, true);
         Gdx.gl.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
@@ -210,6 +306,12 @@ public abstract class BasicSceneManagerScreen implements Screen {
             physicsWorld.debugDrawWorld();
             debugDrawer.end();
         }
+
+        if (stage != null) {
+            stage.act(delta);
+            stage.draw();
+        }
+
         updatePostRender(delta);
     }
 
@@ -309,6 +411,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     @Override
     public void resume() {
+    }
+
+    protected void setShadowBias(float val) {
+        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, val)); // reduce shadow acne
+        System.out.printf("shadow bias set to 1/%f%n", 1/val);
     }
 
     @Override
