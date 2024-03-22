@@ -1,0 +1,320 @@
+package net.nothingtv.gdx.modelloader;
+
+import com.badlogic.gdx.Game;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
+import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.Ray;
+import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.DebugDrawer;
+import com.badlogic.gdx.physics.bullet.collision.*;
+import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
+import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
+import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
+import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
+import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
+import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
+import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
+import net.mgsx.gltf.scene3d.scene.CascadeShadowMap;
+import net.mgsx.gltf.scene3d.scene.SceneManager;
+import net.mgsx.gltf.scene3d.scene.SceneSkybox;
+import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
+import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
+import net.mgsx.gltf.scene3d.utils.IBLBuilder;
+import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
+import net.nothingtv.gdx.tools.DebugDraw;
+import net.nothingtv.gdx.tools.PickResult;
+import net.nothingtv.gdx.tools.SceneObject;
+
+public abstract class BasicSceneManagerScreen implements Screen {
+    protected Game game;
+    protected ScreenConfig screenConfig = new ScreenConfig();
+    protected btDbvtBroadphase broadphase;
+    protected btCollisionConfiguration collisionConfig;
+    protected btConstraintSolver solver;
+    protected btDispatcher dispatcher;
+    protected btDiscreteDynamicsWorld physicsWorld;
+    protected SceneManager sceneManager;
+    protected Camera camera;
+    protected DebugDraw debugDraw;
+    protected FirstPersonCameraController cameraController;
+    protected DirectionalShadowLight directionalLight;
+    protected Cubemap environmentCubemap;
+    protected Cubemap diffuseCubemap;
+    protected Cubemap specularCubemap;
+    protected Texture brdfLUT;
+    protected SceneSkybox skybox;
+    protected Color clearColor = Color.BLACK;
+    protected float gameTime;
+    protected DebugDrawer debugDrawer;
+
+    public BasicSceneManagerScreen(Game game) {
+        this.game = game;
+    }
+
+    protected void init() {
+        gameTime = 0;
+        if (screenConfig.usePhysics)
+            initPhysics();
+        initEnvironment();
+        initCamera();
+        initController();
+        initBatches();
+        initScene();
+    }
+
+    protected void initPhysics() {
+        Bullet.init();
+        broadphase = new btDbvtBroadphase();
+        collisionConfig = new btDefaultCollisionConfiguration();
+        solver =  new btSequentialImpulseConstraintSolver();
+        dispatcher = new btCollisionDispatcher(collisionConfig);
+        physicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+        debugDrawer = new DebugDrawer();
+        debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
+        physicsWorld.setDebugDrawer(debugDrawer);
+        System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
+    }
+
+    protected void updatePhysics(float delta) {
+        physicsWorld.stepSimulation(delta, 4, 1f/60);
+    }
+
+    protected void initEnvironment() {
+        PBRShaderConfig pbrConfig = PBRShaderProvider.createDefaultConfig();
+        pbrConfig.numBones = 60;
+        pbrConfig.numBoneWeights = 8;
+        pbrConfig.numDirectionalLights = 1;
+        pbrConfig.numPointLights = 0;
+        pbrConfig.numSpotLights = 0;
+
+        DepthShader.Config depthConfig = PBRShaderProvider.createDefaultDepthConfig();
+        depthConfig.numBones = pbrConfig.numBones;
+        depthConfig.numBoneWeights = pbrConfig.numBoneWeights;
+
+        sceneManager = new SceneManager(new TerrainPBRShaderProvider(pbrConfig), new PBRDepthShaderProvider(depthConfig));
+
+        sceneManager.setAmbientLight(screenConfig.ambientLightBrightness);
+
+        float l = screenConfig.directionalLightBrightness;
+        Color sunLightColor = new Color(l, l, l, 1);
+        Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
+        int shadowMapSize = 2048;
+        float shadowViewportSize = 10;
+        float shadowNear = 0.1f;
+        float shadowFar = 500;
+        directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
+        directionalLight.set(sunLightColor, sunDirection);
+
+        sceneManager.environment.add(directionalLight);
+        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
+
+        CascadeShadowMap csm = new CascadeShadowMap(3);
+        csm.lights.add(directionalLight);
+        sceneManager.setCascadeShadowMap(csm);
+
+        /*
+        environment = new Environment();
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, ambientLightColor));
+        environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
+        environment.add(directionalLight);
+        environment.shadowMap = directionalLight;
+
+         */
+
+        // setup quick IBL (image based lighting)
+        IBLBuilder iblBuilder = IBLBuilder.createOutdoor(directionalLight);
+        environmentCubemap = iblBuilder.buildEnvMap(1024);
+        diffuseCubemap = iblBuilder.buildIrradianceMap(256);
+        specularCubemap = iblBuilder.buildRadianceMap(10);
+        iblBuilder.dispose();
+
+        // This texture is provided by the library, no need to have it in your assets.
+        brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
+
+        /*
+        environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
+        environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
+        environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+
+         */
+        if (screenConfig.useSkybox) {
+            skybox = new SceneSkybox(environmentCubemap);
+            sceneManager.setSkyBox(skybox);
+        }
+    }
+
+    protected void initBatches() {
+        debugDraw = new DebugDraw(camera, sceneManager.environment);
+    }
+
+    protected void initCamera() {
+        camera = new PerspectiveCamera(60, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+        camera.near = 0.1f;
+        camera.far = 2000f;
+        camera.position.set(-6,2,-6);
+        camera.lookAt(new Vector3(0, 1, 0));
+        camera.up.set(Vector3.Y);
+        camera.update();
+        sceneManager.setCamera(camera);
+    }
+
+    protected void initController() {
+        cameraController = new FirstPersonCameraController(camera);
+        cameraController.setVelocity(16);
+        cameraController.setDegreesPerPixel(0.2f);
+        cameraController.autoUpdate = true;
+        Gdx.input.setInputProcessor(cameraController);
+    }
+
+    public void initScene() {}
+
+    public void updateController(float delta) {
+        if (cameraController != null)
+            cameraController.update(delta);
+    }
+
+    public void updateScene(float delta) {
+        sceneManager.update(delta);
+    }
+
+    public void update(float delta) {
+        updateController(delta);
+        if (screenConfig.usePhysics)
+            updatePhysics(delta);
+        updateScene(delta);
+    }
+
+    @Override
+    public void render(float delta) {
+        gameTime += delta;
+        update(delta);
+        //ScreenUtils.clear(backgroundColor, true);
+        Gdx.gl.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+        sceneManager.render();
+
+        if (debugDraw != null)
+            debugDraw.render();
+
+        if (debugDrawer != null && !physicsWorld.isDisposed()) {
+            debugDrawer.begin(camera);
+            physicsWorld.debugDrawWorld();
+            debugDrawer.end();
+        }
+    }
+
+    /**
+     * Create a new ModelInstance from this model and add it to the scene.
+     * @param model the model to instantiate
+     * @return the model instance created
+     */
+    public SceneObject add(String name, Model model) {
+        ModelInstance instance = new ModelInstance(model);
+        return add(name, instance);
+    }
+
+    /**
+     * Add a model instance to the scene.
+     * @param modelInstance the model instance to be added
+     * @return the model instance added
+     */
+    public SceneObject add(String name, ModelInstance modelInstance) {
+        sceneManager.getRenderableProviders().add(modelInstance);
+        return new SceneObject(name, modelInstance);
+    }
+
+    public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {
+        DefaultMotionState motionState = new DefaultMotionState(sceneObject.modelInstance);
+        Vector3 localInertia = new Vector3();
+        collisionShape.calculateLocalInertia(mass, localInertia);
+        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia);
+        btRigidBody rigidBody = new btRigidBody(info);
+        rigidBody.userData = sceneObject;
+        if (physicsWorld != null)
+            physicsWorld.addRigidBody(rigidBody);
+        sceneObject.setRigidBody(rigidBody, motionState);
+        Vector3 vCenter = new Vector3();
+        Vector3 pCenter = new Vector3();
+        sceneObject.boundingBox.getCenter(vCenter);
+        sceneObject.physicsBoundingBox.getCenter(pCenter);
+        motionState.rigidBodyOffset.set(vCenter).sub(pCenter);
+        rigidBody.translate(motionState.rigidBodyOffset);
+        sceneObject.updatePhysicsBoundingBox();
+        info.dispose();
+    }
+
+    public PickResult pick(float maxDistance) {
+        if (physicsWorld != null) {
+            Ray pickRay = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
+            Vector3 rayFrom = new Vector3(pickRay.origin);
+            Vector3 rayTo = new Vector3(pickRay.direction).scl(maxDistance).add(rayFrom);
+            AllHitsRayResultCallback resultCallback = new AllHitsRayResultCallback(rayFrom, rayTo);
+            PickResult pickResult = new PickResult(resultCallback);
+            physicsWorld.rayTest(rayFrom, rayTo, resultCallback);
+            if (resultCallback.hasHit()) {
+                btScalarArray fractions = resultCallback.getHitFractions();
+                btCollisionObject collisionObject = null;
+                Vector3 hitPosition = new Vector3();
+                float minDist = maxDistance;
+                int n = fractions.size();
+                for (int i = 0; i < fractions.size(); i++) {
+                    float dist = fractions.atConst(i);
+                    if (dist < minDist) {
+                        collisionObject = resultCallback.getCollisionObjects().atConst(i);
+                        hitPosition.set(rayFrom).lerp(rayTo, dist);
+                        System.out.printf("hit fraction %d/%d: %s (%f)%n", i+1, n, hitPosition, dist);
+                        minDist = dist;
+                    }
+                }
+                if (collisionObject != null && collisionObject.userData != null) {
+                    pickResult.pickedObject = (SceneObject) collisionObject.userData;
+                }
+                debugDraw.drawArrow(hitPosition, Color.GREEN);
+            }
+            return pickResult;
+        }
+        return null;
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        sceneManager.updateViewport(width, height);
+    }
+
+    @Override
+    public void show() {
+        init();
+    }
+
+    @Override
+    public void hide() {
+        dispose();
+    }
+
+    @Override
+    public void pause() {
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void dispose() {
+        sceneManager.dispose();
+        physicsWorld.dispose();
+        dispatcher.dispose();
+        broadphase.dispose();
+        solver.dispose();
+        collisionConfig.dispose();
+    }
+}

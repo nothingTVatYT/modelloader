@@ -14,7 +14,7 @@ import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
 import net.nothingtv.gdx.tools.*;
 
-public class PhysicsTest extends BasicScreen {
+public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
     private SceneObject box;
     private SceneObject ball;
@@ -66,7 +66,7 @@ public class PhysicsTest extends BasicScreen {
     }
 
     private void setShadowBias() {
-        environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
+        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
         System.out.printf("shadow bias set to 1/%f%n", 1/shadowBias);
     }
 
