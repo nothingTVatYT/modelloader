@@ -79,8 +79,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         gameTime = 0;
         if (screenConfig.usePhysics)
             initPhysics();
-        initEnvironment();
         initCamera();
+        initEnvironment();
         inputMultiplexer = new InputMultiplexer();
         Gdx.input.setInputProcessor(inputMultiplexer);
         initUI();
@@ -110,7 +110,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         PBRShaderConfig pbrConfig = PBRShaderProvider.createDefaultConfig();
         pbrConfig.numBones = 60;
         pbrConfig.numBoneWeights = 8;
-        pbrConfig.numDirectionalLights = 1;
+        //pbrConfig.numDirectionalLights = 1;
         pbrConfig.numPointLights = 0;
         pbrConfig.numSpotLights = 0;
 
@@ -120,6 +120,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
         sceneManager = new SceneManager(new TerrainPBRShaderProvider(pbrConfig), new PBRDepthShaderProvider(depthConfig));
 
+        sceneManager.setCamera(camera);
         sceneManager.setAmbientLight(screenConfig.ambientLightBrightness);
 
         float l = screenConfig.directionalLightBrightness;
@@ -136,7 +137,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
 
         CascadeShadowMap csm = new CascadeShadowMap(3);
-        csm.lights.add(directionalLight);
+        csm.setCascades(camera, directionalLight, 0, 4);
+        //csm.lights.add(directionalLight);
         sceneManager.setCascadeShadowMap(csm);
 
         // setup quick IBL (image based lighting)
@@ -170,8 +172,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         camera.position.set(-6,2,-6);
         camera.lookAt(new Vector3(0, 1, 0));
         camera.up.set(Vector3.Y);
-        camera.update();
-        sceneManager.setCamera(camera);
+        camera.update(true);
     }
 
     protected void initUI() {
@@ -213,11 +214,12 @@ public abstract class BasicSceneManagerScreen implements Screen {
                 lightControls.row();
                 lightControls.add(new Label("ambient", skin));
                 Slider ambientSlider = new Slider(0, 1, 0.1f, false, skin);
-                Label valueLabel = new Label("0.000", skin);
+                ambientSlider.setValue(screenConfig.ambientLightBrightness);
+                Label valueLabel = new Label(String.format("%1.1f", screenConfig.ambientLightBrightness), skin);
                 ambientSlider.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        valueLabel.setText(""+ambientSlider.getValue());
+                        valueLabel.setText(String.format("%1.1f", ambientSlider.getValue()));
                         sceneManager.setAmbientLight(((Slider)actor).getValue());
                         event.handle();
                     }
@@ -228,31 +230,37 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
                 lightControls.add(new Label("directional", skin));
                 Slider directionalSlider = new Slider(0, 1, 0.1f, false, skin);
+                Label valueLabel2 = new Label(String.format("%1.1f", directionalLight.intensity), skin);
                 directionalSlider.setValue(directionalLight.intensity);
                 directionalSlider.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
+                        valueLabel2.setText(String.format("%1.1f", directionalSlider.getValue()));
                         directionalLight.intensity = ((Slider)actor).getValue();
                         directionalLight.updateColor();
                         event.handle();
                     }
                 });
                 lightControls.add(directionalSlider);
+                lightControls.add(valueLabel2);
                 lightControls.row();
 
                 lightControls.add(new Label("shadow bias", skin));
-                Slider shadowBiasSlider = new Slider(1, 10, 1f, false, skin);
+                Slider shadowBiasSlider = new Slider(1, 24, 1f, false, skin);
+                Label valueLabel3 = new Label(String.format("1/%d", (int)(1/shadowBias)), skin);
                 shadowBiasSlider.setValue(MathUtils.log2(1f/shadowBias));
                 shadowBiasSlider.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
                         float v = ((Slider)actor).getValue();
+                        valueLabel3.setText(String.format("1/%d", MathUtils.floor((float)Math.pow(2, v))));
                         shadowBias = 1f / (float)(Math.pow(2, v));
                         setShadowBias(shadowBias);
                         event.handle();
                     }
                 });
                 lightControls.add(shadowBiasSlider);
+                lightControls.add(valueLabel3).minWidth(100);
 
                 lightControls.pack();
             }
@@ -415,7 +423,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     protected void setShadowBias(float val) {
         sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, val)); // reduce shadow acne
-        System.out.printf("shadow bias set to 1/%f%n", 1/val);
     }
 
     @Override
