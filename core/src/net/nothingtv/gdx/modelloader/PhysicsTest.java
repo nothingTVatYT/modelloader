@@ -70,8 +70,12 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             showLightControls(lightControlsOn);
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
-            debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_MAX_DEBUG_DRAW_MODE);
+        if (Gdx.input.isKeyJustPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
+            if (debugDrawer.getDebugMode() > 0)
+                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
+            else
+                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_MAX_DEBUG_DRAW_MODE);
+        }
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             PickResult picked = pick(100);
             if (picked.hasHit() && picked.pickedObject != null) {

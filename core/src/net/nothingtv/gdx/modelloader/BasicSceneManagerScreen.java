@@ -69,7 +69,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Window lightControls;
     protected Label fpsLabel;
     protected InputMultiplexer inputMultiplexer;
-    private float shadowBias = 1/512f;
+    private float shadowBias = 1/2048f;
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -126,8 +126,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         float l = screenConfig.directionalLightBrightness;
         Color sunLightColor = new Color(l, l, l, 1);
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
-        int shadowMapSize = 2048;
-        float shadowViewportSize = 10;
+        int shadowMapSize = 4096;
+        float shadowViewportSize = 100;
         float shadowNear = 0.1f;
         float shadowFar = 500;
         directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
