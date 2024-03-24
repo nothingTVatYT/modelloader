@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalShadowLight;
 import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
@@ -31,7 +32,6 @@ import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
-import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
@@ -119,6 +119,8 @@ public abstract class BasicScreen implements Screen {
         float shadowFar = 500;
         directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
         directionalLight.set(sunLightColor, sunDirection);
+        //directionalLight.intensity = 0.5f;
+        //directionalLight.updateColor();
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, ambientLightColor));
         environment.set(new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, 1f / 1024f)); // reduce shadow acne
@@ -230,14 +232,17 @@ public abstract class BasicScreen implements Screen {
 
                 lightControls.add(new Label("directional", skin));
                 Slider directionalSlider = new Slider(0, 1, 0.1f, false, skin);
-                Label valueLabel2 = new Label(String.format("%1.1f", directionalLight.intensity), skin);
-                directionalSlider.setValue(directionalLight.intensity);
+                float intensity = directionalLight.color.r;
+                Label valueLabel2 = new Label(String.format("%1.1f", intensity), skin);
+                directionalSlider.setValue(intensity);
                 directionalSlider.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        valueLabel2.setText(String.format("%1.1f", directionalSlider.getValue()));
-                        directionalLight.intensity = ((Slider)actor).getValue();
-                        directionalLight.updateColor();
+                        float val = directionalSlider.getValue();
+                        valueLabel2.setText(String.format("%1.1f", val));
+                        //directionalLight.intensity = ((Slider)actor).getValue();
+                        //directionalLight.updateColor();
+                        directionalLight.color.set(val, val, val, 1);
                         event.handle();
                     }
                 });
@@ -312,7 +317,7 @@ public abstract class BasicScreen implements Screen {
     public void render(float delta) {
         gameTime += delta;
         update(delta);
-        directionalLight.setCenter(camera.position);
+        //directionalLight.setCenter(camera.position);
         ScreenUtils.clear(backgroundColor, true);
 
         directionalLight.begin();

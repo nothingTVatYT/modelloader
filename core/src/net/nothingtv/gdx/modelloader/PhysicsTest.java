@@ -13,7 +13,7 @@ import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
 import net.nothingtv.gdx.tools.*;
 
-public class PhysicsTest extends BasicScreen {
+public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
     private SceneObject box;
     private SceneObject ball;
@@ -26,7 +26,8 @@ public class PhysicsTest extends BasicScreen {
 
     @Override
     protected void init() {
-        screenConfig.useSkybox = false;
+        screenConfig.useSkybox = true;
+        screenConfig.useShadows = false;
         screenConfig.ambientLightBrightness = 0.3f;
         super.init();
     }
@@ -49,7 +50,12 @@ public class PhysicsTest extends BasicScreen {
         ball.moveTo(new Vector3(30, 30, 30));
 
         TerrainConfig terrainConfig = new TerrainConfig(128, 128, 1);
+        terrainConfig.terrainDivideFactor = 4;
         terrainConfig.heightSampler = new TestHeightSampler(6, 0.05f, 0);
+        terrainConfig.splatMap = new Texture(Gdx.files.internal("assets/textures/alpha-example.png"));
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), 25);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), 25);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), 25);
         terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 25);
         terrain = new Terrain(terrainConfig);
         SceneObject terrainObject = add("terrain", terrain.createModelInstance());

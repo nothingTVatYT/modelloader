@@ -9,7 +9,7 @@ in vec4 a_color;
 
 #if defined(normalFlag)
 in vec4 a_normal;
-out vec4 normal;
+out vec3 normal;
 #endif
 
 //#if defined(cameraPositionFlag)
@@ -20,6 +20,16 @@ uniform vec4 u_cameraPosition;
 in vec4 u_emissiveColor;
 out vec4 emissiveColor;
 #endif
+
+#if numDirectionalLights > 0
+struct DirectionalLight
+{
+    vec3 color;
+    vec3 direction;
+};
+uniform DirectionalLight u_dirLights[numDirectionalLights];
+out vec3 v_lightDiffuse;
+#endif // numDirectionalLights
 
 out vec4 worldPos;
 
@@ -71,6 +81,7 @@ void main() {
     ambientLight = u_ambientLightColor.x;
 #endif
 #endif
+
 #ifdef diffuseTextureFlag
     v_diffuseUV = u_diffuseUVTransform.xy + a_texCoord0 * u_diffuseUVTransform.zw;
 #endif
@@ -78,8 +89,19 @@ void main() {
     emissiveColor = u_emissiveColor;
 #endif
 #if defined(normalFlag)
-    normal = a_normal;
+    normal = vec3(a_normal);
 #endif
+
+#if (numDirectionalLights > 0) && defined(normalFlag)
+    v_lightDiffuse = vec3(0);
+    for (int i = 0; i < numDirectionalLights; i++) {
+        vec3 lightDir = -u_dirLights[i].direction;
+        float NdotL = clamp(dot(normal, lightDir), 0.0, 1.0);
+        vec3 value = u_dirLights[i].color * NdotL;
+        v_lightDiffuse += value;
+    }
+#endif // numDirectionalLights
+
     vec4 pos = u_worldTrans * vec4(a_position, 1.0);
     worldPos = pos;
     gl_Position = u_projViewTrans * pos;

@@ -7,6 +7,7 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.math.MathUtils;
@@ -54,7 +55,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Camera camera;
     protected DebugDraw debugDraw;
     protected FirstPersonCameraController cameraController;
-    protected DirectionalShadowLight directionalLight;
+    protected DirectionalShadowLight directionalShadowLight;
+    protected DirectionalLight directionalLight;
     protected Cubemap environmentCubemap;
     protected Cubemap diffuseCubemap;
     protected Cubemap specularCubemap;
@@ -113,6 +115,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         //pbrConfig.numDirectionalLights = 1;
         pbrConfig.numPointLights = 0;
         pbrConfig.numSpotLights = 0;
+        //pbrConfig.glslVersion = "140";
 
         DepthShader.Config depthConfig = PBRShaderProvider.createDefaultDepthConfig();
         depthConfig.numBones = pbrConfig.numBones;
@@ -126,20 +129,27 @@ public abstract class BasicSceneManagerScreen implements Screen {
         float l = screenConfig.directionalLightBrightness;
         Color sunLightColor = new Color(l, l, l, 1);
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
-        int shadowMapSize = 4096;
-        float shadowViewportSize = 100;
-        float shadowNear = 0.1f;
-        float shadowFar = 500;
-        directionalLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
-        directionalLight.set(sunLightColor, sunDirection);
+        if (screenConfig.useShadows) {
+            int shadowMapSize = 8192;
+            float shadowViewportSize = 60;
+            float shadowNear = 0.1f;
+            float shadowFar = 500;
+            directionalShadowLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
+            directionalShadowLight.set(sunLightColor, sunDirection);
 
-        sceneManager.environment.add(directionalLight);
-        sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
+            sceneManager.environment.add(directionalShadowLight);
+            sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
 
-        CascadeShadowMap csm = new CascadeShadowMap(3);
-        csm.setCascades(camera, directionalLight, 0, 4);
-        //csm.lights.add(directionalLight);
-        sceneManager.setCascadeShadowMap(csm);
+            CascadeShadowMap csm = new CascadeShadowMap(3);
+            csm.setCascades(camera, directionalShadowLight, 0, 4);
+            //csm.lights.add(directionalLight);
+            sceneManager.setCascadeShadowMap(csm);
+        } else {
+            directionalLight = new DirectionalLight();
+            directionalLight.color.set(sunLightColor);
+            directionalLight.direction.set(sunDirection);
+            sceneManager.environment.add(directionalLight);
+        }
 
         // setup quick IBL (image based lighting)
         IBLBuilder iblBuilder = IBLBuilder.createOutdoor(directionalLight);
@@ -230,14 +240,20 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
                 lightControls.add(new Label("directional", skin));
                 Slider directionalSlider = new Slider(0, 1, 0.1f, false, skin);
-                Label valueLabel2 = new Label(String.format("%1.1f", directionalLight.intensity), skin);
-                directionalSlider.setValue(directionalLight.intensity);
+                float intensity = screenConfig.useShadows ? directionalShadowLight.intensity : directionalLight.color.r;
+                Label valueLabel2 = new Label(String.format("%1.1f", intensity), skin);
+                directionalSlider.setValue(intensity);
                 directionalSlider.addListener(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        valueLabel2.setText(String.format("%1.1f", directionalSlider.getValue()));
-                        directionalLight.intensity = ((Slider)actor).getValue();
-                        directionalLight.updateColor();
+                        float val = directionalSlider.getValue();
+                        valueLabel2.setText(String.format("%1.1f", val));
+                        if (screenConfig.useShadows) {
+                            directionalShadowLight.intensity = val;
+                            directionalShadowLight.updateColor();
+                        } else {
+                            directionalLight.color.set(intensity, intensity, intensity, 1);
+                        }
                         event.handle();
                     }
                 });
