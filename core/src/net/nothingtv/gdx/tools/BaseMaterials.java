@@ -51,6 +51,13 @@ public class BaseMaterials {
         return material;
     }
 
+    public static Material color(Color color) {
+        Material material = new Material("_color_" + color);
+        material.set(ColorAttribute.createDiffuse(color));
+        material.set(IntAttribute.createCullFace(GL20.GL_BACK));
+        return material;
+    }
+
     public static Material colorPBR(Color color) {
         Material material = new Material("_pbr_color_" + color);
         material.set(PBRColorAttribute.createBaseColorFactor(color));

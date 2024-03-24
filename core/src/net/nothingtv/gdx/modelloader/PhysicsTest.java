@@ -13,7 +13,7 @@ import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
 import net.nothingtv.gdx.tools.*;
 
-public class PhysicsTest extends BasicSceneManagerScreen {
+public class PhysicsTest extends BasicScreen {
     private SceneObject floor;
     private SceneObject box;
     private SceneObject ball;
@@ -26,24 +26,25 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     protected void init() {
-        screenConfig.useSkybox = true;
+        screenConfig.useSkybox = false;
+        screenConfig.ambientLightBrightness = 0.3f;
         super.init();
     }
 
     @Override
     public void initScene() {
         super.initScene();
-        floor = add("floor", BaseModels.createBox(10, 1, 10, BaseMaterials.whiteColorPBR()));
+        floor = add("floor", BaseModels.createBox(10, 1, 10, BaseMaterials.whiteColor()));
         wrapRigidBody(floor, 10, BaseShapes.createBoxShape(floor.modelInstance));
         floor.setLinearFactor(SceneObject.LockY);
         floor.setAngularFactor(SceneObject.LockAll);
         floor.moveTo(new Vector3(0, 20, 0));
         System.out.printf("added %s with %s (rigid body: %s)%n", floor.name, floor.boundingBox, floor.physicsBoundingBox);
-        box = add("box", BaseModels.createBox(1, 1, 1, BaseMaterials.colorPBR(Color.RED)));
+        box = add("box", BaseModels.createBox(1, 1, 1, BaseMaterials.color(Color.RED)));
         wrapRigidBody(box, 1, BaseShapes.createBoxShape(box.modelInstance));
         box.move(new Vector3(0, 23, 0));
         box.rotate(Vector3.X, 25f);
-        ball = add("ball", BaseModels.createSphere(1, BaseMaterials.colorPBR(Color.GREEN)));
+        ball = add("ball", BaseModels.createSphere(1, BaseMaterials.emit(Color.GREEN)));
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
 
