@@ -10,30 +10,41 @@ import net.nothingtv.gdx.tools.SceneObject;
 
 public class FirstPersonController extends InputAdapter {
 
-    private Camera camera;
-    private SceneObject player;
-    private Vector3 movement = new Vector3();
-    private Vector3 linearForce = new Vector3();
-    private float accelerationForce = 10f;
-    private float breakForce = 10f;
-    private float turningSpeed = 0.25f;
-    private float pitchSpeed = 80;
-    private float minVelocity2 = 0.05f;
+    public static class ControllerConfig {
+        public float maxSpeed = 8f;
+        public final SceneObject player;
+        public final Camera camera;
+        public float turningSpeed = 60f;
+        public float minVelocity2 = 0.05f;
+        public float accelerationForce = 10f;
+        public float breakForce = 10f;
+
+        public ControllerConfig(SceneObject player, Camera camera) {
+            this.player = player;
+            this.camera = camera;
+        }
+    }
+    private final ControllerConfig config;
+    private final Camera camera;
+    private final SceneObject player;
+    private final Vector3 movement = new Vector3();
+    private final Vector3 linearForce = new Vector3();
     private boolean walking;
     private boolean mouseGrabbed;
-    private int screenWidth, screenHeight;
+
+    private float currentSpeed;
     private final Vector3 cameraRotation = new Vector3();
 
-    public FirstPersonController(Camera camera, SceneObject player) {
-        this.camera = camera;
-        this.player = player;
+    public FirstPersonController(ControllerConfig config) {
+        this.config = config;
+        this.camera = config.camera;
+        this.player = config.player;
     }
 
     public void init() {
         //updateCamera(0);
         walking = false;
         mouseGrabbed = Gdx.input.isCursorCatched();
-        updateScreenSize();
     }
 
     public boolean isMouseGrabbed() {
@@ -48,9 +59,8 @@ public class FirstPersonController extends InputAdapter {
         return walking;
     }
 
-    public void updateScreenSize() {
-        screenWidth = MathUtils.round(camera.viewportWidth);
-        screenHeight = MathUtils.round(camera.viewportHeight);
+    public float getCurrentSpeed() {
+        return currentSpeed;
     }
 
     public void grabMouse() {
@@ -98,10 +108,10 @@ public class FirstPersonController extends InputAdapter {
         if (!mouseGrabbed) return;
         player.modelInstance.transform.getTranslation(camera.position);
         // horizontal rotation applied to the player and the camera
-        player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * turningSpeed);
+        player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * config.turningSpeed * delta);
         // vertical rotation applied to the camera only
         cameraRotation.set(Vector3.Z);
-        float angle = MathUtils.clamp((((float)Gdx.input.getY() / screenHeight) - 0.5f) * 80, -80f, 80f);
+        float angle = MathUtils.clamp((((float)Gdx.input.getY() / camera.viewportHeight) - 0.5f) * 80, -80f, 80f);
         cameraRotation.rotate(Vector3.X, angle);
         player.localToWorldDirection(cameraRotation);
         camera.direction.set(cameraRotation);
@@ -110,16 +120,21 @@ public class FirstPersonController extends InputAdapter {
     }
 
     private void applyForces(float delta) {
-        Vector3 velocity = player.rigidBody.getLinearVelocity();
-        walking = velocity.len2() > minVelocity2;
-        if (movement.len2() > 0) {
-            linearForce.set(movement).scl(player.mass * accelerationForce);
-            System.out.printf("applying force %s%n", linearForce);
-            player.localToWorldDirection(linearForce);
+        Vector3 velocityXZ = player.rigidBody.getLinearVelocity();
+        velocityXZ.y = 0;
+        currentSpeed = velocityXZ.len();
+        walking = velocityXZ.len2() > config.minVelocity2;
+        if (movement.len2() > 1e-5f) {
+            if (currentSpeed < config.maxSpeed) {
+                linearForce.set(movement).scl(player.mass * config.accelerationForce);
+                player.localToWorldDirection(linearForce);
+            } else {
+                linearForce.x = 0;
+                linearForce.z = 0;
+            }
         } else {
-            linearForce.set(velocity).y = 0;
-            linearForce.scl(player.mass * -breakForce);
-            System.out.printf("breaking with %s%n", linearForce);
+            linearForce.set(velocityXZ).y = 0;
+            linearForce.scl(player.mass * -config.breakForce);
         }
         player.addForce(linearForce);
     }

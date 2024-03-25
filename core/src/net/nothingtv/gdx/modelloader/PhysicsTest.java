@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
+import com.badlogic.gdx.scenes.scene2d.Action;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
@@ -21,6 +23,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private boolean lightControlsOn = false;
     private Vector3 initialPos = new Vector3(12, 0, 12);
     protected FirstPersonController playerController;
+    private Label speedLabel;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -70,7 +73,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
         player.setAngularFactor(SceneObject.LockAll);
 
-        playerController = new FirstPersonController(camera, player);
+        FirstPersonController.ControllerConfig controllerConfig = new FirstPersonController.ControllerConfig(player, camera);
+        playerController = new FirstPersonController(controllerConfig);
 
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1f;
         playerController.getPlayer().moveTo(initialPos);
@@ -84,6 +88,17 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             camera.up.set(Vector3.Y);
             camera.update();
         }
+
+        speedLabel = new Label("00.0 m/s", skin);
+        speedLabel.addAction(new Action() {
+            @Override
+            public boolean act(float delta) {
+                speedLabel.setText(String.format("%2.1f m/s", playerController.getCurrentSpeed()));
+                return false;
+            }
+        });
+        table.row();
+        table.add(speedLabel);
     }
 
     @Override
@@ -121,13 +136,20 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
         Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(150);
         floor.addForce(diff);
+
+        // add a mini game ;)
+        if (ball.getPosition().y < -200) {
+            Vector3 newPos = new Vector3(camera.position).add(MathUtils.random(-3f, 3f), 10, MathUtils.random(-3f, 3f));
+            ball.moveTo(newPos);
+        }
+        if (player.getPosition().y < -200) {
+            player.moveTo(initialPos);
+        }
     }
 
     @Override
     public void resize(int width, int height) {
         super.resize(width, height);
-        if (playerController != null)
-            playerController.updateScreenSize();
     }
 
     @Override

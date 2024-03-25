@@ -75,9 +75,11 @@ public class SceneObject implements Disposable {
     public void moveTo(Vector3 position) {
         modelInstance.transform.setTranslation(position);
         if (rigidBody != null) {
+            rigidBody.setLinearVelocity(Vector3.Zero);
             rigidBody.getWorldTransform(tmpMatrix);
             tmpMatrix.setTranslation(position);
             rigidBody.setWorldTransform(tmpMatrix);
+            rigidBody.activate();
         }
     }
 
