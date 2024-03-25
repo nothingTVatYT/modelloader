@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
@@ -19,6 +20,7 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -67,9 +69,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Table table;
     protected Window lightControls;
     protected Label fpsLabel;
+    protected Label statsLabel;
     protected InputMultiplexer inputMultiplexer;
     protected SceneObject player;
     private float shadowBias = 1/2048f;
+    protected GLProfiler glProfiler;
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -211,6 +215,35 @@ public abstract class BasicSceneManagerScreen implements Screen {
         } else {
             if (fpsLabel != null)
                 table.removeActor(fpsLabel);
+            fpsLabel = null;
+        }
+    }
+
+    public void showStats(boolean showIt) {
+        if (showIt) {
+            if (statsLabel == null) {
+                if (glProfiler == null) {
+                    glProfiler = new GLProfiler(Gdx.graphics);
+                    glProfiler.enable();
+                }
+                statsLabel = new Label(" ", skin);
+                statsLabel.addAction(new Action() {
+                    @Override
+                    public boolean act(float delta) {
+                        if (glProfiler.isEnabled())
+                            statsLabel.setText(String.format("%.0f vertices", glProfiler.getVertexCount().total));
+                        return true;
+                    }
+                });
+                table.row();
+                table.add(statsLabel);
+            }
+        } else {
+            if (statsLabel != null) {
+                glProfiler.disable();
+                table.removeActor(statsLabel);
+                statsLabel = null;
+            }
         }
     }
 
@@ -448,6 +481,9 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     @Override
     public void dispose() {
+        if (glProfiler != null)
+            glProfiler.disable();
+        stage.dispose();
         sceneManager.dispose();
         physicsWorld.dispose();
         dispatcher.dispose();

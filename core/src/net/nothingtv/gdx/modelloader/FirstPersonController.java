@@ -17,7 +17,8 @@ public class FirstPersonController extends InputAdapter {
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
-        public float breakForce = 10f;
+        public float breakForce = 50f;
+        public boolean simulateSideFriction = true;
 
         public ControllerConfig(SceneObject player, Camera camera) {
             this.player = player;
@@ -115,8 +116,8 @@ public class FirstPersonController extends InputAdapter {
             cameraRotation.rotate(Vector3.X, angle);
             player.localToWorldDirection(cameraRotation);
             camera.direction.set(cameraRotation);
-            applyForces(delta);
-        }
+        } else movement.setZero();
+        applyForces(delta);
         camera.update(true);
     }
 
@@ -125,7 +126,7 @@ public class FirstPersonController extends InputAdapter {
         velocityXZ.y = 0;
         currentSpeed = velocityXZ.len();
         walking = velocityXZ.len2() > config.minVelocity2;
-        if (movement.len2() > 1e-5f) {
+        if (movement.len2() > 1e-6f) {
             if (currentSpeed < config.maxSpeed) {
                 linearForce.set(movement).scl(player.mass * config.accelerationForce);
                 player.localToWorldDirection(linearForce);
@@ -134,8 +135,16 @@ public class FirstPersonController extends InputAdapter {
                 linearForce.z = 0;
             }
         } else {
-            linearForce.set(velocityXZ).y = 0;
+            linearForce.set(velocityXZ);
             linearForce.scl(player.mass * -config.breakForce);
+        }
+        if (config.simulateSideFriction) {
+            player.worldToLocalDirection(velocityXZ);
+            velocityXZ.z = 0;
+            if (velocityXZ.len2() > 1e-6f) {
+                player.localToWorldDirection(velocityXZ);
+                linearForce.add(velocityXZ.scl(player.mass * -config.breakForce));
+            }
         }
         player.addForce(linearForce);
     }

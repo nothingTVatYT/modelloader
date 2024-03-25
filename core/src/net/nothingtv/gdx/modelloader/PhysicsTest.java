@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import net.nothingtv.gdx.terrain.MultiHeightSampler;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TestHeightSampler;
@@ -35,6 +36,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.useShadows = false;
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
+        screenConfig.showStats = false;
         super.init();
     }
 
@@ -55,14 +57,17 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
 
-        TerrainConfig terrainConfig = new TerrainConfig(128, 128, 1);
-        terrainConfig.terrainDivideFactor = 4;
-        terrainConfig.heightSampler = new TestHeightSampler(6, 0.05f, 0);
+        TerrainConfig terrainConfig = new TerrainConfig(1024, 1024, 1);
+        terrainConfig.terrainDivideFactor = 8;
+        MultiHeightSampler sampler = new MultiHeightSampler();
+        sampler.addSampler(new TestHeightSampler(6, 0.05f, 0));
+        sampler.addSampler(new TestHeightSampler(20, 0.01f, 0));
+        terrainConfig.heightSampler = sampler;
         terrainConfig.splatMap = new Texture(Gdx.files.internal("assets/textures/alpha-example.png"));
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), 25);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), 25);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), 25);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 25);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), 100);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), 100);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), 100);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 100);
         terrain = new Terrain(terrainConfig);
         SceneObject terrainObject = add("terrain", terrain.createModelInstance());
 
@@ -73,38 +78,42 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
         player.setAngularFactor(SceneObject.LockAll);
 
-        FirstPersonController.ControllerConfig controllerConfig = new FirstPersonController.ControllerConfig(player, camera);
-        playerController = new FirstPersonController(controllerConfig);
-
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1f;
-        playerController.getPlayer().moveTo(initialPos);
-        playerController.init();
-        playerController.grabMouse();
-        addInputController(playerController);
+        player.moveTo(initialPos);
 
-        if (!screenConfig.usePlayerController) {
+        if (screenConfig.usePlayerController) {
+            FirstPersonController.ControllerConfig controllerConfig = new FirstPersonController.ControllerConfig(player, camera);
+            playerController = new FirstPersonController(controllerConfig);
+            playerController.getPlayer().moveTo(initialPos);
+            playerController.init();
+            playerController.grabMouse();
+            addInputController(playerController);
+
+            speedLabel = new Label("00.00 m/s", skin);
+            speedLabel.addAction(new Action() {
+                @Override
+                public boolean act(float delta) {
+                    speedLabel.setText(String.format("%2.2f m/s", playerController.getCurrentSpeed()));
+                    return false;
+                }
+            });
+            table.row();
+            table.add(speedLabel);
+        } else {
             camera.position.set(0, 24, -5);
             camera.lookAt(0, 23, 0);
             camera.up.set(Vector3.Y);
             camera.update();
         }
 
-        speedLabel = new Label("00.0 m/s", skin);
-        speedLabel.addAction(new Action() {
-            @Override
-            public boolean act(float delta) {
-                speedLabel.setText(String.format("%2.1f m/s", playerController.getCurrentSpeed()));
-                return false;
-            }
-        });
-        table.row();
-        table.add(speedLabel);
+        showStats(screenConfig.showStats);
     }
 
     @Override
     public void updateController(float delta) {
         super.updateController(delta);
-        playerController.update(delta);
+        if (playerController != null)
+            playerController.update(delta);
     }
 
     @Override
@@ -128,7 +137,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 BaseShapes.dumpRigidBody(picked.pickedObject.rigidBody);
             }
         }
-        if (Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
+        if (screenConfig.usePlayerController && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
             if (playerController.isMouseGrabbed())
                 playerController.releaseMouse();
             else playerController.grabMouse();

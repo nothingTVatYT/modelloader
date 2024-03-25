@@ -11,7 +11,7 @@ public class TestHeightSampler extends DefaultHeightSampler {
     /**
      * Generate a heightmap using OpenSimplex noise
      * @param heightScale the scale factor to generate the vertices height from the noise values
-     * @param horizontalScale the noise scale, lower values means more details
+     * @param horizontalScale the noise scale, higher values means more details
      * @param seed the seed for the pseudo random number generator
      */
     public TestHeightSampler(float heightScale, float horizontalScale, long seed) {

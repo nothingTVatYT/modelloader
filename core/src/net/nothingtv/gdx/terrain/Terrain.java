@@ -109,7 +109,7 @@ public class Terrain implements Disposable {
                 }
         }
 
-        modelInstance = new ModelInstance(modelBuilder.end());
+        modelInstance = new TerrainInstance(modelBuilder.end());
         return modelInstance;
     }
 

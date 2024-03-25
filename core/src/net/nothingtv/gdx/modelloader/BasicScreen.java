@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.DepthShaderProvider;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
+import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.Ray;
@@ -24,6 +25,7 @@ import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
+import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
@@ -68,9 +70,11 @@ public abstract class BasicScreen implements Screen {
     protected Skin skin;
     protected Table table;
     protected Label fpsLabel;
+    protected Label statsLabel;
     protected Window lightControls;
     private float shadowBias = 1/2048f;
     protected InputMultiplexer inputMultiplexer;
+    protected GLProfiler glProfiler;
 
     public BasicScreen(Game game) {
         this.game = game;
@@ -206,6 +210,23 @@ public abstract class BasicScreen implements Screen {
         }
     }
 
+    public void showStats(boolean showIt) {
+        if (showIt) {
+            if (glProfiler == null) {
+                glProfiler = new GLProfiler(Gdx.graphics);
+            }
+            if (statsLabel == null) {
+                statsLabel = new Label(" ", skin);
+                statsLabel.addAction(new Action() {
+                    @Override
+                    public boolean act(float delta) {
+                        statsLabel.setText(String.format("%.0f vertices", glProfiler.getVertexCount().total));
+                        return true;
+                    }
+                });
+            }
+        }
+    }
 
     public void showLightControls(boolean showIt) {
         if (showIt) {
@@ -344,6 +365,8 @@ public abstract class BasicScreen implements Screen {
         }
 
         updatePostRender(delta);
+        if (glProfiler != null)
+            glProfiler.reset();
     }
 
     public void updatePostRender(float delta) {}
