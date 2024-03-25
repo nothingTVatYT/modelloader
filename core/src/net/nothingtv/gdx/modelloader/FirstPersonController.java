@@ -105,18 +105,19 @@ public class FirstPersonController extends InputAdapter {
     }
 
     public void update(float delta) {
-        if (!mouseGrabbed) return;
         player.modelInstance.transform.getTranslation(camera.position);
-        // horizontal rotation applied to the player and the camera
-        player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * config.turningSpeed * delta);
-        // vertical rotation applied to the camera only
-        cameraRotation.set(Vector3.Z);
-        float angle = MathUtils.clamp((((float)Gdx.input.getY() / camera.viewportHeight) - 0.5f) * 80, -80f, 80f);
-        cameraRotation.rotate(Vector3.X, angle);
-        player.localToWorldDirection(cameraRotation);
-        camera.direction.set(cameraRotation);
+        if (mouseGrabbed) {
+            // horizontal rotation applied to the player and the camera
+            player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * config.turningSpeed * delta);
+            // vertical rotation applied to the camera only
+            cameraRotation.set(Vector3.Z);
+            float angle = MathUtils.clamp((((float) Gdx.input.getY() / camera.viewportHeight) - 0.5f) * 80, -80f, 80f);
+            cameraRotation.rotate(Vector3.X, angle);
+            player.localToWorldDirection(cameraRotation);
+            camera.direction.set(cameraRotation);
+            applyForces(delta);
+        }
         camera.update(true);
-        applyForces(delta);
     }
 
     private void applyForces(float delta) {
