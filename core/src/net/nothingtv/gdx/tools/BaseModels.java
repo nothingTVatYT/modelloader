@@ -21,6 +21,11 @@ public class BaseModels {
                 VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
     }
 
+    public static Model createCapsule(float radius, float height, Material material) {
+        return new ModelBuilder().createCapsule(radius, height, 16, GL20.GL_TRIANGLES, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
+
     public static Model createDownArrow(Color color) {
         ModelBuilder builder = new ModelBuilder();
         builder.begin();

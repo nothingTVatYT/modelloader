@@ -8,6 +8,7 @@ import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 public class DefaultMotionState extends btMotionState {
     public ModelInstance modelInstance;
     public Vector3 rigidBodyOffset = new Vector3();
+    private Vector3 negOffset = new Vector3();
 
     public DefaultMotionState(ModelInstance modelInstance) {
         this.modelInstance = modelInstance;
@@ -16,13 +17,12 @@ public class DefaultMotionState extends btMotionState {
     @Override
     public void getWorldTransform(Matrix4 worldTrans) {
         worldTrans.set(modelInstance.transform).translate(rigidBodyOffset);
-        //System.out.printf("getWorldTransform: set translation to %s%n", worldTrans.getTranslation(new Vector3()));
     }
 
     @Override
     public void setWorldTransform(Matrix4 worldTrans) {
-        modelInstance.transform.set(worldTrans);
-        //System.out.println("set world transform called on " + modelInstance);
+        negOffset.set(rigidBodyOffset).scl(-1);
+        modelInstance.transform.set(worldTrans).translate(negOffset);
     }
 
 }

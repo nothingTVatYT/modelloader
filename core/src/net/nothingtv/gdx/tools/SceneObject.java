@@ -2,6 +2,7 @@ package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
@@ -21,6 +22,10 @@ public class SceneObject implements Disposable {
     public static final Vector3 LockZ = new Vector3(1, 1, 0);
     public static final Vector3 LockXZ = new Vector3(0, 1, 0);
     public static final Vector3 LockAll = new Vector3(0, 0, 0);
+    public float mass;
+    private Vector3 position = new Vector3();
+    private Vector3 forward = new Vector3();
+    private Quaternion rotation = new Quaternion();
 
     public SceneObject(String name, ModelInstance modelInstance) {
         this.name = name;
@@ -78,6 +83,7 @@ public class SceneObject implements Disposable {
 
     public void addForce(Vector3 force) {
         if (rigidBody != null) {
+            rigidBody.activate();
             rigidBody.applyCentralForce(force);
         }
     }
@@ -105,6 +111,26 @@ public class SceneObject implements Disposable {
             tmpMatrix.rotate(axis, degrees);
             rigidBody.setWorldTransform(tmpMatrix);
         }
+    }
+
+    public Vector3 getPosition() {
+        return modelInstance.transform.getTranslation(position);
+    }
+
+    public Quaternion getRotation() {
+        return modelInstance.transform.getRotation(rotation);
+    }
+
+    public Vector3 getForward() {
+        forward.set(0, 0, 1).mul(getRotation());
+        forward.y = 0;
+        forward.nor();
+        return forward;
+    }
+
+    public Vector3 localToWorldDirection(Vector3 direction) {
+        direction.rot(modelInstance.transform);
+        return direction;
     }
 
     public void updateBoundingBox() {

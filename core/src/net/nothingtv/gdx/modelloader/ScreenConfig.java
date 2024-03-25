@@ -7,4 +7,5 @@ public class ScreenConfig {
     public float directionalLightBrightness = 1;
     public float ambientLightBrightness = 1f;
     public boolean useShadows = true;
+    public boolean usePlayerController = false;
 }

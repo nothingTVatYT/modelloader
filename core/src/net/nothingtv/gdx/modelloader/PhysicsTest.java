@@ -19,6 +19,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject ball;
     private Terrain terrain;
     private boolean lightControlsOn = false;
+    private Vector3 initialPos = new Vector3(12, 0, 12);
+    protected FirstPersonController playerController;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -28,6 +30,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
+        screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         super.init();
     }
@@ -63,10 +66,30 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
         System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
 
-        camera.position.set(0, 24, -5);
-        camera.lookAt(0, 23, 0);
-        camera.up.set(Vector3.Y);
-        camera.update();
+        player = add("player", BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
+        wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
+        player.setAngularFactor(SceneObject.LockAll);
+
+        playerController = new FirstPersonController(camera, player);
+
+        initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1f;
+        playerController.getPlayer().moveTo(initialPos);
+        playerController.init();
+        playerController.grabMouse();
+        addInputController(playerController);
+
+        if (!screenConfig.usePlayerController) {
+            camera.position.set(0, 24, -5);
+            camera.lookAt(0, 23, 0);
+            camera.up.set(Vector3.Y);
+            camera.update();
+        }
+    }
+
+    @Override
+    public void updateController(float delta) {
+        super.updateController(delta);
+        playerController.update(delta);
     }
 
     @Override
@@ -81,7 +104,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             if (debugDrawer.getDebugMode() > 0)
                 debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
             else
-                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_MAX_DEBUG_DRAW_MODE);
+                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_FastWireframe);
         }
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             PickResult picked = pick(100);
@@ -90,9 +113,21 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 BaseShapes.dumpRigidBody(picked.pickedObject.rigidBody);
             }
         }
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
+            if (playerController.isMouseGrabbed())
+                playerController.releaseMouse();
+            else playerController.grabMouse();
+        }
         Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
         Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(150);
         floor.addForce(diff);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        super.resize(width, height);
+        if (playerController != null)
+            playerController.updateScreenSize();
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
+import com.badlogic.gdx.physics.bullet.collision.btCapsuleShape;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
@@ -24,6 +25,14 @@ public class BaseShapes {
         BoundingBox bounds = new BoundingBox();
         modelInstance.calculateBoundingBox(bounds);
         return new btSphereShape(bounds.getDimensions(halfExtends).scl(0.5f).x);
+    }
+
+    public static btCollisionShape createCapsuleShape(ModelInstance modelInstance) {
+        BoundingBox bounds = new BoundingBox();
+        modelInstance.calculateBoundingBox(bounds);
+        float radius = Math.max(bounds.getDepth(), bounds.getWidth()) / 2;
+        float height = bounds.getHeight();
+        return new btCapsuleShape(radius, height);
     }
 
     public static void dumpRigidBody(btRigidBody rigidBody) {

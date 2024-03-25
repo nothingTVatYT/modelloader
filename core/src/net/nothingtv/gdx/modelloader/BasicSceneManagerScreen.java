@@ -1,9 +1,6 @@
 package net.nothingtv.gdx.modelloader;
 
-import com.badlogic.gdx.Game;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.InputMultiplexer;
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.*;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
@@ -71,6 +68,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Window lightControls;
     protected Label fpsLabel;
     protected InputMultiplexer inputMultiplexer;
+    protected SceneObject player;
     private float shadowBias = 1/2048f;
 
     public BasicSceneManagerScreen(Game game) {
@@ -287,7 +285,12 @@ public abstract class BasicSceneManagerScreen implements Screen {
         }
     }
 
+    protected void addInputController(InputProcessor controller) {
+        inputMultiplexer.addProcessor(controller);
+    }
+
     protected void initController() {
+        if (screenConfig.usePlayerController) return;
         cameraController = new FirstPersonCameraController(camera);
         cameraController.setVelocity(16);
         cameraController.setDegreesPerPixel(0.2f);
@@ -298,6 +301,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public void initScene() {}
 
     public void updateController(float delta) {
+        if (screenConfig.usePlayerController) return;
         if (cameraController != null)
             cameraController.update(delta);
     }
@@ -375,6 +379,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         Vector3 pCenter = new Vector3();
         sceneObject.boundingBox.getCenter(vCenter);
         sceneObject.physicsBoundingBox.getCenter(pCenter);
+        sceneObject.mass = mass;
         motionState.rigidBodyOffset.set(vCenter).sub(pCenter);
         rigidBody.translate(motionState.rigidBodyOffset);
         sceneObject.updatePhysicsBoundingBox();
