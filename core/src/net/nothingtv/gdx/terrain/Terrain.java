@@ -119,6 +119,20 @@ public class Terrain implements Disposable {
             if (heightSampler == null) {
                 heightSampler = new DefaultHeightSampler();
             }
+            heightSampler.init(this);
+            if (config.erosionIterations > 0) {
+                int w = config.width+1;
+                int h = config.height+1;
+                float[] map = new float[w * h];
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        map[y * w + x] = heightSampler.getHeight(x, y);
+                    }
+                }
+                Erosion erosion = new Erosion();
+                erosion.Erode(map, w, config.erosionIterations, false);
+                heightSampler = new MapHeightSampler(map, w);
+            }
         }
         return heightSampler;
     }
@@ -145,7 +159,7 @@ public class Terrain implements Disposable {
 
     private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
         getHeightSampler();
-        heightSampler.init(this);
+
         // position + normal + tex coordinates
         float[] vertices = new float[(width+1) * (height+1) * 8];
         int index = 0;

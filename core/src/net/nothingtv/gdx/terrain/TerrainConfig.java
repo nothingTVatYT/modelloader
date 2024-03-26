@@ -49,6 +49,7 @@ public class TerrainConfig {
      */
     public int terrainDivideFactor;
 
+    public int erosionIterations;
     /**
      * the layers of the terrain, currently four layers are supported
      */
@@ -59,6 +60,7 @@ public class TerrainConfig {
         this.height = height;
         this.scale = scale;
         this.terrainDivideFactor = 1;
+        this.erosionIterations = 0;
     }
 
     public void addLayer(Texture diffuse, float scale) {

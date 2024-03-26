@@ -148,7 +148,7 @@ public class SceneObject implements Disposable {
 
     @Override
     public void dispose() {
-        rigidBody.dispose();
-        motionState.dispose();
+        //rigidBody.dispose();
+        //motionState.dispose();
     }
 }

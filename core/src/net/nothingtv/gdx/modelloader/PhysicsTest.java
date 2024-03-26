@@ -10,10 +10,9 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import net.nothingtv.gdx.terrain.MultiHeightSampler;
+import net.nothingtv.gdx.terrain.NoiseHeightSampler;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
-import net.nothingtv.gdx.terrain.TestHeightSampler;
 import net.nothingtv.gdx.tools.*;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
@@ -57,17 +56,16 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
 
+        float uvScale = 400;
         TerrainConfig terrainConfig = new TerrainConfig(1024, 1024, 1);
         terrainConfig.terrainDivideFactor = 8;
-        MultiHeightSampler sampler = new MultiHeightSampler();
-        sampler.addSampler(new TestHeightSampler(6, 0.05f, 0));
-        sampler.addSampler(new TestHeightSampler(20, 0.01f, 0));
-        terrainConfig.heightSampler = sampler;
+        terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
+        terrainConfig.erosionIterations = 0;
         terrainConfig.splatMap = new Texture(Gdx.files.internal("assets/textures/alpha-example.png"));
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), 100);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), 100);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), 100);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), 100);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), uvScale);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), uvScale);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), uvScale);
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), uvScale);
         terrain = new Terrain(terrainConfig);
         SceneObject terrainObject = add("terrain", terrain.createModelInstance());
 
