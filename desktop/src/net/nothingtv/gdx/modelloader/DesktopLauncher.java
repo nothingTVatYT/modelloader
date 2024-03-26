@@ -8,7 +8,7 @@ import net.nothingtv.gdx.testprojects.TestGame;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-		config.setForegroundFPS(200);
+		config.setForegroundFPS(1000);
 		config.useVsync(false);
 		config.setTitle("modelloader");
 		config.setResizable(true);
