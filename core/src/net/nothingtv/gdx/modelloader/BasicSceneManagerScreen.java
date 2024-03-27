@@ -37,10 +37,12 @@ import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
+import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
-import net.nothingtv.gdx.tools.DebugDraw;
+import net.nothingtv.gdx.tools.Debug;
 import net.nothingtv.gdx.tools.PickResult;
 import net.nothingtv.gdx.tools.SceneObject;
+import net.nothingtv.gdx.tools.TerrainObject;
 
 public abstract class BasicSceneManagerScreen implements Screen {
     protected Game game;
@@ -52,7 +54,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected btDiscreteDynamicsWorld physicsWorld;
     protected SceneManager sceneManager;
     protected Camera camera;
-    protected DebugDraw debugDraw;
     protected FirstPersonCameraController cameraController;
     protected DirectionalShadowLight directionalShadowLight;
     protected DirectionalLight directionalLight;
@@ -64,6 +65,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Color clearColor = Color.BLACK;
     protected float gameTime;
     protected DebugDrawer debugDrawer;
+    protected Debug debug;
     protected Stage stage;
     protected Skin skin;
     protected Table table;
@@ -104,6 +106,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
         physicsWorld.setDebugDrawer(debugDrawer);
         System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
+        debug = new Debug(debugDrawer);
     }
 
     protected void updatePhysics(float delta) {
@@ -174,7 +177,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
     }
 
     protected void initBatches() {
-        debugDraw = new DebugDraw(camera, sceneManager.environment);
     }
 
     protected void initCamera() {
@@ -359,12 +361,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
         sceneManager.render();
 
-        if (debugDraw != null)
-            debugDraw.render();
-
         if (debugDrawer != null && !physicsWorld.isDisposed()) {
             debugDrawer.begin(camera);
             physicsWorld.debugDrawWorld();
+            debug.drawDebugs();
             debugDrawer.end();
         }
 
@@ -396,6 +396,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public SceneObject add(String name, ModelInstance modelInstance) {
         sceneManager.getRenderableProviders().add(modelInstance);
         return new SceneObject(name, modelInstance);
+    }
+
+    public TerrainObject add(String name, ModelInstance modelInstance, Terrain terrain) {
+        sceneManager.getRenderableProviders().add(modelInstance);
+        return new TerrainObject(name, modelInstance, terrain);
     }
 
     public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {
@@ -430,22 +435,19 @@ public abstract class BasicSceneManagerScreen implements Screen {
             if (resultCallback.hasHit()) {
                 btScalarArray fractions = resultCallback.getHitFractions();
                 btCollisionObject collisionObject = null;
-                Vector3 hitPosition = new Vector3();
+                pickResult.hitPosition = new Vector3();
                 float minDist = maxDistance;
-                int n = fractions.size();
                 for (int i = 0; i < fractions.size(); i++) {
                     float dist = fractions.atConst(i);
                     if (dist < minDist) {
                         collisionObject = resultCallback.getCollisionObjects().atConst(i);
-                        hitPosition.set(rayFrom).lerp(rayTo, dist);
-                        System.out.printf("hit fraction %d/%d: %s (%f)%n", i+1, n, hitPosition, dist);
+                        pickResult.hitPosition.set(rayFrom).lerp(rayTo, dist);
                         minDist = dist;
                     }
                 }
                 if (collisionObject != null && collisionObject.userData != null) {
                     pickResult.pickedObject = (SceneObject) collisionObject.userData;
                 }
-                debugDraw.drawArrow(hitPosition, Color.GREEN);
             }
             return pickResult;
         }

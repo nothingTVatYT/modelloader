@@ -15,11 +15,13 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btConstraintSolver;
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
+import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -37,7 +39,7 @@ import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
 import net.nothingtv.gdx.tools.BaseMaterials;
-import net.nothingtv.gdx.tools.DebugDraw;
+import net.nothingtv.gdx.tools.Debug;
 
 public class TerrainTest extends ScreenAdapter {
     private Environment environment;
@@ -55,7 +57,8 @@ public class TerrainTest extends ScreenAdapter {
     private Cubemap specularCubemap;
     private Texture brdfLUT;
     private SceneSkybox skybox;
-    private DebugDraw debugDraw;
+    private DebugDrawer debugDraw;
+    private Debug debug;
     private btBroadphaseInterface broadphase;
     private btCollisionConfiguration collisionConfig;
     private btDispatcher dispatcher;
@@ -83,12 +86,15 @@ public class TerrainTest extends ScreenAdapter {
         pbrBatch.render(renderableProviders, environment);
         pbrBatch.end();
 
-        debugDraw.render();
+        if (debugDraw != null && !physicsWorld.isDisposed()) {
+            debugDraw.begin(camera);
+            physicsWorld.debugDrawWorld();
+            debug.drawDebugs();
+            debugDraw.end();
+        }
     }
 
     private void update(float delta) {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.R) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT))
-            debugDraw.reset();
         controller.update(delta);
         skybox.update(camera, delta);
         physicsWorld.stepSimulation(delta);
@@ -131,7 +137,7 @@ public class TerrainTest extends ScreenAdapter {
                 terrainBody.getAabb(boundMin, boundMax);
                 BoundingBox bounds = new BoundingBox();
                 terrainInstance.calculateBoundingBox(bounds);
-                System.out.printf("Hit nothing. Terrain would be at %s - %s, terrain model is at %s%n", boundMin, boundMax, terrain.boundingBox);
+                System.out.printf("Hit nothing. Terrain would be at %s - %s, terrain model is at %s%n", boundMin, boundMax, bounds);
             }
             /*
             ModelIntersector.IntersectionResult result = ModelIntersector.intersect(ray, terrainInstance);
@@ -212,17 +218,19 @@ public class TerrainTest extends ScreenAdapter {
         terrainConfig.addLayer(new Texture("textures/Ground026_2K_Color.jpg"), 16f);
         terrainConfig.addLayer(new Texture("textures/leafy_grass_diff_2k.jpg"), 16f);
         terrainConfig.addLayer(new Texture("textures/cobblestone_floor_07_diff_2k.jpg"), 16f);
-        terrainConfig.splatMap = new Texture("textures/alpha-example.png");
+        terrainConfig.splatMap = new Pixmap(Gdx.files.internal("textures/alpha-example.png"));
         terrainConfig.terrainDivideFactor = 4;
         terrainConfig.setHeightMap(new Pixmap(Gdx.files.internal("textures/heightmap.png")), 50, -40);
         terrain = new Terrain(terrainConfig);
         terrainInstance = terrain.createModelInstance();
         //terrainInstance.transform.setTranslation(1, -1, 1);
-        terrain.updateBoundingBox();
         terrainBody = terrain.createRigidBody();
         physicsWorld.addCollisionObject(terrainBody);
 
-        debugDraw = new DebugDraw(camera, environment);
+        debugDraw = new DebugDrawer();
+        debugDraw.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
+        physicsWorld.setDebugDrawer(debugDraw);
+        debug = new Debug(debugDraw);
 
         SceneAsset cubeAsset = new GLTFLoader().load(Gdx.files.internal("models/debug-cube.gltf"));
         testObject = new ModelInstance(cubeAsset.scene.model);
@@ -236,7 +244,7 @@ public class TerrainTest extends ScreenAdapter {
         renderableProviders.add(terrainInstance);
         renderableProviders.add(testObject);
 
-        debugDraw.drawArrow(terrainInstance.transform.getTranslation(new Vector3()), Color.BROWN);
+        debug.drawArrow("terrain origin", terrainInstance.transform.getTranslation(new Vector3()), Color.BROWN);
         //BaseModels.dumpModel(terrainInstance.model, "terrain");
         controller = new FirstPersonCameraController(camera);
         controller.setVelocity(16);

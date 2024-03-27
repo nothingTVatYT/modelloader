@@ -38,7 +38,6 @@ import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.nothingtv.gdx.shaders.WWShaderProvider;
-import net.nothingtv.gdx.tools.DebugDraw;
 import net.nothingtv.gdx.tools.PickResult;
 import net.nothingtv.gdx.tools.SceneObject;
 
@@ -53,7 +52,6 @@ public abstract class BasicScreen implements Screen {
     protected Environment environment;
     protected Camera camera;
     protected ModelBatch pbrBatch, shadowBatch;
-    protected DebugDraw debugDraw;
     protected final Array<RenderableProvider> renderableProviders = new Array<>();
     protected FirstPersonCameraController cameraController;
     protected DirectionalShadowLight directionalLight;
@@ -165,8 +163,6 @@ public abstract class BasicScreen implements Screen {
         depthConfig.numBones = 60;
         depthConfig.numBoneWeights = 8;
         shadowBatch = new ModelBatch(new DepthShaderProvider(depthConfig));
-
-        debugDraw = new DebugDraw(camera, environment);
     }
 
     protected void initCamera() {
@@ -351,8 +347,6 @@ public abstract class BasicScreen implements Screen {
         pbrBatch.render(renderableProviders, environment);
         pbrBatch.end();
 
-        debugDraw.render();
-
         if (debugDrawer != null && !physicsWorld.isDisposed()) {
             debugDrawer.begin(camera);
             physicsWorld.debugDrawWorld();
@@ -437,7 +431,6 @@ public abstract class BasicScreen implements Screen {
                 if (collisionObject != null && collisionObject.userData != null) {
                     pickResult.pickedObject = (SceneObject) collisionObject.userData;
                 }
-                debugDraw.drawArrow(hitPosition, Color.GREEN);
             }
             return pickResult;
         }

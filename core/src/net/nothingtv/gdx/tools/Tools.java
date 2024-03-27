@@ -15,6 +15,22 @@ public class Tools {
     }
 
     /**
+     * Check value is in the given range and return a smoothed value of 1 if inside, 0 if outside.
+     * @param value the value to check against the range
+     * @param begin the range min value
+     * @param end the range max value
+     * @param smoothBegin a relative value (0-1) for the smoothing at the min value
+     * @param smoothEnd a relative value (0-1) for the smoothing at the max value
+     * @return the smoothed value between 0 and 1
+     */
+    public static float smoothInRange(float value, float begin, float end, float smoothBegin, float smoothEnd) {
+        float midPoint = (end - begin) / 2 + begin;
+        if (value < midPoint)
+            return smoothStep(value, begin - smoothBegin, begin + smoothBegin);
+        return 1f - smoothStep(value, end - smoothEnd, end + smoothEnd);
+    }
+
+    /**
      * Clamp the value between 0 and 1
      * @param x the value to be clamped
      * @return 0 if x<=0, 1 if x>=1, x otherwise
@@ -22,11 +38,5 @@ public class Tools {
     public static float clamp01(float x) {
         if (x < 0) return 0;
         return Math.min(x, 1);
-    }
-
-    public static void main(String[] args) {
-        for (int x = 0; x < 10; x++) {
-            System.out.printf("smoothstep(%f, 0.4, 0.6) = %f%n", (float)x, smoothStep((float)x, 3f, 7f));
-        }
     }
 }

@@ -63,6 +63,7 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx:$gdxVersion"
         api "com.github.mgsx-dev.gdx-gltf:gltf:$gltfVersion"
         api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
+        api "org.junit.jupiter:junit-jupiter-api:5.8.1"
     }
 }
 

@@ -11,7 +11,8 @@ import net.nothingtv.gdx.tools.SceneObject;
 public class FirstPersonController extends InputAdapter {
 
     public static class ControllerConfig {
-        public float maxSpeed = 8f;
+        public float maxWalkingSpeed = 8f;
+        public float maxRunningSpeed = 24f;
         public final SceneObject player;
         public final Camera camera;
         public float turningSpeed = 60f;
@@ -31,6 +32,7 @@ public class FirstPersonController extends InputAdapter {
     private final Vector3 movement = new Vector3();
     private final Vector3 linearForce = new Vector3();
     private boolean walking;
+    private float currentMaxSpeed;
     private boolean mouseGrabbed;
 
     private float currentSpeed;
@@ -117,6 +119,10 @@ public class FirstPersonController extends InputAdapter {
             player.localToWorldDirection(cameraRotation);
             camera.direction.set(cameraRotation);
         } else movement.setZero();
+        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT))
+            currentMaxSpeed = config.maxRunningSpeed;
+        else
+            currentMaxSpeed = config.maxWalkingSpeed;
         applyForces(delta);
         camera.update(true);
     }
@@ -127,7 +133,7 @@ public class FirstPersonController extends InputAdapter {
         currentSpeed = velocityXZ.len();
         walking = velocityXZ.len2() > config.minVelocity2;
         if (movement.len2() > 1e-6f) {
-            if (currentSpeed < config.maxSpeed) {
+            if (currentSpeed < currentMaxSpeed) {
                 linearForce.set(movement).scl(player.mass * config.accelerationForce);
                 player.localToWorldDirection(linearForce);
             } else {

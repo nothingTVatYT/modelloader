@@ -42,7 +42,7 @@ public class TerrainConfig {
     /**
      * the alpha splat map, it needs to have four channels (i.e. ARGB) which are used to blend up to four layers
      */
-    public Texture splatMap;
+    public Pixmap splatMap;
 
     /**
      * a factor of 1 will create one mesh, a value of 2 four meshes, etc.

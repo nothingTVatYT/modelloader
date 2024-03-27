@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
@@ -13,17 +14,19 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import net.nothingtv.gdx.terrain.NoiseHeightSampler;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainConfig;
+import net.nothingtv.gdx.terrain.TerrainSplatGenerator;
 import net.nothingtv.gdx.tools.*;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
     private SceneObject box;
     private SceneObject ball;
-    private Terrain terrain;
+    private TerrainObject terrainObject;
     private boolean lightControlsOn = false;
     private Vector3 initialPos = new Vector3(12, 0, 12);
     protected FirstPersonController playerController;
     private Label speedLabel;
+    private TerrainSplatGenerator splatGenerator;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -33,7 +36,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
-        screenConfig.usePlayerController = true;
+        screenConfig.usePlayerController = false;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();
@@ -61,22 +64,42 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
-        terrainConfig.splatMap = new Texture(Gdx.files.internal("assets/textures/alpha-example.png"));
+        terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/alpha-example.png"));
         terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg")), uvScale);
         terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg")), uvScale);
         terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg")), uvScale);
-        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/cobblestone_floor_07_diff_2k.jpg")), uvScale);
-        terrain = new Terrain(terrainConfig);
-        SceneObject terrainObject = add("terrain", terrain.createModelInstance());
+        terrainConfig.addLayer(new Texture(Gdx.files.internal("assets/textures/Rock031_2K-PNG_Color.png")), uvScale);
+        Terrain terrain = new Terrain(terrainConfig);
+        terrainObject = add("terrain", terrain.createModelInstance(), terrain);
 
         wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
         System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
+
+        TerrainSplatGenerator.Configuration splatConfig = TerrainSplatGenerator.createDefaultConfiguration(4);
+        splatConfig.resolution = 4096;
+        splatConfig.layers[0].elevationWeight = 1;
+        splatConfig.layers[0].heightBegin = 0.3f;
+        splatConfig.layers[0].heightEnd = 0.3f;
+        splatConfig.layers[1].elevationWeight = 1;
+        splatConfig.layers[1].heightBegin = 0.3f;
+        splatConfig.layers[1].heightEnd = 0.5f;
+        splatConfig.layers[2].elevationWeight = 1;
+        splatConfig.layers[2].heightBegin = 0.5f;
+        splatConfig.layers[2].heightEnd = 0.7f;
+        splatConfig.layers[3].slopeWeight = 1f;
+        splatConfig.layers[3].slopeBegin = 0.5f;
+        splatConfig.layers[3].slopeEnd = 1f;
+        splatConfig.layers[3].elevationWeight = 1;
+        splatConfig.layers[3].heightBegin = 0.7f;
+        splatConfig.layers[3].heightEnd = 1f;
+        splatGenerator = new TerrainSplatGenerator(terrain, splatConfig);
+        splatGenerator.update();
 
         player = add("player", BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
         wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
         player.setAngularFactor(SceneObject.LockAll);
 
-        initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1f;
+        initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1.3f;
         player.moveTo(initialPos);
 
         if (screenConfig.usePlayerController) {
@@ -131,8 +154,19 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             PickResult picked = pick(100);
             if (picked.hasHit() && picked.pickedObject != null) {
-                System.out.printf("We hit something! (%s)%n", picked.pickedObject.name);
-                BaseShapes.dumpRigidBody(picked.pickedObject.rigidBody);
+                if (picked.pickedObject == terrainObject) {
+                    Vector3 terrainLocal = new Vector3(picked.hitPosition);
+                    terrainObject.worldToLocalLocation(terrainLocal);
+                    int splat = terrainObject.terrain.getSplatAt(terrainLocal.x, terrainLocal.z);
+                    Vector3 n = new Vector3();
+                    terrainObject.terrain.getNormalAt(terrainLocal.x, terrainLocal.z, n);
+                    float h = terrainObject.terrain.getHeightAt(terrainLocal.x, terrainLocal.z);
+                    System.out.printf("splat at %s: %08x, height %f, normal %s%n", terrainLocal, splat, h, n);
+                    debug.drawLine("hit normal", picked.hitPosition, new Vector3(picked.hitPosition).add(n), Color.YELLOW);
+                } else {
+                    System.out.printf("We hit something! (%s)%n", picked.pickedObject.name);
+                    BaseShapes.dumpRigidBody(picked.pickedObject.rigidBody);
+                }
             }
         }
         if (screenConfig.usePlayerController && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {

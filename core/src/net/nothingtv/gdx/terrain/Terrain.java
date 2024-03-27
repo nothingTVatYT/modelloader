@@ -1,22 +1,20 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Mesh;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.VertexAttribute;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 import com.badlogic.gdx.utils.Disposable;
+import net.nothingtv.gdx.tools.Debug;
 
 public class Terrain implements Disposable {
 
@@ -39,17 +37,25 @@ public class Terrain implements Disposable {
     private HeightSampler heightSampler;
     public TerrainConfig config;
     private ModelInstance modelInstance;
-    //private btHeightfieldTerrainShape collisionShape;
     private btCollisionShape collisionShape;
-    private Vector3 rigidBodyOffset = new Vector3();
+    private final Vector3 rigidBodyOffset = new Vector3();
     public btRigidBody rigidBody;
 
-    public BoundingBox boundingBox = new BoundingBox();
+    private float minHeight;
+    private float maxHeight;
 
     public Terrain(TerrainConfig config) {
         this.config = config;
         if (config.heightSampler instanceof DefaultHeightSampler defaultHeightSampler)
             defaultHeightSampler.terrain = this;
+    }
+
+    public float getMinHeight() {
+        return minHeight;
+    }
+
+    public float getMaxHeight() {
+        return maxHeight;
     }
 
     public ModelInstance createModelInstance() {
@@ -87,11 +93,13 @@ public class Terrain implements Disposable {
             }
         }
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
-        material.set(TerrainTextureAttribute.createAlpha1(config.splatMap));
+        material.set(TerrainTextureAttribute.createAlpha1(new Texture(config.splatMap)));
 
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
         Mesh mesh;
+        minHeight = Float.MAX_VALUE;
+        maxHeight = -Float.MAX_VALUE;
         if (config.terrainDivideFactor == 1) {
             mesh = createMesh(config.width, config.height, 0, 0, 1f, 1f, 0, 0, config.scale);
             modelBuilder.part("terrain", mesh, GL20.GL_TRIANGLES, material);
@@ -141,8 +149,42 @@ public class Terrain implements Disposable {
         return getHeightSampler().getHeight(x / config.scale, z / config.scale);
     }
 
-    public void updateBoundingBox() {
-        modelInstance.calculateBoundingBox(boundingBox);
+    public void getNormalAt(float x, float z, Vector3 out) {
+        float d = 1f;
+        float l = getHeightAt(x-d, z) - minHeight;
+        float r = getHeightAt(x+d, z) - minHeight;
+        float t = getHeightAt(x, z-d) - minHeight;
+        float b = getHeightAt(x, z+d) - minHeight;
+        //debugDrawQuad(x, z, d);
+        out.set(-2 * (r-l), 4, -2 * (b-t)).nor();
+    }
+
+    private void debugDrawQuad(float x, float z, float offset) {
+        Vector3 a = new Vector3(x-offset, 0, z);
+        Vector3 b = new Vector3(x, 0, z-offset);
+        Vector3 c = new Vector3(x+offset, 0, z);
+        Vector3 d = new Vector3(x, 0, z+offset);
+        ground(a);
+        ground(b);
+        ground(c);
+        ground(d);
+        Debug.instance.drawQuad("n plane", a, b, c, d, Color.RED);
+    }
+
+    public void ground(Vector3 pos) {
+        pos.y = getHeightAt(pos.x, pos.z);
+    }
+
+    public int getSplatAt(float x, float z) {
+        int splatX = Math.round(x / config.width * config.splatMap.getWidth());
+        int splatZ = Math.round(z / config.height * config.splatMap.getHeight());
+        return config.splatMap.getPixel(splatX, splatZ);
+    }
+
+    public void setSplatMap(Pixmap pixmap) {
+        Texture alpha = new Texture(pixmap);
+        alpha.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        ((TextureAttribute)modelInstance.materials.first().get(TerrainTextureAttribute.Alpha1)).textureDescription.texture = alpha;
     }
 
     public btCollisionShape createCollisionShape() {
@@ -174,6 +216,8 @@ public class Terrain implements Disposable {
                 vertices[index++] = 0;
                 vertices[index++] = (float)x / width * scaleU + offsetU;
                 vertices[index++] = (float)y / height * scaleV + offsetV;
+                minHeight = Math.min(minHeight, v);
+                maxHeight = Math.max(maxHeight, v);
             }
         }
 
