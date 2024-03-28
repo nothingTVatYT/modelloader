@@ -35,6 +35,7 @@ public class FirstPersonController extends InputAdapter {
     private boolean walking;
     private float currentMaxSpeed;
     private boolean mouseGrabbed;
+    private boolean speedUp;
 
     private float currentSpeed;
     private final Vector3 cameraRotation = new Vector3();
@@ -48,6 +49,7 @@ public class FirstPersonController extends InputAdapter {
     public void init() {
         //updateCamera(0);
         walking = false;
+        speedUp = false;
         mouseGrabbed = Gdx.input.isCursorCatched();
     }
 
@@ -82,23 +84,30 @@ public class FirstPersonController extends InputAdapter {
     @Override
     public boolean keyDown(int keycode) {
         boolean handled = false;
-        switch(keycode) {
-            case Input.Keys.W:
-                movement.z = 1;
-                handled = true;
-                break;
-            case Input.Keys.S:
-                movement.z = -1;
-                handled = true;
-                break;
-            case Input.Keys.A:
-                movement.x = 1;
-                handled = true;
-                break;
-            case Input.Keys.D:
-                movement.x = -1;
-                handled = true;
-                break;
+        if (isMouseGrabbed()) {
+            switch (keycode) {
+                case Input.Keys.W:
+                    movement.z = 1;
+                    handled = true;
+                    break;
+                case Input.Keys.S:
+                    movement.z = -1;
+                    handled = true;
+                    break;
+                case Input.Keys.A:
+                    movement.x = 1;
+                    handled = true;
+                    break;
+                case Input.Keys.D:
+                    movement.x = -1;
+                    handled = true;
+                    break;
+                case Input.Keys.SHIFT_LEFT:
+                case Input.Keys.SHIFT_RIGHT:
+                    speedUp = true;
+                    handled = true;
+                    break;
+            }
         }
         return handled;
     }
@@ -106,17 +115,24 @@ public class FirstPersonController extends InputAdapter {
     @Override
     public boolean keyUp(int keycode) {
         boolean handled = false;
-        switch(keycode) {
-            case Input.Keys.W:
-            case Input.Keys.S:
-                movement.z = 0;
-                handled = true;
-                break;
-            case Input.Keys.A:
-            case Input.Keys.D:
-                movement.x = 0;
-                handled = true;
-                break;
+        if (isMouseGrabbed()) {
+            switch (keycode) {
+                case Input.Keys.W:
+                case Input.Keys.S:
+                    movement.z = 0;
+                    handled = true;
+                    break;
+                case Input.Keys.A:
+                case Input.Keys.D:
+                    movement.x = 0;
+                    handled = true;
+                    break;
+                case Input.Keys.SHIFT_LEFT:
+                case Input.Keys.SHIFT_RIGHT:
+                    speedUp = false;
+                    handled = true;
+                    break;
+            }
         }
         return handled;
     }
@@ -134,7 +150,7 @@ public class FirstPersonController extends InputAdapter {
             player.localToWorldDirection(cameraRotation);
             camera.direction.set(cameraRotation);
         } else movement.setZero();
-        if (Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.SHIFT_RIGHT))
+        if (speedUp)
             currentMaxSpeed = config.maxRunningSpeed;
         else
             currentMaxSpeed = config.maxWalkingSpeed;
