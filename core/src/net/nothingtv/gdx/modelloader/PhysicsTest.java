@@ -24,6 +24,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject ball;
     private TerrainObject terrainObject;
     private boolean lightControlsOn = false;
+    private boolean useSplatGenerator = false;
     private Vector3 initialPos = new Vector3(12, 0, 12);
     protected FirstPersonController playerController;
     private Label speedLabel;
@@ -71,7 +72,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
-        terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/alpha-example.png"));
+        terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
         terrainConfig.addLayer(new Texture(layer1Tex), uvScale);
         terrainConfig.addLayer(new Texture(layer2Tex), uvScale);
         terrainConfig.addLayer(new Texture(layer3Tex), uvScale);
@@ -82,29 +83,31 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
         System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
 
-        TerrainSplatGenerator.Configuration splatConfig = TerrainSplatGenerator.createDefaultConfiguration(4);
-        splatConfig.resolution = 1024;
-        splatConfig.layers[0].elevationWeight = 0;
-        splatConfig.layers[1].elevationWeight = 0;
-        splatConfig.layers[1].heightBegin = 0.3f;
-        splatConfig.layers[1].heightEnd = 0.5f;
-        splatConfig.layers[2].elevationWeight = 1;
-        splatConfig.layers[2].heightBegin = 0.1f;
-        splatConfig.layers[2].heightEnd = 0.7f;
-        splatConfig.layers[3].elevationWeight = 1;
-        splatConfig.layers[3].heightBegin = 0.7f;
-        splatConfig.layers[3].heightEnd = 1f;
-        splatConfig.layers[3].slopeWeight = 1f;
-        splatConfig.layers[3].slopeBegin = 0.21f;
-        splatConfig.layers[3].slopeEnd = 1f;
-        splatGenerator = new TerrainSplatGenerator(terrain, splatConfig);
-        splatGenerator.update();
+        if (useSplatGenerator) {
+            TerrainSplatGenerator.Configuration splatConfig = TerrainSplatGenerator.createDefaultConfiguration(4);
+            splatConfig.resolution = 1024;
+            splatConfig.layers[0].elevationWeight = 0;
+            splatConfig.layers[1].elevationWeight = 0;
+            splatConfig.layers[1].heightBegin = 0.3f;
+            splatConfig.layers[1].heightEnd = 0.5f;
+            splatConfig.layers[2].elevationWeight = 1;
+            splatConfig.layers[2].heightBegin = 0.1f;
+            splatConfig.layers[2].heightEnd = 0.7f;
+            splatConfig.layers[3].elevationWeight = 1;
+            splatConfig.layers[3].heightBegin = 0.7f;
+            splatConfig.layers[3].heightEnd = 1f;
+            splatConfig.layers[3].slopeWeight = 1f;
+            splatConfig.layers[3].slopeBegin = 0.21f;
+            splatConfig.layers[3].slopeEnd = 1f;
+            splatGenerator = new TerrainSplatGenerator(terrain, splatConfig);
+            splatGenerator.update();
 
-        splatGeneratorUI = JSplatGenerator.showUI(splatConfig);
-        splatGeneratorUI.setTexture(0, layer1Tex.readBytes());
-        splatGeneratorUI.setTexture(1, layer2Tex.readBytes());
-        splatGeneratorUI.setTexture(2, layer3Tex.readBytes());
-        splatGeneratorUI.setTexture(3, layer4Tex.readBytes());
+            splatGeneratorUI = JSplatGenerator.showUI(splatConfig);
+            splatGeneratorUI.setTexture(0, layer1Tex.readBytes());
+            splatGeneratorUI.setTexture(1, layer2Tex.readBytes());
+            splatGeneratorUI.setTexture(2, layer3Tex.readBytes());
+            splatGeneratorUI.setTexture(3, layer4Tex.readBytes());
+        }
 
         player = add("player", BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
         wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
@@ -198,7 +201,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             player.moveTo(initialPos);
         }
 
-        if (splatGeneratorUI.isMapUpdateRequested()) {
+        if (useSplatGenerator && splatGeneratorUI.isMapUpdateRequested()) {
             splatGenerator.update();
             splatGeneratorUI.resetRequest();
         }
@@ -213,7 +216,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     public void updatePostRender(float delta) {
         super.updatePostRender(delta);
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            splatGeneratorUI.dispose();
+            if (splatGeneratorUI != null)
+                splatGeneratorUI.dispose();
             game.setScreen(new SelectScreen(game));
         }
     }

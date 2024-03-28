@@ -93,7 +93,9 @@ public class Terrain implements Disposable {
             }
         }
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
-        material.set(TerrainTextureAttribute.createAlpha1(new Texture(config.splatMap)));
+        Texture splatMap = new Texture(config.splatMap);
+        splatMap.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        material.set(TerrainTextureAttribute.createAlpha1(splatMap));
 
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
