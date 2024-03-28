@@ -38,7 +38,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
-        screenConfig.usePlayerController = false;
+        screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();

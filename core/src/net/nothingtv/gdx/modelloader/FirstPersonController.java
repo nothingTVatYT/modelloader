@@ -15,6 +15,7 @@ public class FirstPersonController extends InputAdapter {
         public float maxRunningSpeed = 24f;
         public final SceneObject player;
         public final Camera camera;
+        public Vector3 eyeOffset = new Vector3(0, 1, 0);
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
@@ -90,6 +91,14 @@ public class FirstPersonController extends InputAdapter {
                 movement.z = -1;
                 handled = true;
                 break;
+            case Input.Keys.A:
+                movement.x = 1;
+                handled = true;
+                break;
+            case Input.Keys.D:
+                movement.x = -1;
+                handled = true;
+                break;
         }
         return handled;
     }
@@ -103,12 +112,18 @@ public class FirstPersonController extends InputAdapter {
                 movement.z = 0;
                 handled = true;
                 break;
+            case Input.Keys.A:
+            case Input.Keys.D:
+                movement.x = 0;
+                handled = true;
+                break;
         }
         return handled;
     }
 
     public void update(float delta) {
         player.modelInstance.transform.getTranslation(camera.position);
+        camera.position.add(config.eyeOffset);
         if (mouseGrabbed) {
             // horizontal rotation applied to the player and the camera
             player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * config.turningSpeed * delta);
@@ -144,7 +159,7 @@ public class FirstPersonController extends InputAdapter {
             linearForce.set(velocityXZ);
             linearForce.scl(player.mass * -config.breakForce);
         }
-        if (config.simulateSideFriction) {
+        if (config.simulateSideFriction && Math.abs(movement.x) < 1e-6f) {
             player.worldToLocalDirection(velocityXZ);
             velocityXZ.z = 0;
             if (velocityXZ.len2() > 1e-6f) {
