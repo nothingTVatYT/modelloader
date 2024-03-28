@@ -16,6 +16,7 @@ public class FirstPersonController extends InputAdapter {
         public final SceneObject player;
         public final Camera camera;
         public Vector3 eyeOffset = new Vector3(0, 1, 0.06f);
+        public float cameraMaxOffset = 50f;
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
@@ -36,9 +37,11 @@ public class FirstPersonController extends InputAdapter {
     private float currentMaxSpeed;
     private boolean mouseGrabbed;
     private boolean speedUp;
+    private float cameraToPlayerDistance;
 
     private float currentSpeed;
     private final Vector3 cameraRotation = new Vector3();
+    private final Vector3 cameraLocalPosition = new Vector3();
 
     public FirstPersonController(ControllerConfig config) {
         this.config = config;
@@ -50,6 +53,7 @@ public class FirstPersonController extends InputAdapter {
         //updateCamera(0);
         walking = false;
         speedUp = false;
+        cameraToPlayerDistance = 0;
         mouseGrabbed = Gdx.input.isCursorCatched();
     }
 
@@ -79,6 +83,13 @@ public class FirstPersonController extends InputAdapter {
         if (!mouseGrabbed) return;
         Gdx.input.setCursorCatched(false);
         mouseGrabbed = false;
+    }
+
+    @Override
+    public boolean scrolled(float amountX, float amountY) {
+        if (!mouseGrabbed) return false;
+        cameraToPlayerDistance = Math.max(0, Math.min(config.cameraMaxOffset, cameraToPlayerDistance + amountY));
+        return true;
     }
 
     @Override
@@ -138,8 +149,8 @@ public class FirstPersonController extends InputAdapter {
     }
 
     public void update(float delta) {
-        player.modelInstance.transform.getTranslation(camera.position);
-        camera.position.add(config.eyeOffset);
+        cameraLocalPosition.set(config.eyeOffset).add(0, cameraToPlayerDistance / 4, -cameraToPlayerDistance);
+        camera.position.set(player.localToWorldLocation(cameraLocalPosition));
         if (mouseGrabbed) {
             // horizontal rotation applied to the player and the camera
             player.rotate(Vector3.Y, -Gdx.input.getDeltaX() * config.turningSpeed * delta);

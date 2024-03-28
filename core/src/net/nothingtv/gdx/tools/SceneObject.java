@@ -135,6 +135,11 @@ public class SceneObject implements Disposable {
         return direction;
     }
 
+    public Vector3 localToWorldLocation(Vector3 direction) {
+        direction.mul(modelInstance.transform);
+        return direction;
+    }
+
     public Vector3 worldToLocalDirection(Vector3 direction) {
         direction.unrotate(modelInstance.transform);
         return direction;

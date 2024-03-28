@@ -31,7 +31,7 @@ public class BaseShapes {
         BoundingBox bounds = new BoundingBox();
         modelInstance.calculateBoundingBox(bounds);
         float radius = Math.max(bounds.getDepth(), bounds.getWidth()) / 2;
-        float height = bounds.getHeight();
+        float height = bounds.getHeight() - 2 * radius;
         return new btCapsuleShape(radius, height);
     }
 

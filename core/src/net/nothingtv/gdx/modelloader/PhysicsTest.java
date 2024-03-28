@@ -110,7 +110,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         }
 
         player = add("player", BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
-        wrapRigidBody(player, 75, BaseShapes.createSphereShape(player.modelInstance));
+        wrapRigidBody(player, 75, BaseShapes.createCapsuleShape(player.modelInstance));
         player.setAngularFactor(SceneObject.LockAll);
 
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1.3f;
@@ -163,7 +163,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             if (debugDrawer.getDebugMode() > 0)
                 debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
             else
-                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_FastWireframe);
+                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_FastWireframe|btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
         }
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             PickResult picked = pick(100);
