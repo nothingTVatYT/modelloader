@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.PixmapIO;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Json;
 import net.nothingtv.gdx.tools.Tools;
 
 import java.nio.ByteBuffer;
@@ -87,8 +88,8 @@ public class TerrainSplatGenerator {
                     weights[config.defaultLayer] = 1f - weightSum;
                     weightSum = 1f;
                 }
-                // order is RGBA, but the shader expects a=layer0, r=1, g=2, b=3
-                for (int i = 1; i < 4; i++) {
+                // the shader expects a=layer0, r=1, g=2, b=3 (msb to lsb)
+                for (int i = 3; i > 0; i--) {
                     buffer.put((byte)Math.round(255f * weights[i]/weightSum));
                 }
                 buffer.put((byte)Math.round(255f * weights[0]/weightSum));
@@ -98,6 +99,7 @@ public class TerrainSplatGenerator {
         pixmap.setPixels(buffer);
         System.out.printf("found slopes in the range of %f to %f%n", minSlope, maxSlope);
         PixmapIO.writePNG(Gdx.files.local("splatmap-generated.png"), pixmap);
+        new Json().toJson(config, Gdx.files.local("terrain.json"));
         return pixmap;
     }
 }
