@@ -10,7 +10,6 @@ import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.physics.bullet.collision.*;
@@ -19,7 +18,6 @@ import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.dynamics.btSequentialImpulseConstraintSolver;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
-import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
@@ -40,7 +38,7 @@ import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
 import net.nothingtv.gdx.tools.Debug;
-import net.nothingtv.gdx.tools.PickResult;
+import net.nothingtv.gdx.tools.Physics;
 import net.nothingtv.gdx.tools.SceneObject;
 import net.nothingtv.gdx.tools.TerrainObject;
 
@@ -102,6 +100,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         solver =  new btSequentialImpulseConstraintSolver();
         dispatcher = new btCollisionDispatcher(collisionConfig);
         physicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
+        Physics.currentPhysicsWorld = physicsWorld;
         debugDrawer = new DebugDrawer();
         debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
         physicsWorld.setDebugDrawer(debugDrawer);
@@ -422,36 +421,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
         rigidBody.translate(motionState.rigidBodyOffset);
         sceneObject.updatePhysicsBoundingBox();
         info.dispose();
-    }
-
-    public PickResult pick(float maxDistance) {
-        if (physicsWorld != null) {
-            Ray pickRay = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
-            Vector3 rayFrom = new Vector3(pickRay.origin);
-            Vector3 rayTo = new Vector3(pickRay.direction).scl(maxDistance).add(rayFrom);
-            AllHitsRayResultCallback resultCallback = new AllHitsRayResultCallback(rayFrom, rayTo);
-            PickResult pickResult = new PickResult(resultCallback);
-            physicsWorld.rayTest(rayFrom, rayTo, resultCallback);
-            if (resultCallback.hasHit()) {
-                btScalarArray fractions = resultCallback.getHitFractions();
-                btCollisionObject collisionObject = null;
-                pickResult.hitPosition = new Vector3();
-                float minDist = maxDistance;
-                for (int i = 0; i < fractions.size(); i++) {
-                    float dist = fractions.atConst(i);
-                    if (dist < minDist) {
-                        collisionObject = resultCallback.getCollisionObjects().atConst(i);
-                        pickResult.hitPosition.set(rayFrom).lerp(rayTo, dist);
-                        minDist = dist;
-                    }
-                }
-                if (collisionObject != null && collisionObject.userData != null) {
-                    pickResult.pickedObject = (SceneObject) collisionObject.userData;
-                }
-            }
-            return pickResult;
-        }
-        return null;
     }
 
     @Override

@@ -27,6 +27,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private boolean useSplatGenerator = false;
     private Vector3 initialPos = new Vector3(12, 0, 12);
     protected FirstPersonController playerController;
+    private FootStepsSFX footSteps;
     private Label speedLabel;
     private TerrainSplatGenerator splatGenerator;
     private JSplatGenerator splatGeneratorUI;
@@ -124,6 +125,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             playerController.grabMouse();
             addInputController(playerController);
 
+            footSteps = new FootStepsSFX(playerController);
+            footSteps.initializeDefaults();
+
             speedLabel = new Label("00.00 m/s", skin);
             speedLabel.addAction(new Action() {
                 @Override
@@ -147,8 +151,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     public void updateController(float delta) {
         super.updateController(delta);
-        if (playerController != null)
+        if (playerController != null) {
             playerController.update(delta);
+            footSteps.update(delta);
+        }
     }
 
     @Override
@@ -166,8 +172,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_FastWireframe|btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
         }
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
-            PickResult picked = pick(100);
-            if (picked.hasHit() && picked.pickedObject != null) {
+            PickResult picked = Physics.pick(camera, 100);
+            if (picked != null && picked.hasHit() && picked.pickedObject != null) {
                 if (picked.pickedObject == terrainObject) {
                     Vector3 terrainLocal = new Vector3(picked.hitPosition);
                     terrainObject.worldToLocalLocation(terrainLocal);

@@ -6,6 +6,8 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import net.nothingtv.gdx.tools.CastResult;
+import net.nothingtv.gdx.tools.Physics;
 import net.nothingtv.gdx.tools.SceneObject;
 
 public class FirstPersonController extends InputAdapter {
@@ -34,11 +36,12 @@ public class FirstPersonController extends InputAdapter {
     private final Vector3 movement = new Vector3();
     private final Vector3 linearForce = new Vector3();
     private boolean walking;
+    private boolean grounded;
     private float currentMaxSpeed;
     private boolean mouseGrabbed;
     private boolean speedUp;
     private float cameraToPlayerDistance;
-
+    private final Vector3 down = new Vector3(0, -1, 0);
     private float currentSpeed;
     private final Vector3 cameraRotation = new Vector3();
     private final Vector3 cameraLocalPosition = new Vector3();
@@ -71,6 +74,14 @@ public class FirstPersonController extends InputAdapter {
 
     public float getCurrentSpeed() {
         return currentSpeed;
+    }
+
+    public boolean isRunning() {
+        return currentSpeed > 1.3f * config.maxWalkingSpeed;
+    }
+
+    public boolean isGrounded() {
+        return grounded;
     }
 
     public void grabMouse() {
@@ -170,6 +181,13 @@ public class FirstPersonController extends InputAdapter {
     }
 
     private void applyForces(float delta) {
+        float heightOverGround = 100;
+        CastResult result = Physics.castSphere(0.3f, player.getPosition(), down, 3f, player.rigidBody);
+        if (result != null && result.hasHit()) {
+            heightOverGround = player.getPosition().y - result.hitPosition.y - player.physicsBoundingBox.getHeight()/2;
+        }
+        grounded = heightOverGround < 0.05f;
+
         Vector3 velocityXZ = player.rigidBody.getLinearVelocity();
         velocityXZ.y = 0;
         currentSpeed = velocityXZ.len();
