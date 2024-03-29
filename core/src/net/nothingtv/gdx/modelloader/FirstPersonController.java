@@ -22,6 +22,7 @@ public class FirstPersonController extends InputAdapter {
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
+        public float jumpForce = 50f;
         public float breakForce = 50f;
         public boolean simulateSideFriction = true;
 
@@ -107,29 +108,33 @@ public class FirstPersonController extends InputAdapter {
     public boolean keyDown(int keycode) {
         boolean handled = false;
         if (isMouseGrabbed()) {
-            switch (keycode) {
-                case Input.Keys.W:
+            handled = switch (keycode) {
+                case Input.Keys.W -> {
                     movement.z = 1;
-                    handled = true;
-                    break;
-                case Input.Keys.S:
+                    yield true;
+                }
+                case Input.Keys.S -> {
                     movement.z = -1;
-                    handled = true;
-                    break;
-                case Input.Keys.A:
+                    yield true;
+                }
+                case Input.Keys.A -> {
                     movement.x = 1;
-                    handled = true;
-                    break;
-                case Input.Keys.D:
+                    yield true;
+                }
+                case Input.Keys.D -> {
                     movement.x = -1;
-                    handled = true;
-                    break;
-                case Input.Keys.SHIFT_LEFT:
-                case Input.Keys.SHIFT_RIGHT:
+                    yield true;
+                }
+                case Input.Keys.SPACE -> {
+                    movement.y = 1;
+                    yield true;
+                }
+                case Input.Keys.SHIFT_LEFT, Input.Keys.SHIFT_RIGHT -> {
                     speedUp = true;
-                    handled = true;
-                    break;
-            }
+                    yield true;
+                }
+                default -> false;
+            };
         }
         return handled;
     }
@@ -138,23 +143,25 @@ public class FirstPersonController extends InputAdapter {
     public boolean keyUp(int keycode) {
         boolean handled = false;
         if (isMouseGrabbed()) {
-            switch (keycode) {
-                case Input.Keys.W:
-                case Input.Keys.S:
+            handled = switch (keycode) {
+                case Input.Keys.W, Input.Keys.S -> {
                     movement.z = 0;
-                    handled = true;
-                    break;
-                case Input.Keys.A:
-                case Input.Keys.D:
+                    yield true;
+                }
+                case Input.Keys.A, Input.Keys.D -> {
                     movement.x = 0;
-                    handled = true;
-                    break;
-                case Input.Keys.SHIFT_LEFT:
-                case Input.Keys.SHIFT_RIGHT:
+                    yield true;
+                }
+                case Input.Keys.SPACE -> {
+                    movement.y = 0;
+                    yield true;
+                }
+                case Input.Keys.SHIFT_LEFT, Input.Keys.SHIFT_RIGHT -> {
                     speedUp = false;
-                    handled = true;
-                    break;
-            }
+                    yield true;
+                }
+                default -> false;
+            };
         }
         return handled;
     }
@@ -177,6 +184,8 @@ public class FirstPersonController extends InputAdapter {
         else
             currentMaxSpeed = config.maxWalkingSpeed;
         applyForces(delta);
+        if (!grounded)
+            movement.y = 0;
         camera.update(true);
     }
 
@@ -192,15 +201,18 @@ public class FirstPersonController extends InputAdapter {
         velocityXZ.y = 0;
         currentSpeed = velocityXZ.len();
         walking = velocityXZ.len2() > config.minVelocity2;
+        linearForce.setZero();
         if (movement.len2() > 1e-6f) {
-            if (currentSpeed < currentMaxSpeed) {
-                linearForce.set(movement).scl(player.mass * config.accelerationForce);
+            // accelerating up to max speed when grounded
+            if (grounded && currentSpeed < currentMaxSpeed) {
+                linearForce.set(movement.x * config.accelerationForce, movement.y * config.jumpForce, movement.z * config.accelerationForce).scl(player.mass);
                 player.localToWorldDirection(linearForce);
             } else {
                 linearForce.x = 0;
                 linearForce.z = 0;
             }
-        } else {
+        } else if (grounded) {
+            // breaking when grounded
             linearForce.set(velocityXZ);
             linearForce.scl(player.mass * -config.breakForce);
         }
