@@ -15,6 +15,7 @@ public class DesktopLauncher {
 		config.setWindowedMode(1920, 1080);
 		//int samples = 4; // you can also play around with higher values like 4
 		//config.setBackBufferConfig(8, 8, 8, 8, 16, 0, samples); // 8, 8, 8, 8, 16, 0 are default values
+		config.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.GL30, 4,3);
 		new Lwjgl3Application(new TestGame(), config);
 	}
 }

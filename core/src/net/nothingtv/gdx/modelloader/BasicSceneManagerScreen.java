@@ -35,6 +35,7 @@ import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
+import net.nothingtv.gdx.terrain.Foliage;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.terrain.TerrainPBRShaderProvider;
 import net.nothingtv.gdx.tools.Debug;
@@ -119,7 +120,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         //pbrConfig.numDirectionalLights = 1;
         pbrConfig.numPointLights = 0;
         pbrConfig.numSpotLights = 0;
-        //pbrConfig.glslVersion = "140";
+        pbrConfig.glslVersion = "140";
 
         DepthShader.Config depthConfig = PBRShaderProvider.createDefaultDepthConfig();
         depthConfig.numBones = pbrConfig.numBones;
@@ -400,6 +401,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public TerrainObject add(String name, ModelInstance modelInstance, Terrain terrain) {
         sceneManager.getRenderableProviders().add(modelInstance);
         return new TerrainObject(name, modelInstance, terrain);
+    }
+
+    public void add(Foliage foliage) {
+        sceneManager.getRenderableProviders().add(foliage);
     }
 
     public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {

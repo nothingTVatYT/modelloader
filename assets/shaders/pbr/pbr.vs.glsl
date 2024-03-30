@@ -192,6 +192,9 @@ attribute vec2 a_boneWeight7;
 #endif
 
 uniform mat4 u_worldTrans;
+#if defined(instanced)
+attribute mat4 i_worldTrans;
+#endif // instanced
 
 #if defined(numBones)
 #if numBones > 0
@@ -285,7 +288,13 @@ void main() {
 	#else
 		vec4 pos = u_worldTrans * vec4(morph_pos, 1.0);
 	#endif
-	
+
+	vec3 normalVec = a_normal;
+	#if defined(instanced)
+	pos *= i_worldTrans;
+	normalVec = a_normal * transpose(inverse(mat3(i_worldTrans)));
+	#endif
+
 	v_position = vec3(pos.xyz) / pos.w;
 	gl_Position = u_projViewTrans * pos;
 	
@@ -303,7 +312,7 @@ void main() {
 	
 	#if defined(normalFlag)
 		
-		vec3 morph_nor = a_normal;
+		vec3 morph_nor = normalVec;
 		#ifdef morphTargetsFlag
 			#ifdef normal0Flag
 				morph_nor += a_normal0 * u_morphTargets1.x;

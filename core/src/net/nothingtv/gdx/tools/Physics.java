@@ -72,8 +72,8 @@ public class Physics {
             Vector3 rayFrom = new Vector3(pickRay.origin);
             Vector3 rayTo = new Vector3(pickRay.direction).scl(maxDistance).add(rayFrom);
             AllHitsRayResultCallback resultCallback = new AllHitsRayResultCallback(rayFrom, rayTo);
-            PickResult pickResult = new PickResult(resultCallback);
             currentPhysicsWorld.rayTest(rayFrom, rayTo, resultCallback);
+            PickResult pickResult = new PickResult(resultCallback);
             if (resultCallback.hasHit()) {
                 btScalarArray fractions = resultCallback.getHitFractions();
                 btCollisionObject collisionObject = null;
@@ -94,6 +94,7 @@ public class Physics {
             resultCallback.dispose();
             return pickResult;
         }
+        System.err.println("Pick called without a configured physics world.");
         return null;
     }
 

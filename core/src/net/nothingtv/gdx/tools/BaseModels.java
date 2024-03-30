@@ -26,6 +26,11 @@ public class BaseModels {
                 VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
     }
 
+    public static Model createCone(float width, float height, Material material) {
+        return new ModelBuilder().createCone(width, height, width, 16, material,
+                VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
+    }
+
     public static Model createDownArrow(Color color) {
         ModelBuilder builder = new ModelBuilder();
         builder.begin();

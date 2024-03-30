@@ -43,7 +43,11 @@ public class TerrainPBRShaderProvider extends PBRShaderProvider {
     protected PBRShader createShader(Renderable renderable, PBRShaderConfig config, String prefix) {
         if (renderable.material.has(TerrainTextureAttribute.Alpha1))
             return new TerrainPBRShader(renderable, config, prefix);
-        else
+        else if (renderable.meshPart.mesh.isInstanced()) {
+            prefix += "#define instanced\n#define GLSL3\n";
+            System.out.println("create a shader for instanced mesh");
+            return new TerrainPBRShader(renderable, config, prefix);
+        } else
             return super.createShader(renderable, config, prefix);
     }
 }

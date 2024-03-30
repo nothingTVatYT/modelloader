@@ -12,17 +12,18 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import net.nothingtv.gdx.terrain.NoiseHeightSampler;
-import net.nothingtv.gdx.terrain.Terrain;
-import net.nothingtv.gdx.terrain.TerrainConfig;
-import net.nothingtv.gdx.terrain.TerrainSplatGenerator;
+import com.badlogic.gdx.utils.Array;
+import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
+
+import java.util.Random;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
     private SceneObject box;
     private SceneObject ball;
     private TerrainObject terrainObject;
+    private Foliage foliage;
     private boolean lightControlsOn = false;
     private boolean useSplatGenerator = false;
     private Vector3 initialPos = new Vector3(12, 0, 12);
@@ -40,7 +41,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
-        screenConfig.usePlayerController = true;
+        screenConfig.usePlayerController = false;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();
@@ -144,6 +145,20 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             camera.up.set(Vector3.Y);
             camera.update();
         }
+
+        // add foliage
+        foliage = new Foliage();
+        Array<Vector3> positions = new Array<>();
+        Random rnd = new Random(123);
+        for (int i = 0; i < 5000; i++) {
+            float angle = rnd.nextFloat(2 * (float)Math.PI);
+            float radius = rnd.nextFloat(40);
+            Vector3 v = new Vector3(70, 0, 100).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
+            v.y = terrain.getHeightAt(v.x, v.z) + 2.5f;
+            positions.add(v);
+        }
+        foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
+        add(foliage);
 
         showStats(screenConfig.showStats);
     }
