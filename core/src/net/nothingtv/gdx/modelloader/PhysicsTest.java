@@ -158,14 +158,14 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             float angle = rnd.nextFloat(2 * (float)Math.PI);
             float radius = rnd.nextFloat(foliageRadius);
             Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
-            v.y = terrain.getHeightAt(v.x, v.z) + 2.5f;
+            v.y = terrain.getHeightAt(v.x, v.z);
             positions.add(v);
         }
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
         //foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
         foliage.add(tree1, positions, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
-        foliage.setCameraMinDist(20);
+        foliage.setCameraMinDist(60);
         foliage.setCameraMaxDist(512);
         add(foliage);
 

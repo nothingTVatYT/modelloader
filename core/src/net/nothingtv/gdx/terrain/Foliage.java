@@ -29,6 +29,8 @@ public class Foliage implements RenderableProvider {
         ModelInstance modelInstance;
         FloatBuffer instanceData;
         QuadTreeTransforms quadTree;
+        Array<Array<Matrix4>> subTransforms;
+        boolean sharedInstanceData;
     }
 
     private final Array<FoliageType> foliageTypes;
@@ -66,8 +68,16 @@ public class Foliage implements RenderableProvider {
             Matrix4 mat = new Matrix4().translate(pos);
             if ((flags & RandomizeYRotation) != 0)
                 mat.rotate(0, 1, 0, rnd.nextFloat(360));
+            if (model.meshes.size > 1 && model.nodes.size > 1) {
+                type.subTransforms = new Array<>(model.meshes.size-1);
+                for (int i = 1; i < model.meshes.size; i++) {
+                    Matrix4 subMat = new Matrix4(model.nodes.get(i).localTransform).mul(mat);
+                    type.subTransforms.get(i).add(subMat);
+                }
+            }
             type.transforms.add(mat.tra());
         }
+        type.sharedInstanceData = type.model.nodes.size == 1;
         foliageTypes.add(type);
     }
 
@@ -91,7 +101,7 @@ public class Foliage implements RenderableProvider {
                 for (FoliageType type : foliageTypes) {
                     if (type.modelInstance == null) {
                         if (type.model.meshes.size > 1)
-                            System.out.printf("Warning: This model for the foliage contains %d meshes.%n", type.model.meshes.size);
+                            System.out.printf("Warning: This model for the foliage contains %d meshes and %d nodes.%n", type.model.meshes.size, type.model.nodes.size);
                         type.modelInstance = new ModelInstance(type.model);
                         type.model.meshes.first().enableInstancedRendering(true, type.transforms.size,
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
@@ -119,6 +129,18 @@ public class Foliage implements RenderableProvider {
                             type.quadTree.insert(transform);
                         type.instanceData = mats;
                         type.model.meshes.first().setInstanceData(mats);
+                        if (type.model.meshes.size > 1) {
+                            if (type.sharedInstanceData) {
+                                for (int i = 1; i < type.model.meshes.size; i++) {
+                                    type.model.meshes.get(i).enableInstancedRendering(true, type.transforms.size,
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 1),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 2),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 3));
+                                    type.model.meshes.get(i).setInstanceData(mats);
+                                }
+                            }
+                        }
                     }
 
                     // max update 10x per second
@@ -139,6 +161,10 @@ public class Foliage implements RenderableProvider {
                             mats.flip();
 
                             type.modelInstance.model.meshes.first().setInstanceData(mats);
+                            if (type.model.meshes.size > 1 && type.sharedInstanceData) {
+                                for (int i = 1; i < type.model.meshes.size; i++)
+                                    type.model.meshes.get(i).setInstanceData(mats);
+                            }
                             lastPosition.set(camera.position);
                             lastDirection.set(camera.direction);
                             lastCulledFrame = Gdx.graphics.getFrameId();
