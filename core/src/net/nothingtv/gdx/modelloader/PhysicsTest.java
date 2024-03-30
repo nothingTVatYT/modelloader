@@ -150,14 +150,19 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage = new Foliage();
         Array<Vector3> positions = new Array<>();
         Random rnd = new Random(123);
-        for (int i = 0; i < 5000; i++) {
+        Vector3 foliageCenter = new Vector3(512, 0, 512);
+        float foliageRadius = 500;
+        for (int i = 0; i < 250000; i++) {
             float angle = rnd.nextFloat(2 * (float)Math.PI);
-            float radius = rnd.nextFloat(40);
-            Vector3 v = new Vector3(70, 0, 100).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
+            float radius = rnd.nextFloat(foliageRadius);
+            Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
             v.y = terrain.getHeightAt(v.x, v.z) + 2.5f;
             positions.add(v);
         }
         foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
+        foliage.setCamera(camera);
+        foliage.setCameraMinDist(20);
+        foliage.setCameraMaxDist(512);
         add(foliage);
 
         showStats(screenConfig.showStats);
