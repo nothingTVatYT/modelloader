@@ -7,12 +7,14 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Array;
+import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
 
@@ -152,14 +154,16 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Random rnd = new Random(123);
         Vector3 foliageCenter = new Vector3(512, 0, 512);
         float foliageRadius = 500;
-        for (int i = 0; i < 250000; i++) {
+        for (int i = 0; i < 1500; i++) {
             float angle = rnd.nextFloat(2 * (float)Math.PI);
             float radius = rnd.nextFloat(foliageRadius);
             Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
             v.y = terrain.getHeightAt(v.x, v.z) + 2.5f;
             positions.add(v);
         }
-        foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
+        Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
+        //foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
+        foliage.add(tree1, positions, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMinDist(20);
         foliage.setCameraMaxDist(512);

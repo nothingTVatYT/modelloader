@@ -90,12 +90,14 @@ public class Foliage implements RenderableProvider {
                 // set up instancing
                 for (FoliageType type : foliageTypes) {
                     if (type.modelInstance == null) {
+                        if (type.model.meshes.size > 1)
+                            System.out.printf("Warning: This model for the foliage contains %d meshes.%n", type.model.meshes.size);
+                        type.modelInstance = new ModelInstance(type.model);
                         type.model.meshes.first().enableInstancedRendering(true, type.transforms.size,
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 1),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 2),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 3));
-                        type.modelInstance = new ModelInstance(type.model);
                         FloatBuffer mats = BufferUtils.newFloatBuffer(type.transforms.size * 16);
                         float minX = Float.MAX_VALUE;
                         float maxX = -Float.MAX_VALUE;

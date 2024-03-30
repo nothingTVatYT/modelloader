@@ -1,6 +1,7 @@
 package net.nothingtv.gdx.modelloader;
 
 import com.badlogic.gdx.*;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
@@ -75,6 +76,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected SceneObject player;
     private float shadowBias = 1/2048f;
     protected GLProfiler glProfiler;
+    protected AssetManager assetManager;
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -82,6 +84,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     protected void init() {
         gameTime = 0;
+        assetManager = new AssetManager();
         if (screenConfig.usePhysics)
             initPhysics();
         initCamera();
