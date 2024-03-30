@@ -7,81 +7,115 @@ import com.badlogic.gdx.utils.Array;
 
 // from https://gist.github.com/AbhijeetMajumdar/c7b4f10df1b87f974ef4
 
-class Node {
-    float x, y, z;
-    Matrix4 matrix;
-
-    // This class expects a transposed matrix
-    Node(Matrix4 matrix) {
-        this.matrix = matrix;
-        this.x = matrix.val[Matrix4.M30];
-        this.y = matrix.val[Matrix4.M31];
-        this.z = matrix.val[Matrix4.M32];
-    }
-}
-
-class NodeBoundary {
-    public NodeBoundary(float xMin, float yMin, float xMax, float yMax) {
-        super();
-        /*
-         *  Storing two diagonal points
-         */
-        this.xMin = xMin;
-        this.yMin = yMin;
-        this.xMax = xMax;
-        this.yMax = yMax;
-    }
-
-    public boolean inRange(float x, float y) {
-        return (x >= this.xMin && x <= this.xMax
-                && y >= this.yMin && y <= this.yMax);
-    }
-
-    float xMin, yMin, xMax, yMax;
-}
 
 public class QuadTreeTransforms {
-    final int MAX_CAPACITY = 16;
-    int level;
-    Array<Node> nodes;
-    QuadTreeTransforms northWest = null;
-    QuadTreeTransforms northEast = null;
-    QuadTreeTransforms southWest = null;
-    QuadTreeTransforms southEast = null;
-    NodeBoundary nodeBoundary;
-    BoundingBox boundingBox;
+    final TransformsBranch root;
 
-    public QuadTreeTransforms(float minX, float maxX, float minZ, float maxZ) {
-        this(1, new NodeBoundary(minX, minZ, maxX, maxZ));
+    public int transformsPerNode = 16;
+    float minDistance2 = 100, maxDistance2 = 512;
+    public float minX, minZ, maxX, maxZ;
+
+    public QuadTreeTransforms(float minX, float minZ, float maxX, float maxZ) {
+        this.minX = minX;
+        this.minZ = minZ;
+        this.maxX = maxX;
+        this.maxZ = maxZ;
+        this.root = new TransformsBranch(this, 1, new NodeBoundary(minX, minZ, maxX, maxZ));
     }
 
-    QuadTreeTransforms(int level, NodeBoundary nodeBoundary) {
-        this.level = level;
-        nodes = new Array<>();
-        this.nodeBoundary = nodeBoundary;
+    public void setCameraMinMax(float min, float max) {
+        minDistance2 = min * min;
+        maxDistance2 = max * max;
     }
 
-    public static void inFrustum(QuadTreeTransforms tree, Camera camera, float minDistance2, float maxDistance2, Array<Matrix4> result) {
-        if (tree == null)
+    public void setCameraMin2Max2(float min2, float max2) {
+        minDistance2 = min2;
+        maxDistance2 = max2;
+    }
+    /**
+     * Inserts a matrix in the quad tree
+     * @param matrix a transposed matrix to be added
+     */
+    public void insert(Matrix4 matrix) {
+        root.insert(matrix.val[Matrix4.M30], matrix.val[Matrix4.M31], matrix.val[Matrix4.M32], matrix);
+    }
+
+    public void inFrustum(Camera camera, Array<Matrix4> result) {
+        inFrustum(root, camera, result);
+    }
+
+    void inFrustum(TransformsBranch branch, Camera camera, Array<Matrix4> result) {
+        if (branch == null)
             return;
 
-        if (tree.boundingBox == null) {
-            tree.updateBoundingBox();
+        if (branch.boundingBox == null) {
+            branch.updateBoundingBox();
         }
 
-        if (!camera.frustum.boundsInFrustum(tree.boundingBox))
+        if (!camera.frustum.boundsInFrustum(branch.boundingBox))
             return;
 
-        for (Node node : tree.nodes) {
-            if (camera.position.dst2(node.x, node.y, node.z) < maxDistance2 &&
-                    (camera.position.dst2(node.x, node.y, node.z) < minDistance2 ||
-                    camera.frustum.pointInFrustum(node.x, node.y, node.z)))
+        for (Node node : branch.nodes) {
+            if (camera.position.dst2(node.x, node.y, node.z) < branch.tree.maxDistance2 &&
+                    (camera.position.dst2(node.x, node.y, node.z) < branch.tree.minDistance2 ||
+                            camera.frustum.pointInFrustum(node.x, node.y, node.z)))
                 result.add(node.matrix);
         }
-        inFrustum(tree.northWest, camera, minDistance2, maxDistance2, result);
-        inFrustum(tree.northEast, camera, minDistance2, maxDistance2, result);
-        inFrustum(tree.southWest, camera, minDistance2, maxDistance2, result);
-        inFrustum(tree.southEast, camera, minDistance2, maxDistance2, result);
+        inFrustum(branch.northWest, camera, result);
+        inFrustum(branch.northEast, camera, result);
+        inFrustum(branch.southWest, camera, result);
+        inFrustum(branch.southEast, camera, result);
+    }
+
+    static class Node {
+        float x, y, z;
+        Matrix4 matrix;
+
+        // This class expects a transposed matrix
+        Node(Matrix4 matrix) {
+            this.matrix = matrix;
+            this.x = matrix.val[Matrix4.M30];
+            this.y = matrix.val[Matrix4.M31];
+            this.z = matrix.val[Matrix4.M32];
+        }
+    }
+
+    static class NodeBoundary {
+        public NodeBoundary(float xMin, float yMin, float xMax, float yMax) {
+            super();
+            /*
+             *  Storing two diagonal points
+             */
+            this.xMin = xMin;
+            this.yMin = yMin;
+            this.xMax = xMax;
+            this.yMax = yMax;
+        }
+
+        public boolean inRange(float x, float y) {
+            return (x >= this.xMin && x <= this.xMax
+                    && y >= this.yMin && y <= this.yMax);
+        }
+
+        float xMin, yMin, xMax, yMax;
+    }
+
+    static class TransformsBranch {
+    int level;
+    Array<Node> nodes;
+    TransformsBranch northWest = null;
+    TransformsBranch northEast = null;
+    TransformsBranch southWest = null;
+    TransformsBranch southEast = null;
+    NodeBoundary nodeBoundary;
+    BoundingBox boundingBox;
+    QuadTreeTransforms tree;
+
+    TransformsBranch(QuadTreeTransforms tree, int level, NodeBoundary nodeBoundary) {
+        this.level = level;
+        nodes = new Array<>();
+        this.tree = tree;
+        this.nodeBoundary = nodeBoundary;
     }
 
     void split() {
@@ -90,25 +124,17 @@ public class QuadTreeTransforms {
         float yOffset = this.nodeBoundary.yMin
                 + (this.nodeBoundary.yMax - this.nodeBoundary.yMin) / 2;
 
-        northWest = new QuadTreeTransforms(this.level + 1, new NodeBoundary(
+        northWest = new TransformsBranch(tree, this.level + 1, new NodeBoundary(
                 this.nodeBoundary.xMin, this.nodeBoundary.yMin, xOffset,
                 yOffset));
-        northEast = new QuadTreeTransforms(this.level + 1, new NodeBoundary(xOffset,
+        northEast = new TransformsBranch(tree, this.level + 1, new NodeBoundary(xOffset,
                 this.nodeBoundary.yMin, this.nodeBoundary.xMax, yOffset));
-        southWest = new QuadTreeTransforms(this.level + 1, new NodeBoundary(
+        southWest = new TransformsBranch(tree, this.level + 1, new NodeBoundary(
                 this.nodeBoundary.xMin, yOffset, xOffset,
                 this.nodeBoundary.yMax));
-        southEast = new QuadTreeTransforms(this.level + 1, new NodeBoundary(xOffset, yOffset,
+        southEast = new TransformsBranch(tree, this.level + 1, new NodeBoundary(xOffset, yOffset,
                 this.nodeBoundary.xMax, this.nodeBoundary.yMax));
 
-    }
-
-    /**
-     * Inserts a matrix in the quad tree
-     * @param matrix a transposed matrix to be added
-     */
-    public void insert(Matrix4 matrix) {
-        insert(matrix.val[Matrix4.M30], matrix.val[Matrix4.M31], matrix.val[Matrix4.M32], matrix);
     }
 
     void insert(float x, float y, float z, Matrix4 matrix) {
@@ -117,7 +143,7 @@ public class QuadTreeTransforms {
         }
 
         Node node = new Node(matrix);
-        if (nodes.size < MAX_CAPACITY) {
+        if (nodes.size < tree.transformsPerNode) {
             nodes.add(node);
             return;
         }
@@ -164,4 +190,5 @@ public class QuadTreeTransforms {
             }
         }
     }
+}
 }

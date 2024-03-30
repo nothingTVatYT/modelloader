@@ -113,7 +113,8 @@ public class Foliage implements RenderableProvider {
                         }
                         mats.flip();
                         System.out.printf("Create a quad tree with bounds %f/%f - %f/%f%n", minX, minZ, maxX, maxZ);
-                        type.quadTree = new QuadTreeTransforms(minX, maxX, minZ, maxZ);
+                        type.quadTree = new QuadTreeTransforms(minX, minZ, maxX, maxZ);
+                        type.quadTree.setCameraMin2Max2(cameraMinDist2, cameraMaxDist2);
                         for (Matrix4 transform : type.transforms)
                             type.quadTree.insert(transform);
                         type.instanceData = mats;
@@ -129,7 +130,7 @@ public class Foliage implements RenderableProvider {
                             Array<Matrix4> toBeRendered = new Array<>();
                             camera.update(true);
                             //long begin = System.nanoTime();
-                            QuadTreeTransforms.inFrustum(type.quadTree, camera, cameraMinDist2, cameraMaxDist2, toBeRendered);
+                            type.quadTree.inFrustum(camera, toBeRendered);
                             //long elapsed = System.nanoTime() - begin;
                             //System.out.printf("query of quad tree took %d ns (%1.5f ms)%n", elapsed, elapsed / 1e6f);
                             for (Matrix4 transform : toBeRendered) {
