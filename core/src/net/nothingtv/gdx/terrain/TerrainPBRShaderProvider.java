@@ -12,7 +12,7 @@ public class TerrainPBRShaderProvider extends PBRShaderProvider {
     public TerrainPBRShaderProvider(PBRShaderConfig defaultConfig) {
         super(defaultConfig);
         this.config.vertexShader = ShaderParser.parse(Gdx.files.internal("shaders/pbr/pbr.vs.glsl"));
-        this.config.fragmentShader = ShaderParser.parse(Gdx.files.internal("shaders/pbr/pbr_terrain.fs.glsl"));
+        //this.config.fragmentShader = ShaderParser.parse(Gdx.files.internal("shaders/pbr/pbr_terrain.fs.glsl"));
         //this.config.vertexShader = ShaderParser.parse(Gdx.files.internal("shaders/ww.vert"));
         //this.config.fragmentShader = ShaderParser.parse(Gdx.files.internal("shaders/ww.frag"));
     }

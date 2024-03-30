@@ -1,6 +1,30 @@
 #line 1
+// From gdx-gtlf project. Changes for instanced rendering marked with MS (Monstrous Software)
 
-#include <compat.vs.glsl>
+
+//#include <compat.vs.glsl>     // MS: inlined
+    #ifdef GL_ES
+    #define LOWP lowp
+    #define MED mediump
+    #define HIGH highp
+    precision highp float;
+    #else
+    #define MED
+    #define LOWP
+    #define HIGH
+    #endif
+
+    #ifdef GLSL3
+    #define attribute in
+    #define varying out
+    #endif
+
+
+// MS
+#if defined(instanced)
+    attribute mat4 i_worldTrans;
+#endif // instanced
+
 
 varying vec3 v_position;
 
@@ -55,7 +79,7 @@ attribute vec3 a_normal4;
 #endif
 #ifdef tangent4Flag
 attribute vec3 a_tangent4;
-#endif 
+#endif
 
 #ifdef position5Flag
 attribute vec3 a_position5;
@@ -75,7 +99,7 @@ attribute vec3 a_normal6;
 #endif
 #ifdef tangent6Flag
 attribute vec3 a_tangent6;
-#endif 
+#endif
 
 #ifdef position7Flag
 attribute vec3 a_position7;
@@ -186,15 +210,12 @@ attribute vec2 a_boneWeight7;
 #endif //boneWeight7Flag
 
 #if defined(numBones) && defined(boneWeightsFlag)
-#if (numBones > 0) 
+#if (numBones > 0)
 #define skinningFlag
 #endif
 #endif
 
 uniform mat4 u_worldTrans;
-#if defined(instanced)
-attribute mat4 i_worldTrans;
-#endif // instanced
 
 #if defined(numBones)
 #if numBones > 0
@@ -212,11 +233,11 @@ varying vec3 v_csmUVs[numCSM];
 #endif //shadowMapFlag
 
 void main() {
-	
+
 	#ifdef textureFlag
 		v_texCoord0 = (u_texCoord0Transform * vec3(a_texCoord0, 1.0)).xy;
 	#endif
-	
+
 	#ifdef textureCoord1Flag
 		v_texCoord1 = (u_texCoord1Transform * vec3(a_texCoord1, 1.0)).xy;
 	#endif
@@ -224,16 +245,16 @@ void main() {
 	#if defined(colorFlag)
 		v_color = a_color;
 	#endif // colorFlag
-		
+
 	#ifdef skinningFlag
 		mat4 skinning = mat4(0.0);
 		#ifdef boneWeight0Flag
 			skinning += (a_boneWeight0.y) * u_bones[int(a_boneWeight0.x)];
 		#endif //boneWeight0Flag
-		#ifdef boneWeight1Flag				
+		#ifdef boneWeight1Flag
 			skinning += (a_boneWeight1.y) * u_bones[int(a_boneWeight1.x)];
 		#endif //boneWeight1Flag
-		#ifdef boneWeight2Flag		
+		#ifdef boneWeight2Flag
 			skinning += (a_boneWeight2.y) * u_bones[int(a_boneWeight2.x)];
 		#endif //boneWeight2Flag
 		#ifdef boneWeight3Flag
@@ -252,7 +273,7 @@ void main() {
 			skinning += (a_boneWeight7.y) * u_bones[int(a_boneWeight7.x)];
 		#endif //boneWeight7Flag
 	#endif //skinningFlag
-	
+
 	#ifdef morphTargetsFlag
 		vec3 morph_pos = a_position;
 		#ifdef position0Flag
@@ -281,23 +302,25 @@ void main() {
 		#endif
 	#else
 		vec3 morph_pos = a_position;
-	#endif		
-	
+	#endif
+
 	#ifdef skinningFlag
 		vec4 pos = u_worldTrans * skinning * vec4(morph_pos, 1.0);
 	#else
 		vec4 pos = u_worldTrans * vec4(morph_pos, 1.0);
 	#endif
 
-	vec3 normalVec = a_normal;
-	#if defined(instanced)
-	pos *= i_worldTrans;
-	normalVec = a_normal * transpose(inverse(mat3(i_worldTrans)));
-	#endif
+    // MS
+    vec3 normalVec = a_normal;
+    #if defined(instanced)
+        pos *= i_worldTrans;
+        normalVec = a_normal * transpose(inverse(mat3(i_worldTrans)));
+    #endif
+    // end MS
 
 	v_position = vec3(pos.xyz) / pos.w;
 	gl_Position = u_projViewTrans * pos;
-	
+
 	#ifdef shadowMapFlag
 		vec4 spos = u_shadowMapProjViewTrans * pos;
 		v_shadowMapUv.xyz = (spos.xyz / spos.w) * 0.5 + 0.5;
@@ -309,10 +332,10 @@ void main() {
 		}
 		#endif
 	#endif //shadowMapFlag
-	
+
 	#if defined(normalFlag)
-		
-		vec3 morph_nor = normalVec;
+
+        vec3 morph_nor = normalVec;    // MM: was a_normal
 		#ifdef morphTargetsFlag
 			#ifdef normal0Flag
 				morph_nor += a_normal0 * u_morphTargets1.x;
@@ -338,17 +361,17 @@ void main() {
 			#ifdef normal7Flag
 				morph_nor += a_normal7 * u_morphTargets2.w;
 			#endif
-		#endif	
-		
+		#endif
+
 		#if defined(skinningFlag)
 			vec3 normal = (skinning * vec4(morph_nor, 0.0)).xyz;
 		#else
 			vec3 normal = morph_nor;
 		#endif
-		
+
 		// normal new
 		#ifdef tangentFlag
-			
+
 			vec3 morph_tan = a_tangent.xyz;
 			#ifdef morphTargetsFlag
 				#ifdef tangent0Flag
@@ -375,15 +398,15 @@ void main() {
 				#ifdef tangent7Flag
 					morph_tan += a_tangent7 * u_morphTargets2.w;
 				#endif
-			#endif	
-			
+			#endif
+
 			#if defined(skinningFlag)
 				vec3 tangent = (skinning * vec4(morph_tan, 0.0)).xyz;
 			#else
 				vec3 tangent = morph_tan;
 			#endif
-			
-			
+
+
 			vec3 normalW = normalize(vec3(u_normalMatrix * normal.xyz));
 			vec3 tangentW = normalize(vec3(u_worldTrans * vec4(tangent, 0.0)));
 			vec3 bitangentW = cross(normalW, tangentW) * a_tangent.w;
@@ -392,5 +415,5 @@ void main() {
 			v_normal = normalize(vec3(u_normalMatrix * normal.xyz));
 		#endif
 	#endif // normalFlag
-	
+
 }
