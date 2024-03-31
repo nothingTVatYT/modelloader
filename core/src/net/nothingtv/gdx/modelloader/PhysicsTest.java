@@ -36,6 +36,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private Decal playerDecal;
     private TerrainSplatGenerator splatGenerator;
     private JSplatGenerator splatGeneratorUI;
+    private JModelViewer modelViewer;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -170,6 +171,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.setCameraMinDist(60);
         foliage.setCameraMaxDist(128);
         add(foliage);
+        modelViewer = new JModelViewer();
+        modelViewer.showModel(tree1);
+        modelViewer.setVisible(true);
 
         showStats(screenConfig.showStats);
     }
@@ -272,6 +276,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     public void dispose() {
         if (foliage != null)
             foliage.dispose();
+        if (modelViewer != null)
+            modelViewer.dispose();
         super.dispose();
     }
 }
