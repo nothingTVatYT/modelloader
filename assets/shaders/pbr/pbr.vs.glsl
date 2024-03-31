@@ -3,21 +3,21 @@
 
 
 //#include <compat.vs.glsl>     // MS: inlined
-    #ifdef GL_ES
-    #define LOWP lowp
-    #define MED mediump
-    #define HIGH highp
-    precision highp float;
-    #else
-    #define MED
-    #define LOWP
-    #define HIGH
-    #endif
+#ifdef GL_ES
+#define LOWP lowp
+#define MED mediump
+#define HIGH highp
+precision highp float;
+#else
+#define MED
+#define LOWP
+#define HIGH
+#endif
 
-    #ifdef GLSL3
-    #define attribute in
-    #define varying out
-    #endif
+#ifdef GLSL3
+#define attribute in
+#define varying out
+#endif
 
 
 // MS

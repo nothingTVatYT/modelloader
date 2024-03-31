@@ -28,7 +28,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private Foliage foliage;
     private boolean lightControlsOn = false;
     private boolean useSplatGenerator = false;
-    private Vector3 initialPos = new Vector3(12, 0, 12);
+    private final Vector3 initialPos = new Vector3(200, 0, 200);
     protected FirstPersonController playerController;
     private FootStepsSFX footSteps;
     private Label speedLabel;
@@ -43,7 +43,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
-        screenConfig.usePlayerController = true;
+        screenConfig.usePlayerController = false;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();
@@ -171,8 +171,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         }
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
-        BaseModels.dumpModel(grass0, "grass0");
-        //foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
         foliage.add(tree1, positions, Foliage.RandomizeYRotation);
         foliage.add(grass0, positions0, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);

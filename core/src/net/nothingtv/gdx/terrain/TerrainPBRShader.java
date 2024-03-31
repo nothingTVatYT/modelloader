@@ -5,8 +5,6 @@ import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.attributes.FloatAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.shaders.BaseShader;
-import com.badlogic.gdx.graphics.g3d.shaders.DefaultShader;
-import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.shaders.PBRShader;
 
 public class TerrainPBRShader extends PBRShader {
@@ -99,5 +97,25 @@ public class TerrainPBRShader extends PBRShader {
         u_uv2Scale = register(Inputs.uv2Scale, Setters.uv2Scale);
         u_uv3Scale = register(Inputs.uv3Scale, Setters.uv3Scale);
         u_uv4Scale = register(Inputs.uv4Scale, Setters.uv4Scale);
+    }
+
+    public static String createPrefix(Renderable renderable, String prefix) {
+        if (renderable.material.has(TerrainTextureAttribute.Alpha1))
+            prefix += "#define alpha1TextureFlag\n";
+        if (renderable.material.has(TerrainTextureAttribute.Diffuse2))
+            prefix += "#define diffuse2TextureFlag\n";
+        if (renderable.material.has(TerrainTextureAttribute.Diffuse3))
+            prefix += "#define diffuse3TextureFlag\n";
+        if (renderable.material.has(TerrainTextureAttribute.Diffuse4))
+            prefix += "#define diffuse4TextureFlag\n";
+        if (renderable.material.has(TerrainFloatAttribute.UV1Scale))
+            prefix += "#define uv1ScaleFlag\n";
+        if (renderable.material.has(TerrainFloatAttribute.UV2Scale))
+            prefix += "#define uv2ScaleFlag\n";
+        if (renderable.material.has(TerrainFloatAttribute.UV3Scale))
+            prefix += "#define uv3ScaleFlag\n";
+        if (renderable.material.has(TerrainFloatAttribute.UV4Scale))
+            prefix += "#define uv4ScaleFlag\n";
+        return prefix;
     }
 }

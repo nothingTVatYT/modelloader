@@ -35,8 +35,8 @@ import net.mgsx.gltf.scene3d.scene.SceneSkybox;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
+import net.nothingtv.gdx.shaders.GameShaderProvider;
 import net.nothingtv.gdx.shaders.MyPBRDepthShaderProvider;
-import net.nothingtv.gdx.shaders.MyPBRShaderProvider;
 import net.nothingtv.gdx.terrain.Foliage;
 import net.nothingtv.gdx.terrain.Terrain;
 import net.nothingtv.gdx.tools.Debug;
@@ -130,7 +130,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         depthConfig.numBoneWeights = pbrConfig.numBoneWeights;
 
         //sceneManager = new SceneManager(new TerrainPBRShaderProvider(pbrConfig), new PBRDepthShaderProvider(depthConfig));
-        sceneManager = new SceneManager(new MyPBRShaderProvider(), new MyPBRDepthShaderProvider());
+        sceneManager = new SceneManager(new GameShaderProvider(pbrConfig), new MyPBRDepthShaderProvider());
 
         sceneManager.setCamera(camera);
         sceneManager.setAmbientLight(screenConfig.ambientLightBrightness);
