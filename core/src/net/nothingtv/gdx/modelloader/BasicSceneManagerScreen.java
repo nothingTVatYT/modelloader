@@ -153,6 +153,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
             csm.setCascades(camera, directionalShadowLight, 0, 4);
             //csm.lights.add(directionalLight);
             sceneManager.setCascadeShadowMap(csm);
+            directionalLight = directionalShadowLight;
         } else {
             directionalLight = new DirectionalLight();
             directionalLight.color.set(sunLightColor);

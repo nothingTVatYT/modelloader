@@ -68,6 +68,18 @@ public class Foliage implements RenderableProvider, Disposable {
         cameraMaxDist2 = dist * dist;
     }
 
+    public static Array<Vector3> createRandomPositions(Terrain terrain, Random rnd, Vector3 foliageCenter, float foliageRadius, int number) {
+        Array<Vector3> positions0 = new Array<>();
+        for (int i = 0; i < number; i++) {
+            float angle = rnd.nextFloat(2 * (float)Math.PI);
+            float radius = rnd.nextFloat(foliageRadius);
+            Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
+            v.y = terrain.getHeightAt(v.x, v.z);
+            positions0.add(v);
+        }
+        return positions0;
+    }
+
     public void add(Model model, Array<Vector3> positions, long flags) {
         FoliageType type = new FoliageType();
         type.model = model;

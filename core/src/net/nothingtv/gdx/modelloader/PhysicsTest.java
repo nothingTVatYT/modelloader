@@ -13,7 +13,6 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.utils.Array;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
@@ -42,8 +41,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     protected void init() {
         screenConfig.useSkybox = true;
-        screenConfig.useShadows = false;
-        screenConfig.usePlayerController = false;
+        screenConfig.useShadows = true;
+        screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();
@@ -66,7 +65,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
 
-        FileHandle layer1Tex = Gdx.files.internal("assets/textures/Ground026_2K_Color.jpg");
+        FileHandle layer1Tex = Gdx.files.internal("assets/textures/Ground023_2K_Color.png");
         FileHandle layer2Tex = Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg");
         FileHandle layer3Tex = Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg");
         FileHandle layer4Tex = Gdx.files.internal("assets/textures/Rock031_2K-PNG_Color.png");
@@ -150,29 +149,17 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
         // add foliage
         foliage = new Foliage();
-        Array<Vector3> positions = new Array<>();
-        Array<Vector3> positions0 = new Array<>();
         Random rnd = new Random(123);
         Vector3 foliageCenter = new Vector3(512, 0, 512);
         float foliageRadius = 512;
-        for (int i = 0; i < 5000; i++) {
-            float angle = rnd.nextFloat(2 * (float)Math.PI);
-            float radius = rnd.nextFloat(foliageRadius);
-            Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
-            v.y = terrain.getHeightAt(v.x, v.z);
-            positions.add(v);
-        }
-        for (int i = 0; i < 50000; i++) {
-            float angle = rnd.nextFloat(2 * (float)Math.PI);
-            float radius = rnd.nextFloat(foliageRadius);
-            Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
-            v.y = terrain.getHeightAt(v.x, v.z);
-            positions0.add(v);
-        }
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
-        foliage.add(tree1, positions, Foliage.RandomizeYRotation);
-        foliage.add(grass0, positions0, Foliage.RandomizeYRotation);
+        Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
+        Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
+        foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000), Foliage.RandomizeYRotation);
+        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
+        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
+        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMinDist(60);
         foliage.setCameraMaxDist(128);
