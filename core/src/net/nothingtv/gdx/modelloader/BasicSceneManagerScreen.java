@@ -5,6 +5,8 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
+import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
@@ -73,6 +75,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Label fpsLabel;
     protected Label statsLabel;
     protected Image crossHairImage;
+    protected DecalBatch decalBatch;
     protected InputMultiplexer inputMultiplexer;
     protected SceneObject player;
     private float shadowBias = 1/2048f;
@@ -95,6 +98,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         initUI();
         initController();
         initBatches();
+        initDecals();
         initScene();
     }
 
@@ -193,6 +197,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
         camera.lookAt(new Vector3(0, 1, 0));
         camera.up.set(Vector3.Y);
         camera.update(true);
+    }
+
+    protected void initDecals() {
+        if (screenConfig.useDecals)
+            decalBatch = new DecalBatch(100, new CameraGroupStrategy(camera));
     }
 
     protected void initUI() {
@@ -397,6 +406,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
             stage.draw();
         }
 
+        if (decalBatch != null) {
+            decalBatch.flush();
+        }
+
         updatePostRender(delta);
     }
 
@@ -484,6 +497,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         if (glProfiler != null)
             glProfiler.disable();
         stage.dispose();
+        if (decalBatch != null)
+            decalBatch.dispose();
         sceneManager.dispose();
         physicsWorld.dispose();
         dispatcher.dispose();

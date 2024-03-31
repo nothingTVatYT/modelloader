@@ -7,7 +7,9 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
@@ -31,6 +33,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected FirstPersonController playerController;
     private FootStepsSFX footSteps;
     private Label speedLabel;
+    private Decal playerDecal;
     private TerrainSplatGenerator splatGenerator;
     private JSplatGenerator splatGeneratorUI;
 
@@ -172,11 +175,24 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     }
 
     @Override
+    protected void initDecals() {
+        super.initDecals();
+        playerDecal = Decal.newDecal(new TextureRegion(new Texture(Gdx.files.internal("assets/textures/speech-bubble.png"))), true);
+        playerDecal.setDimensions(0.5f, 0.25f);
+    }
+
+    @Override
     public void updateController(float delta) {
         super.updateController(delta);
         if (playerController != null) {
             playerController.update(delta);
             footSteps.update(delta);
+            if (playerController.getCameraToPlayerDistance() > 0) {
+                playerDecal.setPosition(player.getPosition());
+                playerDecal.translate(0, 1.5f, 0);
+                playerDecal.lookAt(camera.position, camera.up);
+                decalBatch.add(playerDecal);
+            }
         }
     }
 

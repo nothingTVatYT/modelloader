@@ -85,6 +85,10 @@ public class FirstPersonController extends InputAdapter {
         return grounded;
     }
 
+    public float getCameraToPlayerDistance() {
+        return cameraToPlayerDistance;
+    }
+
     public void grabMouse() {
         if (mouseGrabbed) return;
         Gdx.input.setCursorCatched(true);
