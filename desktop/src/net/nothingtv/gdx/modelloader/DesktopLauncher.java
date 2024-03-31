@@ -3,6 +3,7 @@ package net.nothingtv.gdx.modelloader;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
 import net.nothingtv.gdx.testprojects.TestGame;
+import net.nothingtv.gdx.tools.Async;
 
 // Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
@@ -17,5 +18,6 @@ public class DesktopLauncher {
 		//config.setBackBufferConfig(8, 8, 8, 8, 16, 0, samples); // 8, 8, 8, 8, 16, 0 are default values
 		config.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.GL30, 4,3);
 		new Lwjgl3Application(new TestGame(), config);
+		Async.shutDown();
 	}
 }

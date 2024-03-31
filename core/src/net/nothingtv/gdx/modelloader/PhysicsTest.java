@@ -251,4 +251,11 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             game.setScreen(new SelectScreen(game));
         }
     }
+
+    @Override
+    public void dispose() {
+        if (foliage != null)
+            foliage.dispose();
+        super.dispose();
+    }
 }

@@ -1,6 +1,5 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.VertexAttribute;
 import com.badlogic.gdx.graphics.VertexAttributes;
@@ -12,16 +11,25 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
+import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
+import net.nothingtv.gdx.tools.Async;
 
 import java.nio.FloatBuffer;
 import java.util.Random;
 
-public class Foliage implements RenderableProvider {
+public class Foliage implements RenderableProvider, Disposable {
 
     public static int RandomizeYRotation = 1;
     public int renderMethod = 2;
     public boolean useFrustumCulling = true;
+
+    @Override
+    public void dispose() {
+        for (FoliageType foliageType : foliageTypes)
+            if (foliageType.dataUpdater != null)
+                foliageType.dataUpdater.cancel();
+    }
 
     public static class FoliageType {
         public Model model;
@@ -31,6 +39,7 @@ public class Foliage implements RenderableProvider {
         QuadTreeTransforms quadTree;
         Array<Array<Matrix4>> subTransforms;
         boolean sharedInstanceData;
+        InstanceDataUpdater dataUpdater;
     }
 
     private final Array<FoliageType> foliageTypes;
@@ -40,7 +49,6 @@ public class Foliage implements RenderableProvider {
     private float cameraMaxDist2 = 512*512;
     private final Vector3 lastPosition = new Vector3();
     private final Vector3 lastDirection = new Vector3();
-    private long lastCulledFrame;
 
     public Foliage() {
         foliageTypes = new Array<>();
@@ -97,6 +105,7 @@ public class Foliage implements RenderableProvider {
                 }
                 break;
             case 2:
+                boolean cameraChanged = camera != null && (!camera.position.epsilonEquals(lastPosition) || !camera.direction.epsilonEquals(lastDirection));
                 // set up instancing
                 for (FoliageType type : foliageTypes) {
                     if (type.modelInstance == null) {
@@ -141,38 +150,99 @@ public class Foliage implements RenderableProvider {
                                 }
                             }
                         }
+                        if (useFrustumCulling && camera != null) {
+                            type.dataUpdater = new InstanceDataUpdater(type, camera);
+                            Async.submit(type.dataUpdater);
+                        }
                     }
 
-                    // max update 10x per second
-                    if (useFrustumCulling && camera != null && Gdx.graphics.getFrameId() > (lastCulledFrame + (Gdx.graphics.getFramesPerSecond() / 10))) {
-                        if (!lastPosition.epsilonEquals(camera.position) || !lastDirection.epsilonEquals(camera.direction)) {
-                            FloatBuffer mats = type.instanceData;
-                            mats.rewind();
-                            mats.limit(type.transforms.size * 16);
-                            Array<Matrix4> toBeRendered = new Array<>();
-                            camera.update(true);
-                            //long begin = System.nanoTime();
-                            type.quadTree.inFrustum(camera, toBeRendered);
-                            //long elapsed = System.nanoTime() - begin;
-                            //System.out.printf("query of quad tree took %d ns (%1.5f ms)%n", elapsed, elapsed / 1e6f);
-                            for (Matrix4 transform : toBeRendered) {
-                                mats.put(transform.getValues());
-                            }
-                            mats.flip();
-
-                            type.modelInstance.model.meshes.first().setInstanceData(mats);
-                            if (type.model.meshes.size > 1 && type.sharedInstanceData) {
-                                for (int i = 1; i < type.model.meshes.size; i++)
-                                    type.model.meshes.get(i).setInstanceData(mats);
-                            }
-                            lastPosition.set(camera.position);
-                            lastDirection.set(camera.direction);
-                            lastCulledFrame = Gdx.graphics.getFrameId();
+                    if (type.dataUpdater != null && type.dataUpdater.hasNewData && cameraChanged) {
+                        type.modelInstance.model.meshes.first().setInstanceData(type.dataUpdater.getBuffer());
+                        if (type.model.meshes.size > 1 && type.sharedInstanceData) {
+                            for (int i = 1; i < type.model.meshes.size; i++)
+                                type.model.meshes.get(i).setInstanceData(type.dataUpdater.getBuffer());
                         }
+                        type.dataUpdater.calculateNext(50);
                     }
                     type.modelInstance.getRenderables(renderables, pool);
                 }
+                if (camera != null) {
+                    lastPosition.set(camera.position);
+                    lastDirection.set(camera.direction);
+                }
                 break;
+        }
+    }
+
+    static class InstanceDataUpdater implements Runnable {
+
+        FoliageType type;
+        Camera camera;
+        volatile boolean canceled;
+        volatile boolean hasNewData;
+        FloatBuffer mats;
+        long resetAt;
+        Array<Matrix4> toBeRendered = new Array<>();
+
+        InstanceDataUpdater(FoliageType type, Camera camera) {
+            this.type = type;
+            this.camera = camera;
+        }
+
+        public synchronized void calculateNext(int milliSeconds) {
+            resetAt = System.currentTimeMillis() + milliSeconds;
+            hasNewData = false;
+            notify();
+        }
+
+        public void cancel() {
+            canceled = true;
+        }
+
+        public FloatBuffer getBuffer() {
+            return mats;
+        }
+
+        @Override
+        public void run() {
+            canceled = false;
+            hasNewData = false;
+            calculateBuffer();
+            while (!canceled) {
+                if (resetAt > 0) {
+                    if (System.currentTimeMillis() >= resetAt) {
+                        calculateBuffer();
+                        resetAt = 0;
+                        continue;
+                    }
+                    try {
+                        Thread.sleep(Math.min(100, resetAt - System.currentTimeMillis()));
+                        continue;
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                }
+                synchronized (this) {
+                    try {
+                        wait(100);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        void calculateBuffer() {
+            mats = type.instanceData;
+            mats.rewind();
+            mats.limit(type.transforms.size * 16);
+            toBeRendered.clear();
+            type.quadTree.inFrustum(camera, toBeRendered);
+            for (Matrix4 transform : toBeRendered) {
+                mats.put(transform.getValues());
+            }
+            mats.flip();
+            hasNewData = true;
         }
     }
 }
