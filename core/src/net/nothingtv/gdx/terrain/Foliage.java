@@ -105,7 +105,7 @@ public class Foliage implements RenderableProvider, Disposable {
                 }
                 break;
             case 2:
-                boolean cameraChanged = camera != null && (!camera.position.epsilonEquals(lastPosition) || !camera.direction.epsilonEquals(lastDirection));
+                boolean cameraChanged = camera != null && (!camera.position.epsilonEquals(lastPosition, 1e-3f) || !camera.direction.epsilonEquals(lastDirection, 1e-3f));
                 // set up instancing
                 for (FoliageType type : foliageTypes) {
                     if (type.modelInstance == null) {

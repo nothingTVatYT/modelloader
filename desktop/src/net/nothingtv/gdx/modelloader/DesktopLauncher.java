@@ -9,7 +9,7 @@ import net.nothingtv.gdx.tools.Async;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
-		config.setForegroundFPS(1000);
+		config.setForegroundFPS(300);
 		config.useVsync(false);
 		config.setTitle("modelloader");
 		config.setResizable(true);

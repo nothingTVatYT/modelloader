@@ -43,7 +43,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     protected void init() {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = false;
-        screenConfig.usePlayerController = false;
+        screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         super.init();
@@ -151,22 +151,33 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         // add foliage
         foliage = new Foliage();
         Array<Vector3> positions = new Array<>();
+        Array<Vector3> positions0 = new Array<>();
         Random rnd = new Random(123);
         Vector3 foliageCenter = new Vector3(512, 0, 512);
-        float foliageRadius = 500;
-        for (int i = 0; i < 1500; i++) {
+        float foliageRadius = 512;
+        for (int i = 0; i < 5000; i++) {
             float angle = rnd.nextFloat(2 * (float)Math.PI);
             float radius = rnd.nextFloat(foliageRadius);
             Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
             v.y = terrain.getHeightAt(v.x, v.z);
             positions.add(v);
         }
+        for (int i = 0; i < 50000; i++) {
+            float angle = rnd.nextFloat(2 * (float)Math.PI);
+            float radius = rnd.nextFloat(foliageRadius);
+            Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
+            v.y = terrain.getHeightAt(v.x, v.z);
+            positions0.add(v);
+        }
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
+        Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
+        BaseModels.dumpModel(grass0, "grass0");
         //foliage.add(BaseModels.createCone(1, 5, BaseMaterials.colorPBR(Color.GREEN)), positions, Foliage.RandomizeYRotation);
         foliage.add(tree1, positions, Foliage.RandomizeYRotation);
+        foliage.add(grass0, positions0, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMinDist(60);
-        foliage.setCameraMaxDist(512);
+        foliage.setCameraMaxDist(128);
         add(foliage);
 
         showStats(screenConfig.showStats);
