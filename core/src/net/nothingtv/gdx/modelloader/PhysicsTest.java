@@ -130,6 +130,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             footSteps = new FootStepsSFX(playerController);
             footSteps.initializeDefaults();
 
+            showCrossHair(true);
+
             speedLabel = new Label("00.00 m/s", skin);
             speedLabel.addAction(new Action() {
                 @Override
@@ -213,6 +215,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             if (playerController.isMouseGrabbed())
                 playerController.releaseMouse();
             else playerController.grabMouse();
+            showCrossHair(playerController.isMouseGrabbed());
         }
         Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
         Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(150);
