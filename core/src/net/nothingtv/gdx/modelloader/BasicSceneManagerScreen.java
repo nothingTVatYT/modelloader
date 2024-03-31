@@ -225,18 +225,21 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public void showFPS(boolean showIt) {
         if (showIt) {
             if (fpsLabel == null) {
-                fpsLabel = new Label("0000", skin) {
+                fpsLabel = new Label("0000", skin);
+                fpsLabel.addAction(new Action() {
                     @Override
-                    public void act(float delta) {
-                        setText("" + Gdx.graphics.getFramesPerSecond());
-                        super.act(delta);
+                    public boolean act(float delta) {
+                        fpsLabel.setText(String.valueOf(Gdx.graphics.getFramesPerSecond()));
+                        return true;
                     }
-                };
+                });
             }
             table.add(fpsLabel);
         } else {
-            if (fpsLabel != null)
+            if (fpsLabel != null) {
+                fpsLabel.clear();
                 table.removeActor(fpsLabel);
+            }
             fpsLabel = null;
         }
     }
@@ -263,6 +266,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         } else {
             if (statsLabel != null) {
                 glProfiler.disable();
+                statsLabel.clear();
                 table.removeActor(statsLabel);
                 statsLabel = null;
             }
