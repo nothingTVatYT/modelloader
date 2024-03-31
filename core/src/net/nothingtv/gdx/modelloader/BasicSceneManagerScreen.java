@@ -72,6 +72,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Window lightControls;
     protected Label fpsLabel;
     protected Label statsLabel;
+    protected Image crossHairImage;
     protected InputMultiplexer inputMultiplexer;
     protected SceneObject player;
     private float shadowBias = 1/2048f;
@@ -205,6 +206,20 @@ public abstract class BasicSceneManagerScreen implements Screen {
         inputMultiplexer.addProcessor(stage);
         if (screenConfig.showFPS)
             showFPS(true);
+    }
+
+    public void showCrossHair(boolean showIt) {
+        if (showIt) {
+            if (crossHairImage == null) {
+                crossHairImage = new Image(new Texture(Gdx.files.internal("assets/textures/crosshair.png")));
+                crossHairImage.setSize(32, 32);
+                crossHairImage.setPosition(Gdx.graphics.getWidth()/2f, Gdx.graphics.getHeight()/2f);
+            }
+            stage.addActor(crossHairImage);
+        } else {
+            if (crossHairImage != null)
+                crossHairImage.remove();
+        }
     }
 
     public void showFPS(boolean showIt) {
