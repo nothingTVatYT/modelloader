@@ -45,6 +45,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
+        //Gdx.app.setLogLevel(Application.LOG_DEBUG);
         super.init();
     }
 
