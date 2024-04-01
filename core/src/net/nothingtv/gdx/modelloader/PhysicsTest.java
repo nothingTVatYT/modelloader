@@ -181,8 +181,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     protected void initDecals() {
         super.initDecals();
-        playerDecal = Decal.newDecal(new TextureRegion(new Texture(Gdx.files.internal("assets/textures/speech-bubble.png"))), true);
-        playerDecal.setDimensions(0.5f, 0.25f);
+        playerDecal = Decal.newDecal(new TextureRegion(new Texture(Gdx.files.internal("assets/textures/questionmark.png"))), true);
+        playerDecal.setDimensions(0.5f, 0.5f);
     }
 
     @Override

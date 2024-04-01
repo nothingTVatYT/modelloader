@@ -71,6 +71,7 @@ public class JModelViewer extends JFrame {
     public void showModel(Object model3d) {
         model.setModel3d(model3d);
         splitPane.setDividerLocation(0.5);
+        propertiesPanel.showObject(tree.getPathForRow(0));
     }
 
     private void updateTitle() {
