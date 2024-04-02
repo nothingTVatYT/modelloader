@@ -26,7 +26,7 @@ public class Bag extends GameItem
     {
         if (iconOpenedBag == null && !iconOpenedBagName.isEmpty())
             iconOpenedBag = new TextureRegionDrawable(new Texture(Gdx.files.internal("inventory/" + iconOpenedBagName)));
-        return isOpen ? iconOpenedBag : icon;
+        return isOpen ? iconOpenedBag : super.currentIcon();
     }
 
     @Override

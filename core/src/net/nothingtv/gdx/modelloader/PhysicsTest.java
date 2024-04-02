@@ -16,6 +16,7 @@ import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
+import net.nothingtv.gdx.inventory.GameItem;
 import net.nothingtv.gdx.inventory.Inventory;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
@@ -242,6 +243,13 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
+            inventoryView.showInventory(Inventory.PlayerInventory);
+        }
+
+        // test item pickup
+        if (Gdx.input.isKeyJustPressed(Input.Keys.N) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
+            GameItem bread = Inventory.PlayerInventory.newGameItemInstance("Bread", 0, 0, 1, 1);
+            Inventory.PlayerInventory.requestItemPickup(bread);
             inventoryView.showInventory(Inventory.PlayerInventory);
         }
 

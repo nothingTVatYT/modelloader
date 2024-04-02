@@ -46,8 +46,6 @@ public class InventoryContainerView extends Window {
         }
 
         public void setItem(GameItem item) {
-            if (this.item == item)
-                return;
             this.item = item;
             if (this.item != null) {
                 if (this.item.amount != 1)
