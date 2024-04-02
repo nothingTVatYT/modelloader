@@ -14,6 +14,7 @@ public class InventoryView {
     private final HashMap<Integer, InventoryContainerView> containerViews = new HashMap<>();
     private final Stage stage;
     private final Skin skin;
+    private boolean visible;
 
     public InventoryView(Stage stage, Skin skin) {
         this.stage = stage;
@@ -21,6 +22,7 @@ public class InventoryView {
         Drawable d = Inventory.emptyIcon;
         ImageTextButton.ImageTextButtonStyle slotStyle = new ImageTextButton.ImageTextButtonStyle(d, d, d, skin.getFont("default-font"));
         this.skin.add("default", slotStyle);
+        visible = false;
     }
 
     public void showPlayerInventory() {
@@ -35,8 +37,21 @@ public class InventoryView {
                 containerViews.put(container.containerId, view);
                 view.setY(y);
                 y += view.getPrefHeight();
+            } else {
+                stage.addActor(containerViews.get(container.containerId));
             }
         }
+        visible = true;
+    }
+
+    public void hideInventory() {
+        for (InventoryContainerView view : containerViews.values())
+            view.remove();
+        visible = false;
+    }
+
+    public boolean isVisible() {
+        return visible;
     }
 
     public InventoryContainerView showContainer(GameItemContainer container) {

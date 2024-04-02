@@ -217,6 +217,16 @@ public abstract class BasicSceneManagerScreen implements Screen {
             showFPS(true);
     }
 
+    protected void enableMouseInUI() {
+        if (inputMultiplexer.getProcessors().contains(stage, true))
+            return;
+        inputMultiplexer.addProcessor(stage);
+    }
+
+    protected void disableMouseInUI() {
+        inputMultiplexer.removeProcessor(stage);
+    }
+
     public void showCrossHair(boolean showIt) {
         if (showIt) {
             if (crossHairImage == null) {

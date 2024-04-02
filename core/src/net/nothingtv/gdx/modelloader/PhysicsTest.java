@@ -243,7 +243,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
-            inventoryView.showInventory(Inventory.PlayerInventory);
+            if (inventoryView.isVisible())
+                inventoryView.hideInventory();
+            else
+                inventoryView.showInventory(Inventory.PlayerInventory);
         }
 
         // test item pickup
@@ -254,9 +257,13 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         }
 
         if (screenConfig.usePlayerController && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
-            if (playerController.isMouseGrabbed())
+            if (playerController.isMouseGrabbed()) {
                 playerController.releaseMouse();
-            else playerController.grabMouse();
+                enableMouseInUI();
+            } else {
+                playerController.grabMouse();
+                disableMouseInUI();
+            }
             showCrossHair(playerController.isMouseGrabbed());
         }
         Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
