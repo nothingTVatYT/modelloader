@@ -15,40 +15,34 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import net.nothingtv.gdx.inventory.Inventory;
 
 public class SelectScreen extends ScreenAdapter {
-    private Stage stage;
-    private Table table;
-
+    private final Stage stage;
+    private final Skin skin;
 
     public SelectScreen (Game game) {
         stage = new Stage();
         Gdx.input.setInputProcessor(stage);
 
-        table = new Table();
+        Table table = new Table();
         table.setFillParent(true);
         table.pad(10).defaults().space(20);
         stage.addActor(table);
 
-        Skin skin = new Skin(Gdx.files.internal("data/uiskin.json"));
+        skin = new Skin(Gdx.files.internal("data/uiskin.json"));
 
-        table.add(createMenuButton("Terrain Test", skin, () -> game.setScreen(new TerrainTest())));
-        table.row();
+        table.add(createMenuButton("Terrain Test", () -> game.setScreen(new TerrainTest()))).row();
 
-        table.add(createMenuButton("Model Loader", skin, () -> game.setScreen(new ModelLoader())));
-        table.row();
+        table.add(createMenuButton("Model Loader", () -> game.setScreen(new ModelLoader()))).row();
 
-        table.add(createMenuButton("Shadow Test", skin, () -> game.setScreen(new ShadowTest())));
-        table.row();
+        table.add(createMenuButton("Shadow Test", () -> game.setScreen(new ShadowTest()))).row();
 
-        table.add(createMenuButton("Game/Physics Test", skin, () -> game.setScreen(new PhysicsTest(game))));
-        table.row();
+        table.add(createMenuButton("Game/Physics Test", () -> game.setScreen(new PhysicsTest(game)))).row();
 
-        table.add(createMenuButton("Update Innventory", skin, Inventory::writeItems));
-        table.row();
+        table.add(createMenuButton("Update Innventory", Inventory::writeItems)).row();
 
-        table.add(createMenuButton("Exit", skin, () -> Gdx.app.exit())).width(100);
+        table.add(createMenuButton("Exit", () -> Gdx.app.exit())).width(100);
     }
 
-    private TextButton createMenuButton(String text, Skin skin, Clicked l) {
+    private TextButton createMenuButton(String text, Clicked l) {
         TextButton button = new TextButton(text, skin);
         button.addListener(new ChangeListener() {
             @Override
