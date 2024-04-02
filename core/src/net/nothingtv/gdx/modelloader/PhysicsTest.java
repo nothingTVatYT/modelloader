@@ -16,8 +16,10 @@ import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
+import net.nothingtv.gdx.inventory.Inventory;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
+import net.nothingtv.gdx.ui.InventoryView;
 
 import java.util.Random;
 
@@ -37,6 +39,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private TerrainSplatGenerator splatGenerator;
     private JSplatGenerator splatGeneratorUI;
     private JModelViewer modelViewer;
+    private InventoryView inventoryView;
 
     public PhysicsTest(Game game) {
         super(game);
@@ -56,6 +59,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     public void initScene() {
         super.initScene();
+
+        Inventory.init();
+        inventoryView = new InventoryView(stage, skin);
+
         floor = add("floor", BaseModels.createBox(10, 1, 10, BaseMaterials.whiteColor()));
         wrapRigidBody(floor, 10, BaseShapes.createBoxShape(floor.modelInstance));
         floor.setLinearFactor(SceneObject.LockY);
@@ -171,9 +178,11 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.setCameraMinDist(60);
         foliage.setCameraMaxDist(128);
         add(foliage);
+        /*
         modelViewer = new JModelViewer();
         modelViewer.showModel(tree1);
         modelViewer.setVisible(true);
+        */
 
         showStats(screenConfig.showStats);
     }
@@ -232,6 +241,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 }
             }
         }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
+            inventoryView.showInventory(Inventory.PlayerInventory);
+        }
+
         if (screenConfig.usePlayerController && Gdx.input.isButtonJustPressed(Input.Buttons.RIGHT)) {
             if (playerController.isMouseGrabbed())
                 playerController.releaseMouse();

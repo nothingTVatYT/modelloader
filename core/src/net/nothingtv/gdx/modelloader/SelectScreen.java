@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.ScreenUtils;
+import net.nothingtv.gdx.inventory.Inventory;
 
 public class SelectScreen extends ScreenAdapter {
     private Stage stage;
@@ -27,60 +28,35 @@ public class SelectScreen extends ScreenAdapter {
         table.pad(10).defaults().space(20);
         stage.addActor(table);
 
-        //table.setDebug(true); // This is optional, but enables debug lines for tables.
-
-        // Add widgets to the table here.
-
         Skin skin = new Skin(Gdx.files.internal("data/uiskin.json"));
 
-        TextButton button1 = new TextButton("Terrain Test", skin);
-        button1.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new TerrainTest());
-            }
-        });
-        table.add(button1);
+        table.add(createMenuButton("Terrain Test", skin, () -> game.setScreen(new TerrainTest())));
         table.row();
 
-        TextButton button2 = new TextButton("Model Loader", skin);
-        button2.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new ModelLoader());
-            }
-        });
-        table.add(button2);
+        table.add(createMenuButton("Model Loader", skin, () -> game.setScreen(new ModelLoader())));
         table.row();
 
-        TextButton button3 = new TextButton("Shadow Test", skin);
-        button3.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new ShadowTest());
-            }
-        });
-        table.add(button3);
+        table.add(createMenuButton("Shadow Test", skin, () -> game.setScreen(new ShadowTest())));
         table.row();
 
-        TextButton button4 = new TextButton("Physics Test", skin);
-        button4.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new PhysicsTest(game));
-            }
-        });
-        table.add(button4);
+        table.add(createMenuButton("Game/Physics Test", skin, () -> game.setScreen(new PhysicsTest(game))));
         table.row();
 
-        TextButton button5 = new TextButton("Exit", skin);
-        button5.addListener(new ChangeListener() {
+        table.add(createMenuButton("Update Innventory", skin, Inventory::writeItems));
+        table.row();
+
+        table.add(createMenuButton("Exit", skin, () -> Gdx.app.exit())).width(100);
+    }
+
+    private TextButton createMenuButton(String text, Skin skin, Clicked l) {
+        TextButton button = new TextButton(text, skin);
+        button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                Gdx.app.exit();
+                l.clicked();
             }
         });
-        table.add(button5).width(100);
+        return button;
     }
 
     public void resize (int width, int height) {
@@ -98,5 +74,9 @@ public class SelectScreen extends ScreenAdapter {
 
     public void dispose() {
         stage.dispose();
+    }
+
+    interface Clicked {
+        void clicked();
     }
 }
