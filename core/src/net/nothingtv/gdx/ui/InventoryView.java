@@ -1,5 +1,8 @@
 package net.nothingtv.gdx.ui;
 
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Event;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -9,7 +12,7 @@ import net.nothingtv.gdx.inventory.Inventory;
 
 import java.util.HashMap;
 
-public class InventoryView {
+public class InventoryView implements InventoryViewListener {
 
     private final HashMap<Integer, InventoryContainerView> containerViews = new HashMap<>();
     private final Stage stage;
@@ -58,8 +61,41 @@ public class InventoryView {
         InventoryContainerView view = containerViews.get(container.containerId);
         if (view == null) {
             view = new InventoryContainerView(container.name, container, skin);
+            view.addListener(this);
         }
         stage.addActor(view);
         return view;
+    }
+
+    @Override
+    public boolean slotDragging(InventoryViewEvent event) {
+        return false;
+    }
+
+    @Override
+    public boolean slotDragDropped(InventoryViewEvent event) {
+        // already handled by a view?
+        if (event.isHandled()) return true;
+        Vector2 pos = new Vector2(event.x, event.y);
+        event.slot.localToStageCoordinates(pos);
+        Actor actor = stage.hit(pos.x, pos.y, true);
+        System.out.printf("A slot is dropped on %s: %s%n", actor, event.slot);
+        if (actor instanceof InventoryContainerView.Slot newSlot) {
+            if (newSlot.getItem() == null)
+                Inventory.PlayerInventory.requestItemLocationChange(event.slot.getItem(), newSlot);
+            else Inventory.PlayerInventory.requestItemStack(event.slot.getItem(), newSlot.getItem());
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean handle(Event event) {
+        if (!(event instanceof InventoryViewEvent ive))
+            return false;
+        if (ive.type == InventoryViewEvent.Type.Drop) {
+            return slotDragDropped(ive);
+        }
+        return false;
     }
 }

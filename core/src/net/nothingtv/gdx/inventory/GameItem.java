@@ -48,4 +48,18 @@ public class GameItem {
         copyFields(newItem);
         return newItem;
     }
+
+    @Override
+    public String toString() {
+        return "GameItem{" +
+                "name='" + name + '\'' +
+                ", iconName='" + iconName + '\'' +
+                ", icon=" + icon +
+                ", amount=" + amount +
+                ", maxStackAmount=" + maxStackAmount +
+                ", containerId=" + containerId +
+                ", locationId=" + locationId +
+                ", rarity=" + rarity +
+                '}';
+    }
 }

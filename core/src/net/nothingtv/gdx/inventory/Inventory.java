@@ -167,10 +167,13 @@ public class Inventory {
     }
 
     public boolean requestItemLocationChange(GameItem item, InventoryContainerView.Slot newSlot) {
+        InventoryChangesInfo info = new InventoryChangesInfo(item.containerId, item.locationId);
         item.locationId = newSlot.locationId;
         if (item.containerId != newSlot.containerId) {
             _containers.get(newSlot.containerId).add(_containers.get(item.containerId).remove(item));
         }
+        info.add(newSlot.containerId, newSlot.locationId);
+        fireInventoryChanged(info);
         return true;
     }
 
