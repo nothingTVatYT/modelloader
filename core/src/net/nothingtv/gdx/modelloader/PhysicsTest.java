@@ -172,9 +172,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
         foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000), Foliage.RandomizeYRotation);
-        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
-        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
-        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 50000), Foliage.RandomizeYRotation);
+        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
+        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
+        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMinDist(60);
         foliage.setCameraMaxDist(128);
@@ -246,7 +246,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             if (inventoryView.isVisible())
                 inventoryView.hideInventory();
             else
-                inventoryView.showInventory(Inventory.PlayerInventory);
+                inventoryView.showPlayerInventory();
         }
 
         // test item pickup

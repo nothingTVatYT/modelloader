@@ -249,12 +249,13 @@ public abstract class BasicSceneManagerScreen implements Screen {
                     @Override
                     public boolean act(float delta) {
                         fpsLabel.setText(String.valueOf(Gdx.graphics.getFramesPerSecond()));
-                        return true;
+                        return false;
                     }
                 });
             }
             table.add(fpsLabel);
         } else {
+            System.out.println("FPS label removed");
             if (fpsLabel != null) {
                 fpsLabel.clear();
                 table.removeActor(fpsLabel);
