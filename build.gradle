@@ -64,6 +64,7 @@ project(":core") {
         api "com.github.mgsx-dev.gdx-gltf:gltf:$gltfVersion"
         api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
         api "org.junit.jupiter:junit-jupiter-api:5.8.1"
+        api "net.nothingtv:game-network-client:1.0-SNAPSHOT"
     }
 }
 

@@ -17,7 +17,7 @@ public class FirstPersonController extends InputAdapter {
         public float maxRunningSpeed = 24f;
         public final SceneObject player;
         public final Camera camera;
-        public Vector3 eyeOffset = new Vector3(0, 1, 0.06f);
+        public Vector3 eyeOffset = new Vector3(0, 1, 0.2f);
         public float cameraMaxOffset = 50f;
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
