@@ -274,7 +274,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
                     public boolean act(float delta) {
                         if (glProfiler.isEnabled())
                             statsLabel.setText(String.format("%.0f vertices", glProfiler.getVertexCount().total));
-                        return true;
+                        return false;
                     }
                 });
                 table.row();
@@ -395,6 +395,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        if (screenConfig.showStats)
+            glProfiler.reset();
         gameTime += delta;
         update(delta);
         Gdx.gl.glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);

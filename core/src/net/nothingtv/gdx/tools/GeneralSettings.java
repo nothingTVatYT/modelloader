@@ -12,8 +12,8 @@ public class GeneralSettings {
 
     public static final GeneralSettings UltraSettings = new GeneralSettings(Setting.Ultra, 1920, 1080, 128, 1, 2000);
     public static final GeneralSettings HighSettings = new GeneralSettings(Setting.High, 1920, 1080, 128, 10, 1000);
-    public static final GeneralSettings MidSettings = new GeneralSettings(Setting.Mid, 1200, 675, 64, 100, 500);
-    public static final GeneralSettings LowSettings = new GeneralSettings(Setting.Mid, 800, 450, 64, 500, 250);
+    public static final GeneralSettings MidSettings = new GeneralSettings(Setting.Mid, 1200, 675, 64, 25, 500);
+    public static final GeneralSettings LowSettings = new GeneralSettings(Setting.Mid, 800, 450, 32, 20, 250);
 
     public static GeneralSettings current = LowSettings;
 
@@ -53,7 +53,7 @@ public class GeneralSettings {
         int cpus = Runtime.getRuntime().availableProcessors();
         if (cpus >= 16) select(Setting.Ultra);
         else if (cpus >= 8) select(Setting.High);
-        else if(cpus >= 4) select(Setting.Mid);
+        else if (cpus >= 4) select(Setting.Mid);
         else select(Setting.Low);
     }
 

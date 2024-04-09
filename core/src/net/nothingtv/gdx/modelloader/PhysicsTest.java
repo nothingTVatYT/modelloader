@@ -52,7 +52,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
-        screenConfig.showStats = false;
+        screenConfig.showStats = true;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
         super.init();
     }
@@ -84,7 +84,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         FileHandle layer3Tex = hi ? Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg") : Gdx.files.internal("assets/textures/Ground048_1K_Color.png");
         FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
-        int tf = hi ? 1 : GeneralSettings.isAtLeast(GeneralSettings.Setting.Mid) ? 2 : 4;
+        int tf = 1 << (GeneralSettings.current.setting.ordinal() -1);
         float uvScale = 400 * tf;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
@@ -179,7 +179,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
-        foliage.setCameraMinDist(30);
+        foliage.setCameraMinDist(10);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
         /*
