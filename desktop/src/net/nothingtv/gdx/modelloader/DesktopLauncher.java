@@ -9,9 +9,7 @@ import net.nothingtv.gdx.tools.GeneralSettings;
 // Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
 	public static void main (String[] arg) {
-		String settingsName = System.getenv("GRAPHICS_SETTING");
-		if (settingsName != null)
-			GeneralSettings.select(settingsName);
+		GeneralSettings.autoSelect();
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(300);
 		config.useVsync(false);

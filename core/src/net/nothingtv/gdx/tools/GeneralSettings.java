@@ -1,8 +1,14 @@
 package net.nothingtv.gdx.tools;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Properties;
+
 public class GeneralSettings {
 
-    public static enum Setting { Low, Mid, High, Ultra }
+    public enum Setting { Low, Mid, High, Ultra }
 
     public static final GeneralSettings UltraSettings = new GeneralSettings(Setting.Ultra, 1920, 1080, 128, 1, 2000);
     public static final GeneralSettings HighSettings = new GeneralSettings(Setting.High, 1920, 1080, 128, 10, 1000);
@@ -18,6 +24,38 @@ public class GeneralSettings {
     public float foliageMaxDistance;
     public int foliageDivider;
     public float cameraFar;
+
+    public static void autoSelect() {
+        String env = System.getenv("GRAPHICS_SETTINGS");
+        if (env != null && !env.isEmpty()) {
+            select(env);
+            return;
+        }
+        String home = System.getenv("HOME");
+        Properties properties = new Properties();
+        for (Path path : new Path[] {
+                Path.of(home, ".local/share/gdx.config"),
+                Path.of(home, ".gdxConfig")}) {
+            if (Files.exists(path)) {
+                try (FileInputStream fis = new FileInputStream(path.toFile())) {
+                    properties.load(fis);
+                    String settings = properties.getProperty("GraphicsSettings", "");
+                    if (!settings.isBlank()) {
+                        select(settings);
+                        return;
+                    }
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
+        }
+        // just a wild guess
+        int cpus = Runtime.getRuntime().availableProcessors();
+        if (cpus >= 16) select(Setting.Ultra);
+        else if (cpus >= 8) select(Setting.High);
+        else if(cpus >= 4) select(Setting.Mid);
+        else select(Setting.Low);
+    }
 
     public static void select(Setting setting) {
         switch (setting) {
