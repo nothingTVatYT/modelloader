@@ -49,7 +49,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     @Override
     protected void init() {
         screenConfig.useSkybox = true;
-        screenConfig.useShadows = true;
+        screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
@@ -89,6 +89,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
         terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
+
         terrainConfig.addLayer(new Texture(layer1Tex), uvScale);
         terrainConfig.addLayer(new Texture(layer2Tex), uvScale);
         terrainConfig.addLayer(new Texture(layer3Tex), uvScale);
@@ -171,13 +172,13 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
-        foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000), Foliage.RandomizeYRotation);
-        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
-        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
-        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000), Foliage.RandomizeYRotation);
+        foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
-        foliage.setCameraMinDist(60);
-        foliage.setCameraMaxDist(128);
+        foliage.setCameraMinDist(30);
+        foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
         /*
         modelViewer = new JModelViewer();

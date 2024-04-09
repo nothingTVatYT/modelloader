@@ -41,10 +41,7 @@ import net.nothingtv.gdx.shaders.GameShaderProvider;
 import net.nothingtv.gdx.shaders.MyPBRDepthShaderProvider;
 import net.nothingtv.gdx.terrain.Foliage;
 import net.nothingtv.gdx.terrain.Terrain;
-import net.nothingtv.gdx.tools.Debug;
-import net.nothingtv.gdx.tools.Physics;
-import net.nothingtv.gdx.tools.SceneObject;
-import net.nothingtv.gdx.tools.TerrainObject;
+import net.nothingtv.gdx.tools.*;
 
 public abstract class BasicSceneManagerScreen implements Screen {
     protected Game game;
@@ -192,7 +189,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected void initCamera() {
         camera = new PerspectiveCamera(60, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
-        camera.far = 2000f;
+        camera.far = GeneralSettings.current.cameraFar;
         camera.position.set(-6,2,-6);
         camera.lookAt(new Vector3(0, 1, 0));
         camera.up.set(Vector3.Y);
