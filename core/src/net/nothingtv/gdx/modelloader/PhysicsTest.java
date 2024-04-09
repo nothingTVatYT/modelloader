@@ -84,8 +84,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         FileHandle layer3Tex = hi ? Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg") : Gdx.files.internal("assets/textures/Ground048_1K_Color.png");
         FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
-        float uvScale = 400;
-        TerrainConfig terrainConfig = new TerrainConfig(1024, 1024, 1);
+        int tf = hi ? 1 : 2;
+        float uvScale = 400 * tf;
+        TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
