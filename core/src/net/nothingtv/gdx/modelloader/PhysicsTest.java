@@ -78,10 +78,11 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
 
-        FileHandle layer1Tex = Gdx.files.internal("assets/textures/Ground023_2K_Color.png");
-        FileHandle layer2Tex = Gdx.files.internal("assets/textures/leafy_grass_diff_2k.jpg");
-        FileHandle layer3Tex = Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg");
-        FileHandle layer4Tex = Gdx.files.internal("assets/textures/Rock031_2K-PNG_Color.png");
+        boolean hi = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
+        FileHandle layer1Tex = hi ? Gdx.files.internal("assets/textures/Ground023_2K_Color.png") : Gdx.files.internal("assets/textures/Ground023_1K_Color.png");
+        FileHandle layer2Tex = hi ? Gdx.files.internal("assets/textures/Grass004_2K_Color.png") : Gdx.files.internal("assets/textures/Grass004_1K_Color.png");
+        FileHandle layer3Tex = hi ? Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg") : Gdx.files.internal("assets/textures/Ground048_1K_Color.jpg");
+        FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
         float uvScale = 400;
         TerrainConfig terrainConfig = new TerrainConfig(1024, 1024, 1);
