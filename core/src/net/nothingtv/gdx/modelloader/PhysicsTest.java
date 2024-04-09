@@ -81,7 +81,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         boolean hi = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         FileHandle layer1Tex = hi ? Gdx.files.internal("assets/textures/Ground023_2K_Color.png") : Gdx.files.internal("assets/textures/Ground023_1K_Color.png");
         FileHandle layer2Tex = hi ? Gdx.files.internal("assets/textures/Grass004_2K_Color.png") : Gdx.files.internal("assets/textures/Grass004_1K_Color.png");
-        FileHandle layer3Tex = hi ? Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg") : Gdx.files.internal("assets/textures/Ground048_1K_Color.jpg");
+        FileHandle layer3Tex = hi ? Gdx.files.internal("assets/textures/Ground048_2K_Color.jpg") : Gdx.files.internal("assets/textures/Ground048_1K_Color.png");
         FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
         float uvScale = 400;
