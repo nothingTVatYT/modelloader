@@ -98,6 +98,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.addLayer(new Texture(layer4Tex), uvScale);
         Terrain terrain = new Terrain(terrainConfig);
         terrainObject = add("terrain", terrain.createModelInstance(), terrain);
+        terrainObject.getTerrainInstance().calculateBoundingBoxes();
 
         wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
         System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);

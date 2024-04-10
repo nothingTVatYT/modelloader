@@ -23,6 +23,18 @@ public class TerrainInstance extends ModelInstance implements Updatable {
         super(model);
     }
 
+    public void calculateBoundingBoxes() {
+        for (Node node : nodes) {
+            BoundingBox nodeBoundingBox = cachedBounds.get(node);
+            if (nodeBoundingBox == null) {
+                nodeBoundingBox = new BoundingBox();
+                node.calculateWorldTransform();
+                node.calculateBoundingBox(nodeBoundingBox);
+                cachedBounds.put(node, nodeBoundingBox);
+            }
+        }
+    }
+
     @Override
     public void update(Camera camera, float delta) {
         vertices = 0;
