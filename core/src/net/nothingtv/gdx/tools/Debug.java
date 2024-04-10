@@ -2,13 +2,14 @@ package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.DebugDrawer;
 
 import java.util.HashMap;
 
 public class Debug {
 
-    enum RequestType { Line, Quad }
+    enum RequestType { Line, Quad, Box }
     static class DrawRequest {
         String id;
         RequestType type;
@@ -61,18 +62,28 @@ public class Debug {
         requests.put(id, req);
     }
 
+    public void drawBoundingBox(String id, BoundingBox boundingBox, Color color) {
+        DrawRequest req = new DrawRequest();
+        req.id = id;
+        req.type = RequestType.Box;
+        req.points = new Vector3[2];
+        req.points[0] = new Vector3(boundingBox.min);
+        req.points[1] = new Vector3(boundingBox.max);
+        req.color = new Vector3(color.r, color.g, color.b);
+        requests.put(id, req);
+    }
+
     public void drawDebugs() {
         for (DrawRequest request : requests.values())
             switch (request.type) {
-                case Line:
-                    debugDrawer.drawLine(request.points[0], request.points[1], request.color);
-                    break;
-                case Quad:
+                case Line -> debugDrawer.drawLine(request.points[0], request.points[1], request.color);
+                case Quad -> {
                     debugDrawer.drawLine(request.points[0], request.points[1], request.color);
                     debugDrawer.drawLine(request.points[1], request.points[2], request.color);
                     debugDrawer.drawLine(request.points[2], request.points[3], request.color);
                     debugDrawer.drawLine(request.points[3], request.points[0], request.color);
-                    break;
+                }
+                case Box -> debugDrawer.drawBox(request.points[0], request.points[1], request.color);
             }
     }
 }

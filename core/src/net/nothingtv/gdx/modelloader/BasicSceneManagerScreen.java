@@ -41,6 +41,7 @@ import net.nothingtv.gdx.shaders.GameShaderProvider;
 import net.nothingtv.gdx.shaders.MyPBRDepthShaderProvider;
 import net.nothingtv.gdx.terrain.Foliage;
 import net.nothingtv.gdx.terrain.Terrain;
+import net.nothingtv.gdx.terrain.TerrainInstance;
 import net.nothingtv.gdx.tools.*;
 
 public abstract class BasicSceneManagerScreen implements Screen {
@@ -269,14 +270,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
                     glProfiler.enable();
                 }
                 statsLabel = new Label(" ", skin);
-                statsLabel.addAction(new Action() {
-                    @Override
-                    public boolean act(float delta) {
-                        if (glProfiler.isEnabled())
-                            statsLabel.setText(String.format("%.0f vertices", glProfiler.getVertexCount().total));
-                        return false;
-                    }
-                });
                 table.row();
                 table.add(statsLabel);
             }
@@ -411,17 +404,27 @@ public abstract class BasicSceneManagerScreen implements Screen {
             debugDrawer.end();
         }
 
+        if (decalBatch != null) {
+            decalBatch.flush();
+        }
+
+        if (statsLabel != null) {
+            String statsText = "";
+            if (glProfiler.isEnabled())
+                statsText += String.format("%.0f V", glProfiler.getVertexCount().total);
+            statsText += updateStats();
+            statsLabel.setText(statsText);
+        }
+
         if (stage != null) {
             stage.act(delta);
             stage.draw();
         }
 
-        if (decalBatch != null) {
-            decalBatch.flush();
-        }
-
         updatePostRender(delta);
     }
+
+    protected String updateStats() { return ""; }
 
     public void updatePostRender(float delta) {}
 
@@ -445,7 +448,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         return new SceneObject(name, modelInstance);
     }
 
-    public TerrainObject add(String name, ModelInstance modelInstance, Terrain terrain) {
+    public TerrainObject add(String name, TerrainInstance modelInstance, Terrain terrain) {
         sceneManager.getRenderableProviders().add(modelInstance);
         return new TerrainObject(name, modelInstance, terrain);
     }

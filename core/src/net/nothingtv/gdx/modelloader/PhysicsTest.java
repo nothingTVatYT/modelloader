@@ -192,6 +192,11 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     }
 
     @Override
+    protected String updateStats() {
+        return " T:" + terrainObject.getTerrainInstance().vertices + " " + terrainObject.getTerrainInstance().visibleNodes;
+    }
+
+    @Override
     protected void initDecals() {
         super.initDecals();
         playerDecal = Decal.newDecal(new TextureRegion(new Texture(Gdx.files.internal("assets/textures/questionmark.png"))), true);
@@ -219,6 +224,14 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         if (Gdx.input.isKeyJustPressed(Input.Keys.L) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             lightControlsOn = !lightControlsOn;
             showLightControls(lightControlsOn);
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
+            if (sceneManager.getRenderableProviders().contains(foliage, true))
+                sceneManager.getRenderableProviders().removeValue(foliage, true);
+            else sceneManager.getRenderableProviders().add(foliage);
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT)) {
+            terrainObject.getTerrainInstance().debugBounds = true;
         }
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.D) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {

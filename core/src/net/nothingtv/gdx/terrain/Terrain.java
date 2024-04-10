@@ -2,7 +2,6 @@ package net.nothingtv.gdx.terrain;
 
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Material;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
@@ -36,7 +35,7 @@ public class Terrain implements Disposable {
      */
     private HeightSampler heightSampler;
     public TerrainConfig config;
-    private ModelInstance modelInstance;
+    private TerrainInstance modelInstance;
     private btCollisionShape collisionShape;
     private final Vector3 rigidBodyOffset = new Vector3();
     public btRigidBody rigidBody;
@@ -58,7 +57,7 @@ public class Terrain implements Disposable {
         return maxHeight;
     }
 
-    public ModelInstance createModelInstance() {
+    public TerrainInstance createModelInstance() {
         if (config.layers.isEmpty() || config.layers.size > 4) {
             throw new RuntimeException("Cannot create a terrain with " + config.layers.size + " layers.");
         }
@@ -269,6 +268,7 @@ public class Terrain implements Disposable {
                 VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.TexCoords(0));
         mesh.setVertices(vertices);
         mesh.setIndices(indices);
+        //System.out.printf("created mesh for %dx%d with %d vertices and %d indices%n", width, height, vertices.length/8, indices.length);
         return mesh;
     }
 
