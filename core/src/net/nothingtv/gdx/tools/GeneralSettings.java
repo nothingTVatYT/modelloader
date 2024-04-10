@@ -11,9 +11,9 @@ public class GeneralSettings {
     public enum Setting { Low, Mid, High, Ultra }
 
     public static final GeneralSettings UltraSettings = new GeneralSettings(Setting.Ultra, 1920, 1080, 128, 1, 2000);
-    public static final GeneralSettings HighSettings = new GeneralSettings(Setting.High, 1920, 1080, 128, 10, 1000);
-    public static final GeneralSettings MidSettings = new GeneralSettings(Setting.Mid, 1200, 675, 64, 25, 500);
-    public static final GeneralSettings LowSettings = new GeneralSettings(Setting.Mid, 800, 450, 32, 20, 125);
+    public static final GeneralSettings HighSettings = new GeneralSettings(Setting.High, 1920, 1080, 128, 1, 1000);
+    public static final GeneralSettings MidSettings = new GeneralSettings(Setting.Mid, 1200, 675, 64, 1, 500);
+    public static final GeneralSettings LowSettings = new GeneralSettings(Setting.Mid, 800, 450, 32, 1, 125);
 
     public static GeneralSettings current = LowSettings;
 
