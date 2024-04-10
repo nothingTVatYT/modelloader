@@ -15,12 +15,17 @@ import java.util.HashMap;
 public class TerrainInstance extends ModelInstance implements Updatable {
 
     private final HashMap<Node, BoundingBox> cachedBounds = new HashMap<>();
+    public enum DrawMode { NoOptimization, FrustumCulling }
     public int vertices;
     public int visibleNodes;
+    public DrawMode drawMode = DrawMode.FrustumCulling;
     public boolean debugBounds = false;
+    public float minUpdateTime = 0.01f;
+    private float updateTime;
 
-    public TerrainInstance(Model model) {
+    public TerrainInstance(Model model, Terrain terrain) {
         super(model);
+        updateTime = minUpdateTime;
     }
 
     public void calculateBoundingBoxes() {
@@ -35,8 +40,11 @@ public class TerrainInstance extends ModelInstance implements Updatable {
         }
     }
 
-    @Override
-    public void update(Camera camera, float delta) {
+    public void updateNodesForFrustum(Camera camera, float delta) {
+        updateTime += delta;
+        if (updateTime < minUpdateTime)
+            return;
+        updateTime = 0;
         vertices = 0;
         visibleNodes = 0;
         for (Node node : nodes) {
@@ -61,5 +69,11 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             }
         }
         debugBounds = false;
+    }
+
+    @Override
+    public void update(Camera camera, float delta) {
+        if (drawMode == DrawMode.FrustumCulling)
+            updateNodesForFrustum(camera, delta);
     }
 }
