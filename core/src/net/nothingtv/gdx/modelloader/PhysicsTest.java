@@ -85,7 +85,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
         int tf = 1 << (GeneralSettings.current.setting.ordinal() -1);
-        float uvScale = 400 * tf;
+        float uvScale = 400f * tf;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
@@ -98,6 +98,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.addLayer(new Texture(layer4Tex), uvScale);
         Terrain terrain = new Terrain(terrainConfig);
         terrainObject = add("terrain", terrain.createModelInstance(), terrain);
+        terrainObject.getTerrainInstance().drawMode = TerrainInstance.DrawMode.ProceduralNode;
         terrainObject.getTerrainInstance().calculateBoundingBoxes();
         if (!hi)
             terrainObject.getTerrainInstance().minUpdateTime = 0.1f;
