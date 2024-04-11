@@ -7,10 +7,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.ScreenUtils;
 import net.nothingtv.gdx.inventory.Inventory;
@@ -37,11 +34,11 @@ public class SelectScreen extends ScreenAdapter {
 
         table.add(createMenuButton("Shadow Test", () -> game.setScreen(new ShadowTest()))).row();
 
-        table.add(createMenuButton("Game/Physics Test", () -> game.setScreen(new PhysicsTest(game)))).row();
+        table.add(createMenuButton("_Game/Physics Test", () -> game.setScreen(new PhysicsTest(game)))).row();
 
         table.add(createMenuButton("Online Game Test", () -> game.setScreen(new LoginScreen(game)))).row();
 
-        table.add(createMenuButton("Update Innventory", Inventory::writeItems)).row();
+        table.add(createMenuButton("Update Inventory", Inventory::writeItems)).row();
 
         table.add(createMenuButton("Exit", () -> Gdx.app.exit())).width(100);
 
@@ -57,6 +54,11 @@ public class SelectScreen extends ScreenAdapter {
 
     private TextButton createMenuButton(String text, Clicked l) {
         TextButton button = new TextButton(text, skin);
+        if (text.startsWith("_")) {
+            Label label = button.getLabel();
+            label.setText(text.substring(1));
+            label.setFontScale(1.2f * label.getFontScaleX());
+        }
         button.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
