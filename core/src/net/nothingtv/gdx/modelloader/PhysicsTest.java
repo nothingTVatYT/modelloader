@@ -52,7 +52,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
-        screenConfig.showStats = true;
+        screenConfig.showStats = false;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
         super.init();
     }
@@ -98,9 +98,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.addLayer(new Texture(layer4Tex), uvScale);
         Terrain terrain = new Terrain(terrainConfig);
         terrainObject = add("terrain", terrain.createModelInstance(), terrain);
-        terrainObject.getTerrainInstance().drawMode = TerrainInstance.DrawMode.ProceduralNode;
+        terrainObject.getTerrainInstance().drawMode = TestSettings.terrainDrawMode;
         terrainObject.getTerrainInstance().calculateBoundingBoxes();
-        if (!hi)
+        //if (!hi)
             terrainObject.getTerrainInstance().minUpdateTime = 0.1f;
 
         wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
