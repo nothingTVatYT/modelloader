@@ -127,6 +127,8 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             tmpVector.rotate(Vector3.Y, 180-cameraAngle);
             //tmpVector.add(MathUtils.floor(camera.position.x), 0, MathUtils.floor(camera.position.z));
             tmpVector.add(camera.position.x, 0, camera.position.z);
+            tmpVector.x = MathUtils.round(tmpVector.x);
+            tmpVector.z = MathUtils.round(tmpVector.z);
             terrain.getNormalAt(tmpVector.x, tmpVector.z, tmpNormal);
             procVertices[vi++] = tmpVector.x;
             procVertices[vi++] = terrain.getHeightAt(tmpVector.x, tmpVector.z);
