@@ -64,7 +64,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
 
     public void proceduralNodes(Camera camera, float delta) {
         if (procNode == null) {
-            rays = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
+            rays = Math.max((int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor)), 60);
             nodes.forEach(n -> n.parts.forEach(p -> p.enabled = false));
             procNode = new Node();
             NodePart procPart = new NodePart();
@@ -144,16 +144,6 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             vertexBuffer.put(tmpNormal.z);
             vertexBuffer.put(tmpVector.x / terrain.config.width * uvScale);
             vertexBuffer.put(tmpVector.z / terrain.config.height * uvScale);
-            /*
-            procVertices[vi++] = tmpVector.x;
-            procVertices[vi++] = terrain.getHeightAt(tmpVector.x, tmpVector.z);
-            procVertices[vi++] = tmpVector.z;
-            procVertices[vi++] = tmpNormal.x;
-            procVertices[vi++] = tmpNormal.y;
-            procVertices[vi++] = tmpNormal.z;
-            procVertices[vi++] = tmpVector.x / terrain.config.width * uvScale;
-            procVertices[vi++] = tmpVector.z / terrain.config.height * uvScale;
-             */
         }
         vertexBuffer.flip();
 

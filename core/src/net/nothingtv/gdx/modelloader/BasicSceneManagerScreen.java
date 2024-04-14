@@ -5,6 +5,7 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
@@ -27,6 +28,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import net.mgsx.gltf.scene3d.attributes.FogAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
@@ -62,7 +64,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Cubemap specularCubemap;
     protected Texture brdfLUT;
     protected SceneSkybox skybox;
-    protected Color clearColor = Color.BLACK;
+    protected Color clearColor = new Color(0.7f, 0.7f, 0.7f, 1f);
     protected float gameTime;
     protected DebugDrawer debugDrawer;
     protected Debug debug;
@@ -212,6 +214,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
         sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
         sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+        sceneManager.environment.set(FogAttribute.createFog(camera.far * 0.7f, camera.far * 1.1f, 1f));
+        sceneManager.environment.set(ColorAttribute.createFog(0.7f, 0.7f, 0.7f, 1f));
 
         if (screenConfig.useSkybox) {
             skybox = new SceneSkybox(environmentCubemap);

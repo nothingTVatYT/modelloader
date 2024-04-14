@@ -48,7 +48,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     protected void init() {
-        screenConfig.useSkybox = true;
+        screenConfig.useSkybox = false;
         screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
@@ -87,7 +87,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         int tf = 1 << (GeneralSettings.current.setting.ordinal() -1);
         float uvScale = 400f * tf;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
-        terrainConfig.terrainDivideFactor = 16;
+        terrainConfig.terrainDivideFactor = 8;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
         terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
