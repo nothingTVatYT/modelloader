@@ -87,7 +87,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         int tf = 1 << (GeneralSettings.current.setting.ordinal() -1);
         float uvScale = 400f * tf;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
-        terrainConfig.terrainDivideFactor = 8;
+        terrainConfig.terrainDivideFactor = 16;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
         terrainConfig.erosionIterations = 0;
         terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
@@ -318,6 +318,13 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 splatGeneratorUI.dispose();
             game.setScreen(new SelectScreen(game));
         }
+    }
+
+    @Override
+    public void hide() {
+        if (screenConfig.usePlayerController)
+            playerController.releaseMouse();
+        super.hide();
     }
 
     @Override

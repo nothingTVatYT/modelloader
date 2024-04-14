@@ -142,10 +142,10 @@ public abstract class BasicSceneManagerScreen implements Screen {
         Color sunLightColor = new Color(l, l, l, 1);
         Vector3 sunDirection = new Vector3(-0.4f, -0.4f, -0.4f).nor();
         if (screenConfig.useShadows) {
-            int shadowMapSize = 8192;
+            int shadowMapSize = 2048;
             float shadowViewportSize = 30;
             float shadowNear = 0.1f;
-            float shadowFar = 500;
+            float shadowFar = 200;
             directionalShadowLight = new DirectionalShadowLight(shadowMapSize, shadowMapSize, shadowViewportSize, shadowViewportSize, shadowNear, shadowFar);
             directionalShadowLight.set(sunLightColor, sunDirection);
 

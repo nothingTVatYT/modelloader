@@ -36,8 +36,8 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private MeshPart procMeshPart;
     private float fov = 120;
     private float uvScale = 0.1f;
-    private int rays = 33;
-    private float depthFactor = 1.2f;
+    private int rays = 63;
+    private float depthFactor = 1.1f;
     private Matrix4 camMatrix = new Matrix4();
     private int arcs;
     private Vector3 tmpVector = new Vector3();
