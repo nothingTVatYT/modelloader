@@ -79,13 +79,43 @@ public abstract class BasicSceneManagerScreen implements Screen {
     private float shadowBias = 1/2048f;
     protected GLProfiler glProfiler;
     protected AssetManager assetManager;
+    protected Thread physicsUpdateThread;
+    protected volatile boolean visible;
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
     }
 
+    public static class PhysicsUpdate implements Runnable {
+        BasicSceneManagerScreen screen;
+
+        public PhysicsUpdate(BasicSceneManagerScreen screen) {
+            this.screen = screen;
+        }
+
+        @Override
+        public void run() {
+            long lastRun = 0;
+            float delta = 1f/60f;
+            while (screen.visible) {
+                long ts = System.currentTimeMillis();
+                if (ts - lastRun >= 17) {
+                    screen.updatePhysics(delta);
+                    lastRun = ts;
+                } else {
+                    try {
+                        Thread.sleep(2);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     protected void init() {
         gameTime = 0;
+        visible = true;
         assetManager = new AssetManager();
         if (screenConfig.usePhysics)
             initPhysics();
@@ -98,6 +128,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         initBatches();
         initDecals();
         initScene();
+        if (physicsUpdateThread != null)
+            physicsUpdateThread.start();
     }
 
     protected void initPhysics() {
@@ -113,10 +145,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
         physicsWorld.setDebugDrawer(debugDrawer);
         System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
         debug = new Debug(debugDrawer);
+        //physicsUpdateThread = new Thread(new PhysicsUpdate(this));
     }
 
     protected void updatePhysics(float delta) {
-        physicsWorld.stepSimulation(delta, 4, 1f/60);
+        physicsWorld.stepSimulation(delta, 4);
     }
 
     protected void initEnvironment() {
@@ -381,7 +414,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     public void update(float delta) {
         updateController(delta);
-        if (screenConfig.usePhysics)
+        if (screenConfig.usePhysics && physicsUpdateThread == null)
             updatePhysics(delta);
         updateScene(delta);
     }
@@ -490,6 +523,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     @Override
     public void hide() {
+        visible = false;
         dispose();
     }
 
