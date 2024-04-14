@@ -8,6 +8,7 @@ public class ScreenConfig {
     public float ambientLightBrightness = 1f;
     public boolean useShadows = true;
     public boolean usePlayerController = false;
+    public boolean useKinematicController = false;
     public boolean useDecals = true;
     public boolean showStats = false;
 }

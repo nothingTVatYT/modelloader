@@ -63,9 +63,11 @@ public class SceneObject implements Disposable {
      */
     public void move(Vector3 translation) {
         modelInstance.transform.translate(translation);
-        if (rigidBody != null)
+        if (rigidBody != null) {
+            rigidBody.activate();
             //rigidBody.translate(translation);
             rigidBody.proceedToTransform(modelInstance.transform);
+        }
     }
 
     /**
@@ -103,12 +105,13 @@ public class SceneObject implements Disposable {
      * @param factor the factor, you can use the Lock* constants
      */
     public void setAngularFactor(Vector3 factor) {
-        rigidBody.setAngularFactor(factor);
+        if (rigidBody != null)
+            rigidBody.setAngularFactor(factor);
     }
 
     public void rotate(Vector3 axis, float degrees) {
         modelInstance.transform.rotate(axis, degrees);
-        if (rigidBody != null) {
+        if (rigidBody != null && mass > 0) {
             rigidBody.getWorldTransform(tmpMatrix);
             tmpMatrix.rotate(axis, degrees);
             rigidBody.setWorldTransform(tmpMatrix);

@@ -33,7 +33,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private boolean lightControlsOn = false;
     private boolean useSplatGenerator = false;
     private final Vector3 initialPos = new Vector3(200, 0, 200);
-    protected FirstPersonPhysicsController playerController;
+    protected BasePlayerController playerController;
     private FootStepsSFX footSteps;
     private Label speedLabel;
     private Decal playerDecal;
@@ -51,6 +51,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
+        screenConfig.useKinematicController = false;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
@@ -132,16 +133,22 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             splatGeneratorUI.setTexture(3, layer4Tex.readBytes());
         }
 
-        player = add("player", BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
-        wrapRigidBody(player, 75, BaseShapes.createCapsuleShape(player.modelInstance));
+        player = addPlayer(BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
+        player.mass = 75;
+        if (!screenConfig.useKinematicController)
+            wrapRigidBody(player, player.mass, BaseShapes.createCapsuleShape(player.modelInstance));
         player.setAngularFactor(SceneObject.LockAll);
 
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1.3f;
         player.moveTo(initialPos);
 
         if (screenConfig.usePlayerController) {
-            FirstPersonPhysicsController.ControllerConfig controllerConfig = new FirstPersonPhysicsController.ControllerConfig(player, camera);
-            playerController = new FirstPersonPhysicsController(controllerConfig);
+            BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);
+            if (screenConfig.useKinematicController) {
+                playerController = new FirstPersonKinematicController(controllerConfig);
+            } else {
+                playerController = new FirstPersonPhysicsController(controllerConfig);
+            }
             playerController.getPlayer().moveTo(initialPos);
             playerController.init();
             playerController.grabMouse();
@@ -329,6 +336,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     public void dispose() {
+        if (playerController != null)
+            playerController.dispose();
         if (foliage != null)
             foliage.dispose();
         if (modelViewer != null)

@@ -75,7 +75,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected Image crossHairImage;
     protected DecalBatch decalBatch;
     protected InputMultiplexer inputMultiplexer;
-    protected SceneObject player;
+    protected PlayerObject player;
     private float shadowBias = 1/2048f;
     protected GLProfiler glProfiler;
     protected AssetManager assetManager;
@@ -460,6 +460,16 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected String updateStats() { return ""; }
 
     public void updatePostRender(float delta) {}
+
+    public PlayerObject addPlayer(Model model) {
+        ModelInstance instance = new ModelInstance(model);
+        return addPlayer(instance);
+    }
+
+    public PlayerObject addPlayer(ModelInstance modelInstance) {
+        sceneManager.getRenderableProviders().add(modelInstance);
+        return new PlayerObject("Player", modelInstance);
+    }
 
     /**
      * Create a new ModelInstance from this model and add it to the scene.
