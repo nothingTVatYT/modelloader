@@ -23,9 +23,9 @@ public class SceneObject implements Disposable {
     public static final Vector3 LockXZ = new Vector3(0, 1, 0);
     public static final Vector3 LockAll = new Vector3(0, 0, 0);
     public float mass;
-    private Vector3 position = new Vector3();
-    private Vector3 forward = new Vector3();
-    private Quaternion rotation = new Quaternion();
+    private final Vector3 position = new Vector3();
+    private final Vector3 forward = new Vector3();
+    private final Quaternion rotation = new Quaternion();
 
     public SceneObject(String name, ModelInstance modelInstance) {
         this.name = name;

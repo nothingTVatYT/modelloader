@@ -51,7 +51,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.useSkybox = true;
         screenConfig.useShadows = GeneralSettings.isAtLeast(GeneralSettings.Setting.High);
         screenConfig.usePlayerController = true;
-        screenConfig.useKinematicController = false;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
@@ -216,7 +215,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     public void updateController(float delta) {
-        super.updateController(delta);
         if (playerController != null) {
             playerController.update(delta);
             footSteps.update(delta);
@@ -294,7 +292,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             showCrossHair(playerController.isMouseGrabbed());
         }
         Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
-        Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(150);
+        Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(15);
         floor.addForce(diff);
 
         // add a mini game ;)

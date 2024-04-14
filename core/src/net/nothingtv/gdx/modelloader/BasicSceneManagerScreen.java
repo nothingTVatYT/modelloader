@@ -95,12 +95,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
         @Override
         public void run() {
-            long lastRun = 0;
-            float delta = 1f/60f;
+            long lastRun = System.currentTimeMillis();
             while (screen.visible) {
                 long ts = System.currentTimeMillis();
                 if (ts - lastRun >= 17) {
-                    screen.updatePhysics(delta);
+                    screen.updatePhysics((ts - lastRun) / 1000f);
                     lastRun = ts;
                 } else {
                     try {
@@ -145,12 +144,16 @@ public abstract class BasicSceneManagerScreen implements Screen {
         physicsWorld.setDebugDrawer(debugDrawer);
         System.out.printf("Bullet \"%d\" initialized.%n", Bullet.VERSION);
         debug = new Debug(debugDrawer);
-        //physicsUpdateThread = new Thread(new PhysicsUpdate(this));
+        if (screenConfig.useDedicatedPhysicsThread)
+            physicsUpdateThread = new Thread(new PhysicsUpdate(this));
     }
 
     protected void updatePhysics(float delta) {
-        physicsWorld.stepSimulation(delta, 4);
+        physicsWorld.stepSimulation(delta, 5, 1/60f);
+        updateFixedTime(delta);
     }
+
+    protected void updateFixedTime(float delta) {}
 
     protected void initEnvironment() {
         PBRShaderConfig pbrConfig = PBRShaderProvider.createDefaultConfig();
@@ -165,7 +168,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
         depthConfig.numBones = pbrConfig.numBones;
         depthConfig.numBoneWeights = pbrConfig.numBoneWeights;
 
-        //sceneManager = new SceneManager(new TerrainPBRShaderProvider(pbrConfig), new PBRDepthShaderProvider(depthConfig));
         sceneManager = new SceneManager(new GameShaderProvider(pbrConfig), new MyPBRDepthShaderProvider());
 
         sceneManager.setCamera(camera);
@@ -187,7 +189,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
             CascadeShadowMap csm = new CascadeShadowMap(3);
             csm.setCascades(camera, directionalShadowLight, 0, 4);
-            //csm.lights.add(directionalLight);
+            csm.lights.add(directionalShadowLight);
             sceneManager.setCascadeShadowMap(csm);
             directionalLight = directionalShadowLight;
         } else {
@@ -237,7 +239,6 @@ public abstract class BasicSceneManagerScreen implements Screen {
 
     protected void initUI() {
         stage = new Stage();
-        //stage.setDebugAll(true);
         skin = new Skin(Gdx.files.internal("data/uiskin.json"));
         table = new Table(skin);
         table.setFillParent(true);

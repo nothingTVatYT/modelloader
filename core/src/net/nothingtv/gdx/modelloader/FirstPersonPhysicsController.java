@@ -46,8 +46,6 @@ public class FirstPersonPhysicsController extends BasePlayerController {
                 linearForce.add(velocityXZ.scl(player.mass * -config.breakForce));
             }
         }
-        if (player.mass == 0)
-            player.move(linearForce.scl(100));
-        else player.addForce(linearForce);
+        player.addForce(linearForce);
     }
 }

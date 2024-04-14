@@ -23,7 +23,7 @@ public class BasePlayerController extends InputAdapter implements Disposable {
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
         public float jumpForce = 50f;
-        public float breakForce = 50f;
+        public float breakForce = 5f;
         public boolean simulateSideFriction = true;
 
         public ControllerConfig(PlayerObject player, Camera camera) {

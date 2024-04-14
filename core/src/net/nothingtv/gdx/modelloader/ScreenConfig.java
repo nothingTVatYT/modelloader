@@ -2,6 +2,7 @@ package net.nothingtv.gdx.modelloader;
 
 public class ScreenConfig {
     public boolean usePhysics = true;
+    public boolean useDedicatedPhysicsThread = true;
     public boolean useSkybox = true;
     public boolean showFPS = true;
     public float directionalLightBrightness = 1;

@@ -49,6 +49,7 @@ public class Foliage implements RenderableProvider, Disposable {
     private float cameraMaxDist2 = 512*512;
     private final Vector3 lastPosition = new Vector3();
     private final Vector3 lastDirection = new Vector3();
+    private boolean neverUpdated = true;
 
     public Foliage() {
         foliageTypes = new Array<>();
@@ -168,13 +169,14 @@ public class Foliage implements RenderableProvider, Disposable {
                         }
                     }
 
-                    if (type.dataUpdater != null && type.dataUpdater.hasNewData && cameraChanged) {
+                    if (type.dataUpdater != null && type.dataUpdater.hasNewData && (cameraChanged || neverUpdated)) {
                         type.modelInstance.model.meshes.first().setInstanceData(type.dataUpdater.getBuffer());
                         if (type.model.meshes.size > 1 && type.sharedInstanceData) {
                             for (int i = 1; i < type.model.meshes.size; i++)
                                 type.model.meshes.get(i).setInstanceData(type.dataUpdater.getBuffer());
                         }
                         type.dataUpdater.calculateNext(50);
+                        neverUpdated = false;
                     }
                     type.modelInstance.getRenderables(renderables, pool);
                 }

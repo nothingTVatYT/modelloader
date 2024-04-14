@@ -16,6 +16,7 @@ import net.mgsx.gltf.exporters.GLTFExporter;
 import net.mgsx.gltf.scene3d.scene.Updatable;
 import net.nothingtv.gdx.tools.Debug;
 
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 
 public class TerrainInstance extends ModelInstance implements Updatable {
@@ -36,7 +37,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private MeshPart procMeshPart;
     private float fov = 120;
     private float uvScale = 0.1f;
-    private int rays = 63;
+    private int rays = 80;
     private float depthFactor = 1.1f;
     private Matrix4 camMatrix = new Matrix4();
     private int arcs;
@@ -63,6 +64,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
 
     public void proceduralNodes(Camera camera, float delta) {
         if (procNode == null) {
+            rays = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
             nodes.forEach(n -> n.parts.forEach(p -> p.enabled = false));
             procNode = new Node();
             NodePart procPart = new NodePart();
@@ -115,13 +117,17 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             nodes.add(procNode);
             visibleNodes = 1;
             vertices = ii;
+            procMeshPart.mesh.setIndices(procIndices);
         }
+
+        FloatBuffer vertexBuffer = procMeshPart.mesh.getVerticesBuffer(true);
+        vertexBuffer.position(0);
+        vertexBuffer.limit(vertexBuffer.capacity());
 
         // TODO: use a matrix instead of the various calculations
         //camMatrix.idt().trn(camera.position.x, 0, camera.position.z).rotateTowardDirection(dir, Vector3.Y);
         camMatrix.setToLookAt(camera.direction, Vector3.Y);
         float cameraAngle = new Quaternion().setFromMatrix(camMatrix).getAngleAround(Vector3.Y);
-        int vi = 0;
         for (int i = 0; i < procVertices.length/8; i++) {
             tmpVector.set(segmentGrid[i*2], 0, segmentGrid[i*2+1]);
             tmpVector.rotate(Vector3.Y, 180-cameraAngle);
@@ -130,6 +136,15 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             tmpVector.x = MathUtils.round(tmpVector.x);
             tmpVector.z = MathUtils.round(tmpVector.z);
             terrain.getNormalAt(tmpVector.x, tmpVector.z, tmpNormal);
+            vertexBuffer.put(tmpVector.x);
+            vertexBuffer.put(terrain.getHeightAt(tmpVector.x, tmpVector.z));
+            vertexBuffer.put(tmpVector.z);
+            vertexBuffer.put(tmpNormal.x);
+            vertexBuffer.put(tmpNormal.y);
+            vertexBuffer.put(tmpNormal.z);
+            vertexBuffer.put(tmpVector.x / terrain.config.width * uvScale);
+            vertexBuffer.put(tmpVector.z / terrain.config.height * uvScale);
+            /*
             procVertices[vi++] = tmpVector.x;
             procVertices[vi++] = terrain.getHeightAt(tmpVector.x, tmpVector.z);
             procVertices[vi++] = tmpVector.z;
@@ -138,11 +153,10 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             procVertices[vi++] = tmpNormal.z;
             procVertices[vi++] = tmpVector.x / terrain.config.width * uvScale;
             procVertices[vi++] = tmpVector.z / terrain.config.height * uvScale;
+             */
         }
+        vertexBuffer.flip();
 
-        // TODO: better write to the underlying buffer directly
-        procMeshPart.mesh.setVertices(procVertices);
-        procMeshPart.mesh.setIndices(procIndices);
         if (debugBounds) {
             System.out.printf("Exporting mesh to %s%n", Gdx.files.external("/tmp/mesh-dump.gltf").file().getAbsolutePath());
             new GLTFExporter().export(procMeshPart.mesh, GL20.GL_TRIANGLES, Gdx.files.external("/tmp/mesh-dump.gltf"));
