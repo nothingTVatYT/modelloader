@@ -33,7 +33,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private boolean lightControlsOn = false;
     private boolean useSplatGenerator = false;
     private final Vector3 initialPos = new Vector3(200, 0, 200);
-    protected FirstPersonController playerController;
+    protected FirstPersonPhysicsController playerController;
     private FootStepsSFX footSteps;
     private Label speedLabel;
     private Decal playerDecal;
@@ -140,8 +140,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         player.moveTo(initialPos);
 
         if (screenConfig.usePlayerController) {
-            FirstPersonController.ControllerConfig controllerConfig = new FirstPersonController.ControllerConfig(player, camera);
-            playerController = new FirstPersonController(controllerConfig);
+            FirstPersonPhysicsController.ControllerConfig controllerConfig = new FirstPersonPhysicsController.ControllerConfig(player, camera);
+            playerController = new FirstPersonPhysicsController(controllerConfig);
             playerController.getPlayer().moveTo(initialPos);
             playerController.init();
             playerController.grabMouse();

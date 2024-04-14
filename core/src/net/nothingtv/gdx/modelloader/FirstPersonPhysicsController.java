@@ -10,7 +10,7 @@ import net.nothingtv.gdx.tools.CastResult;
 import net.nothingtv.gdx.tools.Physics;
 import net.nothingtv.gdx.tools.SceneObject;
 
-public class FirstPersonController extends InputAdapter {
+public class FirstPersonPhysicsController extends InputAdapter {
 
     public static class ControllerConfig {
         public float maxWalkingSpeed = 8f;
@@ -47,7 +47,7 @@ public class FirstPersonController extends InputAdapter {
     private final Vector3 cameraRotation = new Vector3();
     private final Vector3 cameraLocalPosition = new Vector3();
 
-    public FirstPersonController(ControllerConfig config) {
+    public FirstPersonPhysicsController(ControllerConfig config) {
         this.config = config;
         this.camera = config.camera;
         this.player = config.player;

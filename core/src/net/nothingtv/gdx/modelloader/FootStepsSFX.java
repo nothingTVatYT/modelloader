@@ -14,7 +14,7 @@ public class FootStepsSFX implements Disposable {
     public float stepIntervalRunning = 0.4f;
     public float volume;
 
-    private final FirstPersonController playerController;
+    private final FirstPersonPhysicsController playerController;
     private float lastStepTime;
     private float gameTime;
     private final Random rnd = new Random();
@@ -22,7 +22,7 @@ public class FootStepsSFX implements Disposable {
     private Sound lastSound;
     public float stepInterval;
 
-    public FootStepsSFX(FirstPersonController controller) {
+    public FootStepsSFX(FirstPersonPhysicsController controller) {
         this.playerController = controller;
         gameTime = 0;
     }
