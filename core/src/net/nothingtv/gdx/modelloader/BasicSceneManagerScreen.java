@@ -562,6 +562,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         if (decalBatch != null)
             decalBatch.dispose();
         sceneManager.dispose();
+        Physics.currentPhysicsWorld = null;
         physicsWorld.dispose();
         dispatcher.dispose();
         broadphase.dispose();

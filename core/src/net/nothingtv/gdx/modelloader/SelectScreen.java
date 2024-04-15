@@ -42,6 +42,8 @@ public class SelectScreen extends ScreenAdapter {
 
         table.add(createMenuButton("Controller Test", () -> game.setScreen(new ControllerTest(game)))).row();
 
+        table.add(createMenuButton("Collision Shape Test", () -> game.setScreen(new CollisionShapeTest(game)))).row();
+
         table.add(createMenuButton("Update Inventory", Inventory::writeItems)).row();
 
         table.add(createMenuButton("Exit", () -> Gdx.app.exit())).width(100);
