@@ -75,7 +75,7 @@ public class CollisionShapeTest extends BasicSceneManagerScreen {
         mesh.setIndices(indexArray);
         ModelBuilder builder = new ModelBuilder();
         builder.begin();
-        builder.part("testMesh", mesh, GL20.GL_TRIANGLES, BaseMaterials.color(Color.CORAL));
+        builder.part("testMesh", mesh, GL20.GL_TRIANGLES, BaseMaterials.colorPBR(Color.CORAL));
         Model model = builder.end();
         SceneObject testi = add("testi", model);
 
