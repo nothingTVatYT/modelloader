@@ -7,7 +7,9 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
@@ -21,7 +23,7 @@ import java.util.Random;
 public class Foliage implements RenderableProvider, Disposable {
 
     public static int RandomizeYRotation = 1;
-    public int renderMethod = 2;
+    public int renderMethod = 3;
     public boolean useFrustumCulling = true;
 
     @Override
@@ -34,12 +36,18 @@ public class Foliage implements RenderableProvider, Disposable {
     public static class FoliageType {
         public Model model;
         public Array<Matrix4> transforms;
+        public Vector3 center;
+        public float radius;
+        public int numberInstances;
+        public Terrain terrain;
+        public long seed;
         ModelInstance modelInstance;
         FloatBuffer instanceData;
         QuadTreeTransforms quadTree;
         Array<Array<Matrix4>> subTransforms;
         boolean sharedInstanceData;
         InstanceDataUpdater dataUpdater;
+        long flags;
     }
 
     private final Array<FoliageType> foliageTypes;
@@ -73,7 +81,7 @@ public class Foliage implements RenderableProvider, Disposable {
         Array<Vector3> positions0 = new Array<>();
         for (int i = 0; i < number; i++) {
             float angle = rnd.nextFloat(2 * (float)Math.PI);
-            float radius = rnd.nextFloat(foliageRadius);
+            float radius = foliageRadius * (float)Math.sqrt(rnd.nextFloat());
             Vector3 v = new Vector3(foliageCenter).add((float)Math.cos(angle) * radius, 0, (float)Math.sin(angle) * radius);
             v.y = terrain.getHeightAt(v.x, v.z);
             positions0.add(v);
@@ -81,10 +89,24 @@ public class Foliage implements RenderableProvider, Disposable {
         return positions0;
     }
 
+    public void add(Model model, Vector3 center, float radius, int numberInstances, Terrain terrain, long flags) {
+        FoliageType type = new FoliageType();
+        type.model = model;
+        type.center = new Vector3(center);
+        type.radius = radius;
+        type.numberInstances = numberInstances;
+        type.terrain = terrain;
+        type.flags = flags;
+        type.seed = (long)Float.floatToIntBits(center.x) ^ (long)Float.floatToIntBits(center.y) << 3 ^ (long)Float.floatToIntBits(center.z) << 6;
+        type.sharedInstanceData = type.model.nodes.size == 1;
+        foliageTypes.add(type);
+    }
+
     public void add(Model model, Array<Vector3> positions, long flags) {
         FoliageType type = new FoliageType();
         type.model = model;
         type.transforms = new Array<>(positions.size);
+        type.numberInstances = positions.size;
         for (Vector3 pos : positions) {
             Matrix4 mat = new Matrix4().translate(pos);
             if ((flags & RandomizeYRotation) != 0)
@@ -111,9 +133,11 @@ public class Foliage implements RenderableProvider, Disposable {
                     if (type.modelInstance == null) {
                         type.modelInstance = new ModelInstance(type.model);
                     }
-                    for (Matrix4 transform : type.transforms) {
-                        type.modelInstance.transform.set(transform).tra();
-                        type.modelInstance.getRenderables(renderables, pool);
+                    if (type.transforms != null) {
+                        for (Matrix4 transform : type.transforms) {
+                            type.modelInstance.transform.set(transform).tra();
+                            type.modelInstance.getRenderables(renderables, pool);
+                        }
                     }
                 }
                 break;
@@ -125,12 +149,12 @@ public class Foliage implements RenderableProvider, Disposable {
                         if (type.model.meshes.size > 1)
                             System.out.printf("Warning: This model for the foliage contains %d meshes and %d nodes.%n", type.model.meshes.size, type.model.nodes.size);
                         type.modelInstance = new ModelInstance(type.model);
-                        type.model.meshes.first().enableInstancedRendering(true, type.transforms.size,
+                        type.model.meshes.first().enableInstancedRendering(true, type.numberInstances,
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 1),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 2),
                                 new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 3));
-                        FloatBuffer mats = BufferUtils.newFloatBuffer(type.transforms.size * 16);
+                        FloatBuffer mats = BufferUtils.newFloatBuffer(type.numberInstances * 16);
                         float minX = Float.MAX_VALUE;
                         float maxX = -Float.MAX_VALUE;
                         float minZ = Float.MAX_VALUE;
@@ -183,6 +207,55 @@ public class Foliage implements RenderableProvider, Disposable {
                 if (camera != null) {
                     lastPosition.set(camera.position);
                     lastDirection.set(camera.direction);
+                }
+                break;
+            case 3:
+                for (FoliageType type : foliageTypes) {
+                    if (type.center == null)
+                        continue;
+                    if (type.center.dst2(camera.position) > cameraMaxDist2)
+                        continue;
+                    if (type.modelInstance == null) {
+                        type.modelInstance = new ModelInstance(type.model);
+                        type.model.meshes.first().enableInstancedRendering(true, type.numberInstances,
+                                new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
+                                new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 1),
+                                new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 2),
+                                new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 3));
+                        FloatBuffer mats = BufferUtils.newFloatBuffer(type.numberInstances * 16);
+                        Matrix4 tmpMatrix = new Matrix4();
+                        RandomXS128 prng = new RandomXS128(type.seed);
+                        for (int i = 0; i < type.numberInstances; i++) {
+                            float t = 2 * MathUtils.PI * prng.nextFloat();
+                            float u = prng.nextFloat() + prng.nextFloat();
+                            float r = u > 1f ? 2f - u : u;
+                            float x = r * MathUtils.cos(t) * type.radius + type.center.x;
+                            float z = r * MathUtils.sin(t) * type.radius + type.center.z;
+                            float y = type.terrain.getHeightAt(x, z);
+                            tmpMatrix.idt();
+                            if ((type.flags & RandomizeYRotation) != 0)
+                                tmpMatrix.rotate(0, 1, 0, prng.nextFloat(360));
+                            tmpMatrix.setTranslation(x, y, z);
+                            tmpMatrix.tra();
+                            mats.put(tmpMatrix.getValues());
+                        }
+                        mats.flip();
+                        type.instanceData = mats;
+                        type.model.meshes.first().setInstanceData(mats);
+                        if (type.model.meshes.size > 1) {
+                            if (type.sharedInstanceData) {
+                                for (int i = 1; i < type.model.meshes.size; i++) {
+                                    type.model.meshes.get(i).enableInstancedRendering(true, type.numberInstances,
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 0),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 1),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 2),
+                                            new VertexAttribute(VertexAttributes.Usage.Generic, 4, "i_worldTrans", 3));
+                                    type.model.meshes.get(i).setInstanceData(mats);
+                                }
+                            }
+                        }
+                    }
+                    type.modelInstance.getRenderables(renderables, pool);
                 }
                 break;
         }
@@ -247,6 +320,11 @@ public class Foliage implements RenderableProvider, Disposable {
         }
 
         void calculateBuffer() {
+            if (type.transforms != null)
+                calculateCulling();
+        }
+
+        void calculateCulling() {
             mats = type.instanceData;
             mats.rewind();
             mats.limit(type.transforms.size * 16);

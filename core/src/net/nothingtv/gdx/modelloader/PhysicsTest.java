@@ -178,16 +178,23 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         // add foliage
         foliage = new Foliage();
         Random rnd = new Random(123);
-        Vector3 foliageCenter = new Vector3(512, 0, 512);
+        Vector3 foliageCenter = new Vector3(initialPos);
         float foliageRadius = 512;
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
-        foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        //foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        //foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        //foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        //foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
+        foliage.add(tree1, foliageCenter, 100, 300, terrain, Foliage.RandomizeYRotation);
+        foliageCenter.x += 0.5f;
+        foliage.add(grass0, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
+        foliageCenter.z += 0.5f;
+        foliage.add(grass1, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
+        foliageCenter.x += 0.5f;
+        foliage.add(grass2, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMinDist(10);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
