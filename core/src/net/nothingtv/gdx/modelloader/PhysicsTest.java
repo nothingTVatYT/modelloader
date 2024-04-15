@@ -188,7 +188,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         //foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         //foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         //foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        foliage.add(tree1, foliageCenter, 100, 300, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, foliageCenter, 30, 30, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
         foliage.add(grass0, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
         foliageCenter.z += 0.5f;

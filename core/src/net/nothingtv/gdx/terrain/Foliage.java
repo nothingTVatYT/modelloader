@@ -213,7 +213,7 @@ public class Foliage implements RenderableProvider, Disposable {
                 for (FoliageType type : foliageTypes) {
                     if (type.center == null)
                         continue;
-                    if (type.center.dst2(camera.position) > cameraMaxDist2)
+                    if (type.center.dst2(camera.position) - type.radius > cameraMaxDist2)
                         continue;
                     if (type.modelInstance == null) {
                         type.modelInstance = new ModelInstance(type.model);
