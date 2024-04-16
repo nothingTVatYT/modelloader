@@ -7,18 +7,14 @@ import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
-import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import net.nothingtv.gdx.tools.Async;
-import net.nothingtv.gdx.tools.Debug;
 import net.nothingtv.gdx.tools.Physics;
 
 import java.nio.FloatBuffer;
@@ -29,7 +25,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Terrain implements Disposable {
+public class Terrain {
 
     private static final Logger LOG = Logger.getLogger(Terrain.class.getName());
 
@@ -79,28 +75,12 @@ public class Terrain implements Disposable {
         }
     }
 
-    class TerrainMotionState extends btMotionState {
-        @Override
-        public void getWorldTransform(Matrix4 worldTrans) {
-            worldTrans.set(modelInstance.transform).translate(rigidBodyOffset);
-            System.out.printf("getWorldTransform: set translation to %s%n", worldTrans.getTranslation(new Vector3()));
-        }
-
-        @Override
-        public void setWorldTransform(Matrix4 worldTrans) {
-            modelInstance.transform.set(worldTrans);
-            System.out.println("set world transform called on the terrain");
-        }
-    }
     /**
      * cached height sampler
      */
     private HeightSampler heightSampler;
     public TerrainConfig config;
     private TerrainInstance modelInstance;
-    private btCollisionShape collisionShape;
-    private final Vector3 rigidBodyOffset = new Vector3();
-    public btRigidBody rigidBody;
     protected Array<TerrainChunk> chunks = new Array<>();
     private final List<TerrainChunk> toBeRemoved = new ArrayList<>();
     private final Vector3 currentPos = new Vector3();
@@ -195,19 +175,6 @@ public class Terrain implements Disposable {
                 heightSampler = new DefaultHeightSampler();
             }
             heightSampler.init(this);
-            if (config.erosionIterations > 0) {
-                int w = config.width+1;
-                int h = config.height+1;
-                float[] map = new float[w * h];
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        map[y * w + x] = heightSampler.getHeight(x, y);
-                    }
-                }
-                Erosion erosion = new Erosion();
-                erosion.Erode(map, w, config.erosionIterations, false);
-                heightSampler = new MapHeightSampler(map, w);
-            }
         }
         return heightSampler;
     }
@@ -350,24 +317,7 @@ public class Terrain implements Disposable {
         float r = getHeightAt(x+d, z) - minHeight;
         float t = getHeightAt(x, z-d) - minHeight;
         float b = getHeightAt(x, z+d) - minHeight;
-        //debugDrawQuad(x, z, d);
         out.set(-2 * (r-l), 4, -2 * (b-t)).nor();
-    }
-
-    private void debugDrawQuad(float x, float z, float offset) {
-        Vector3 a = new Vector3(x-offset, 0, z);
-        Vector3 b = new Vector3(x, 0, z-offset);
-        Vector3 c = new Vector3(x+offset, 0, z);
-        Vector3 d = new Vector3(x, 0, z+offset);
-        ground(a);
-        ground(b);
-        ground(c);
-        ground(d);
-        Debug.instance.drawQuad("n plane", a, b, c, d, Color.RED);
-    }
-
-    public void ground(Vector3 pos) {
-        pos.y = getHeightAt(pos.x, pos.z);
     }
 
     public int getSplatAt(float x, float z) {
@@ -380,11 +330,6 @@ public class Terrain implements Disposable {
         Texture alpha = new Texture(pixmap);
         alpha.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         ((TextureAttribute)modelInstance.materials.first().get(TerrainTextureAttribute.Alpha1)).textureDescription.texture = alpha;
-    }
-
-    public btCollisionShape createCollisionShape() {
-        collisionShape = Bullet.obtainStaticNodeShape(modelInstance.nodes);
-        return collisionShape;
     }
 
     private TerrainChunk getChunkAt(Vector3 pos) {
@@ -444,13 +389,6 @@ public class Terrain implements Disposable {
         }
         toBeRemoved.forEach(c -> { chunks.removeValue(c, true); c.dispose(); });
         toBeRemoved.clear();
-    }
-
-    public btRigidBody createRigidBody() {
-        btMotionState motionState = new TerrainMotionState();
-        rigidBody = new btRigidBody(0f, motionState, createCollisionShape());
-        rigidBody.userData = modelInstance;
-        return rigidBody;
     }
 
     private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
@@ -523,11 +461,5 @@ public class Terrain implements Disposable {
         mesh.setIndices(indices);
         //System.out.printf("created mesh for %dx%d with %d vertices and %d indices%n", width, height, vertices.length/8, indices.length);
         return mesh;
-    }
-
-    @Override
-    public void dispose() {
-        collisionShape.dispose();
-        rigidBody.dispose();
     }
 }

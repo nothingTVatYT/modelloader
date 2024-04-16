@@ -71,7 +71,6 @@ public class TerrainConfig {
      */
     public int terrainDivideFactor;
 
-    public int erosionIterations;
     /**
      * the layers of the terrain, currently four layers are supported
      */
@@ -82,19 +81,10 @@ public class TerrainConfig {
         this.height = height;
         this.scale = scale;
         this.terrainDivideFactor = 1;
-        this.erosionIterations = 0;
     }
 
     public void addLayer(Texture diffuse, float scale) {
         TerrainLayer layer = new TerrainLayer(diffuse, scale);
         layers.add(layer);
-    }
-
-    public void setHeightMap(Pixmap heightMap, float heightScale, float heightOffset) {
-        if (heightSampler instanceof HeightMapHeightSampler hhs)
-            hhs.set(heightMap, heightScale, heightOffset);
-        else {
-            this.heightSampler = new HeightMapHeightSampler(heightMap, heightScale, heightOffset);
-        }
     }
 }

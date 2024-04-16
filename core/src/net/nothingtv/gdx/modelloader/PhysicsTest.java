@@ -22,8 +22,6 @@ import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
 import net.nothingtv.gdx.ui.InventoryView;
 
-import java.util.Random;
-
 public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
     private SceneObject box;
@@ -103,9 +101,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         //if (!hi)
             terrainObject.getTerrainInstance().minUpdateTime = 0.1f;
 
-        //wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
-        System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
-
         if (useSplatGenerator) {
             TerrainSplatGenerator.Configuration splatConfig = TerrainSplatGenerator.createDefaultConfiguration(4);
             splatConfig.resolution = 1024;
@@ -140,6 +135,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1.3f;
         player.moveTo(initialPos);
+        // make sure the collision object is at the initial position
         terrain.init(initialPos);
 
         if (screenConfig.usePlayerController) {
@@ -176,19 +172,13 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             camera.update();
         }
 
-        // add foliage
+        // add some test foliage types
         foliage = new Foliage();
-        Random rnd = new Random(123);
         Vector3 foliageCenter = new Vector3(initialPos);
-        float foliageRadius = 512;
         Model tree1 = new GLBLoader().load(Gdx.files.internal("models/tree1.glb")).scene.model;
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
-        //foliage.add(tree1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 5000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        //foliage.add(grass0, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        //foliage.add(grass1, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
-        //foliage.add(grass2, Foliage.createRandomPositions(terrain, rnd, foliageCenter, foliageRadius, 100000/GeneralSettings.current.foliageDivider), Foliage.RandomizeYRotation);
         foliage.add(tree1, foliageCenter, 30, 30, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
         foliage.add(grass0, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
@@ -200,11 +190,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.setCameraMinDist(10);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
-        /*
-        modelViewer = new JModelViewer();
-        modelViewer.showModel(tree1);
-        modelViewer.setVisible(true);
-        */
 
         showStats(screenConfig.showStats);
     }
