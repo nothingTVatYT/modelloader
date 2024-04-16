@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btDiscreteDynamicsWorld;
 import com.badlogic.gdx.physics.bullet.linearmath.btScalarArray;
+import net.nothingtv.gdx.terrain.Terrain;
 
 public class Physics {
 
@@ -53,8 +54,12 @@ public class Physics {
             result.hitPosition = new Vector3();
             result.hitPosition.set(pos).lerp(to, callback.getClosestHitFraction());
             btCollisionObject co = callback.getHitCollisionObject();
-            if (co != null)
-                result.hitObject = (SceneObject) co.userData;
+            if (co != null) {
+                if (co.userData instanceof SceneObject so)
+                    result.hitObject = so;
+                else if (co.userData instanceof Terrain.TerrainChunk chunk)
+                    result.hitTerrainChunk = chunk;
+            }
         }
         callback.dispose();
         return result;

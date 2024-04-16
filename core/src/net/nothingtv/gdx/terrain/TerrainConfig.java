@@ -8,6 +8,7 @@ import com.badlogic.gdx.utils.Array;
  * Holds the configuration of the terrain
  */
 public class TerrainConfig {
+
     public static class TerrainLayer {
         /**
          * diffuse color texture of this layer
@@ -29,6 +30,27 @@ public class TerrainConfig {
      * width and height of the terrain in vertex resolution
      */
     public int width, height;
+    /**
+     * width and height for a terrain chunk usd for physics
+     */
+    public float chunkWidth, chunkHeight;
+    /**
+     * resolution of the physics collision mesh in vertex per unit
+     */
+    public float chunkResolution = 1;
+
+    /**
+     * relative distance (normalized to 0..1 using the chunk size) at which a new terrain chunk is loaded
+     */
+    public float chunkLoadRelDistance = 0.1f;
+    /**
+     * relative distance (normalized to 0..1 using the chunk size) at which a terrain chunk is removed from the physics world
+     */
+    public float chunkUnloadRelDistance = 1f;
+    /**
+     * delete the terrain chunk after this tim in seconds after the last state changed
+     */
+    public float chunkDeletionTime = 60f;
     /**
      * the scale that dictates how big the terrain gets, width*scale x height*scale
      */

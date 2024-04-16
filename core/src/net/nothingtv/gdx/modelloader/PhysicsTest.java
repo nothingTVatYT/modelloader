@@ -103,7 +103,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         //if (!hi)
             terrainObject.getTerrainInstance().minUpdateTime = 0.1f;
 
-        wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
+        //wrapRigidBody(terrainObject, 0, terrain.createCollisionShape());
         System.out.printf("added %s with %s (rigid body: %s)%n", terrainObject.name, terrainObject.boundingBox, terrainObject.physicsBoundingBox);
 
         if (useSplatGenerator) {
@@ -140,6 +140,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
         initialPos.y = terrain.getHeightAt(initialPos.x, initialPos.z) + 1.3f;
         player.moveTo(initialPos);
+        terrain.init(initialPos);
 
         if (screenConfig.usePlayerController) {
             BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);
@@ -315,6 +316,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             splatGenerator.update();
             splatGeneratorUI.resetRequest();
         }
+
+        terrainObject.terrain.update(player.getPosition());
     }
 
     @Override

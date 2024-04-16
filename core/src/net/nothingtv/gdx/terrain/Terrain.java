@@ -6,16 +6,78 @@ import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.Bullet;
-import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
+import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
 import com.badlogic.gdx.physics.bullet.linearmath.btMotionState;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import net.nothingtv.gdx.tools.Async;
 import net.nothingtv.gdx.tools.Debug;
+import net.nothingtv.gdx.tools.Physics;
+
+import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Terrain implements Disposable {
+
+    private static final Logger LOG = Logger.getLogger(Terrain.class.getName());
+
+    public static class TerrainChunk implements Disposable {
+        public enum ChunkState { Init, Prepared, InPreparation, Visible }
+        BoundingBox boundingBox;
+        private ChunkState state;
+        long lastStateChange;
+        FloatBuffer vertexBuffer;
+        ShortBuffer indexBuffer;
+        btCollisionShape shape;
+        btCollisionObject collisionObject;
+        Future<btBvhTriangleMeshShape> futureShape;
+
+        public boolean isVisible() {
+            synchronized (this) {
+                return state == ChunkState.Visible;
+            }
+        }
+
+        public boolean isPrepared() {
+            synchronized (this) {
+                return state == ChunkState.Visible || state == ChunkState.Prepared;
+            }
+        }
+        public boolean isPreparing() {
+            synchronized (this) {
+                return state == ChunkState.InPreparation;
+            }
+        }
+
+        public void setState(ChunkState newState) {
+            synchronized (this) {
+                state = newState;
+                lastStateChange = System.currentTimeMillis();
+            }
+        }
+        @Override
+        public void dispose() {
+            if (collisionObject != null)
+                collisionObject.dispose();
+            if (shape != null)
+                shape.dispose();
+            if (futureShape != null && !futureShape.isDone()) {
+                futureShape.cancel(true);
+            }
+        }
+    }
 
     class TerrainMotionState extends btMotionState {
         @Override
@@ -39,6 +101,10 @@ public class Terrain implements Disposable {
     private btCollisionShape collisionShape;
     private final Vector3 rigidBodyOffset = new Vector3();
     public btRigidBody rigidBody;
+    protected Array<TerrainChunk> chunks = new Array<>();
+    private final List<TerrainChunk> toBeRemoved = new ArrayList<>();
+    private final Vector3 currentPos = new Vector3();
+    private final Vector3 tmpPos = new Vector3();
 
     private float minHeight;
     private float maxHeight;
@@ -146,6 +212,134 @@ public class Terrain implements Disposable {
         return heightSampler;
     }
 
+    /**
+     * initialize the physics part of the terrain
+     * @param pos a position to load the chunk for
+     */
+    public void init(Vector3 pos) {
+        if (config.chunkWidth == 0) {
+            config.chunkWidth = config.width * config.scale / config.terrainDivideFactor;
+            config.chunkHeight = config.height * config.scale / config.terrainDivideFactor;
+        }
+        ensureChunkLoaded(pos, true);
+    }
+
+    protected void ensureChunkLoaded(Vector3 pos, boolean waitForIt) {
+        for (TerrainChunk chunk : chunks) {
+            if (chunk.boundingBox.contains(pos)) {
+                if (!chunk.isVisible())
+                    loadChunk(chunk, true);
+                return;
+            }
+        }
+        // create a new one
+        TerrainChunk chunk = new TerrainChunk();
+        float chunkX = MathUtils.floor(pos.x / config.chunkWidth) * config.chunkWidth;
+        float chunkZ = MathUtils.floor(pos.z / config.chunkHeight) * config.chunkHeight;
+        Vector3 min = new Vector3(chunkX, 0, chunkZ);
+        Vector3 max = new Vector3(chunkX + config.chunkWidth, 1, chunkZ * config.chunkHeight);
+        chunk.boundingBox = new BoundingBox(min, max);
+        chunk.boundingBox.ext(pos);
+        chunk.setState(TerrainChunk.ChunkState.Init);
+        chunks.add(chunk);
+        loadChunk(chunk, waitForIt);
+    }
+
+    protected void loadChunk(TerrainChunk chunk, boolean waitForIt) {
+        if (chunk.isVisible()) return;
+        if (!chunk.isPrepared()) {
+            if (!chunk.isPreparing()) {
+                chunk.futureShape = prepareChunkAsync(chunk);
+            }
+            if (!waitForIt)
+                return;
+            try {
+                chunk.futureShape.get();
+            } catch (Exception e) {
+                LOG.log(Level.WARNING, "Cannot prepare terrain chunk", e);
+            }
+        }
+        activateChunk(chunk);
+    }
+
+    protected void activateChunk(TerrainChunk chunk) {
+        if (!chunk.isPrepared()) {
+            LOG.log(Level.WARNING, "Cannot activate a chunk that is not prepared.");
+            return;
+        }
+        Vector3 localInertia = new Vector3();
+        chunk.shape.calculateLocalInertia(0, localInertia);
+        btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(0, null, chunk.shape, localInertia);
+        btRigidBody rigidBody = new btRigidBody(info);
+        rigidBody.userData = chunk;
+        if (Physics.currentPhysicsWorld != null)
+            Physics.currentPhysicsWorld.addRigidBody(rigidBody);
+        info.dispose();
+        chunk.collisionObject = rigidBody;
+        chunk.setState(TerrainChunk.ChunkState.Visible);
+    }
+
+    protected Future<btBvhTriangleMeshShape> prepareChunkAsync(TerrainChunk chunk) {
+        chunk.setState(TerrainChunk.ChunkState.InPreparation);
+        return Async.submit(() -> prepareChunk(chunk));
+    }
+
+    protected btBvhTriangleMeshShape prepareChunk(TerrainChunk chunk) {
+        chunk.setState(TerrainChunk.ChunkState.InPreparation);
+        // for physics we need the position only
+        int vertexSize = 3;
+        // how many vertices should be used
+        int vy = MathUtils.ceil(config.chunkHeight * config.chunkResolution);
+        int vx = MathUtils.ceil(config.chunkWidth * config.chunkResolution);
+
+        FloatBuffer vb = BufferUtils.newFloatBuffer(vx * vy * vertexSize);
+
+        float minY = Float.MAX_VALUE;
+        float maxY = -Float.MAX_VALUE;
+        for (int z = 0; z < vy; z++) {
+            float worldZ = z * config.chunkResolution + chunk.boundingBox.min.z;
+            for (int x = 0; x < vx; x++) {
+                float worldX = x * config.chunkResolution + chunk.boundingBox.min.x;
+                float worldY = getHeightAt(worldX, worldZ);
+                vb.put(worldX);
+                vb.put(worldY);
+                vb.put(worldZ);
+                minY = Math.min(minY, worldY);
+                maxY = Math.max(maxY, worldY);
+            }
+        }
+        vb.flip();
+
+        ShortBuffer ib = BufferUtils.newShortBuffer((vx-1) * (vy-1) * 6);
+        for (int z = 0; z < vy-1; z++) {
+            for (int x = 0; x < vx-1; x++) {
+                ib.put((short)(x + vx*z));
+                ib.put((short)(x + vx*(z+1)));
+                ib.put((short)(x+1 + vx*z));
+                ib.put((short)(x+1 + vx*z));
+                ib.put((short)(x + vx*(z+1)));
+                ib.put((short)(x+1 + vx*(z+1)));
+            }
+        }
+        ib.flip();
+
+        btTriangleIndexVertexArray va = new btTriangleIndexVertexArray();
+        btIndexedMesh btMesh = new btIndexedMesh();
+        btMesh.set(chunk, vb, vertexSize * 4, vx * vy, 0, ib, 0, ib.limit());
+        va.addIndexedMesh(btMesh, PHY_ScalarType.PHY_SHORT);
+        btBvhTriangleMeshShape shape = new btBvhTriangleMeshShape(va, true);
+        chunk.vertexBuffer = vb;
+        chunk.indexBuffer = ib;
+        chunk.shape = shape;
+
+        chunk.boundingBox.min.y = minY;
+        chunk.boundingBox.max.y = maxY;
+        chunk.boundingBox.update();
+
+        chunk.setState(TerrainChunk.ChunkState.Prepared);
+        return shape;
+    }
+
     public float getHeightAt(float x, float z) {
         return getHeightSampler().getHeight(x / config.scale, z / config.scale);
     }
@@ -191,6 +385,65 @@ public class Terrain implements Disposable {
     public btCollisionShape createCollisionShape() {
         collisionShape = Bullet.obtainStaticNodeShape(modelInstance.nodes);
         return collisionShape;
+    }
+
+    private TerrainChunk getChunkAt(Vector3 pos) {
+        for (TerrainChunk chunk : chunks) {
+            if (chunk.boundingBox.contains(pos))
+                return chunk;
+        }
+        return null;
+    }
+
+    public void update(Vector3 pos) {
+        // check for neighboring terrain chunks
+        currentPos.set(pos);
+        currentPos.y = getHeightAt(currentPos.x, currentPos.z);
+        TerrainChunk currentChunk = getChunkAt(currentPos);
+        if (currentChunk == null) return;
+        float rx = (currentPos.x - currentChunk.boundingBox.min.x) / currentChunk.boundingBox.getWidth();
+        float rz = (currentPos.z - currentChunk.boundingBox.min.z) / currentChunk.boundingBox.getDepth();
+        if (rx < config.chunkLoadRelDistance) {
+            tmpPos.set(currentPos).x -= currentChunk.boundingBox.getWidth();
+            ensureChunkLoaded(tmpPos, false);
+        }
+        if (rx > 1f - config.chunkLoadRelDistance) {
+            tmpPos.set(currentPos).x += currentChunk.boundingBox.getWidth();
+            ensureChunkLoaded(tmpPos, false);
+        }
+        if (rz < config.chunkLoadRelDistance) {
+            tmpPos.set(currentPos).z -= currentChunk.boundingBox.getHeight();
+            ensureChunkLoaded(tmpPos, false);
+        }
+        if (rz > 1f - config.chunkLoadRelDistance) {
+            tmpPos.set(currentPos).z += currentChunk.boundingBox.getHeight();
+            ensureChunkLoaded(tmpPos, false);
+        }
+        checkLoadedChunks(pos);
+    }
+
+    protected void unloadChunk(TerrainChunk chunk) {
+        if (chunk.isVisible()) {
+            Physics.currentPhysicsWorld.removeCollisionObject(chunk.collisionObject);
+            chunk.setState(TerrainChunk.ChunkState.Prepared);
+        }
+    }
+
+    public void checkLoadedChunks(Vector3 pos) {
+        for (TerrainChunk chunk : chunks) {
+            if (!chunk.isVisible()) {
+                if (chunk.isPrepared() && System.currentTimeMillis() - chunk.lastStateChange > config.chunkDeletionTime)
+                    toBeRemoved.add(chunk);
+                continue;
+            }
+            float dx = Math.max(chunk.boundingBox.min.x - pos.x, currentPos.x - chunk.boundingBox.max.x) / chunk.boundingBox.getWidth();
+            float dz = Math.max(chunk.boundingBox.min.z - pos.z, currentPos.z - chunk.boundingBox.max.z) / chunk.boundingBox.getDepth();
+            if (dx > config.chunkUnloadRelDistance && dz > config.chunkUnloadRelDistance) {
+                unloadChunk(chunk);
+            }
+        }
+        toBeRemoved.forEach(c -> { chunks.removeValue(c, true); c.dispose(); });
+        toBeRemoved.clear();
     }
 
     public btRigidBody createRigidBody() {
