@@ -30,8 +30,6 @@ public class SelectScreen extends ScreenAdapter {
 
         skin = new Skin(Gdx.files.internal("data/uiskin.json"));
 
-        table.add(createMenuButton("Terrain Test", () -> game.setScreen(new TerrainTest()))).row();
-
         table.add(createMenuButton("Model Loader", () -> game.setScreen(new ModelLoader()))).row();
 
         table.add(createMenuButton("Shadow Test", () -> game.setScreen(new ShadowTest()))).row();

@@ -11,16 +11,19 @@ import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.collision.*;
 import com.badlogic.gdx.physics.bullet.dynamics.btRigidBody;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import net.nothingtv.gdx.tools.Async;
+import net.nothingtv.gdx.tools.JMapVisualizer;
 import net.nothingtv.gdx.tools.Physics;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,6 +66,15 @@ public class Terrain {
                 lastStateChange = System.currentTimeMillis();
             }
         }
+
+        @Override
+        public String toString() {
+            return "TerrainChunk{" +
+                    "boundingBox=" + boundingBox +
+                    ", state=" + state +
+                    '}';
+        }
+
         @Override
         public void dispose() {
             if (collisionObject != null)
@@ -81,9 +93,8 @@ public class Terrain {
     private HeightSampler heightSampler;
     public TerrainConfig config;
     private TerrainInstance modelInstance;
-    protected Array<TerrainChunk> chunks = new Array<>();
-    private final List<TerrainChunk> toBeRemoved = new ArrayList<>();
-    private final Vector3 currentPos = new Vector3();
+    private final ConcurrentHashMap<Long, TerrainChunk> chunks = new ConcurrentHashMap<>();
+    private final List<Long> toBeRemoved = new ArrayList<>();
     private final Vector3 tmpPos = new Vector3();
 
     private float minHeight;
@@ -184,36 +195,51 @@ public class Terrain {
      * @param pos a position to load the chunk for
      */
     public void init(Vector3 pos) {
-        if (config.chunkWidth == 0) {
-            config.chunkWidth = config.width * config.scale / config.terrainDivideFactor;
-            config.chunkHeight = config.height * config.scale / config.terrainDivideFactor;
+        if (config.chunkEdgeLength == 0) {
+            config.chunkEdgeLength = config.width * config.scale / config.terrainDivideFactor;
         }
         ensureChunkLoaded(pos, true);
     }
 
-    protected void ensureChunkLoaded(Vector3 pos, boolean waitForIt) {
-        for (TerrainChunk chunk : chunks) {
-            if (chunk.boundingBox.contains(pos)) {
-                if (!chunk.isVisible())
-                    loadChunk(chunk, true);
-                return;
+    public long chunkKey(float x, float z) {
+        int cz = (int)Math.floor(z / config.chunkEdgeLength);
+        int cx = (int)Math.floor(x / config.chunkEdgeLength);
+        return (cz < 0 ? 1000000000000000L : 0L) | (Math.abs(cz) & 0xfffffffL) << 62 | (cx < 0 ? 10000000L : 0L) | (Math.abs(cx) & 0xfffffff);
+    }
+
+    private TerrainChunk getChunkAt(Vector3 pos) {
+        return chunks.get(chunkKey(pos.x, pos.z));
+    }
+
+    public void ensureChunkLoaded(Vector3 pos, boolean waitForIt) {
+        TerrainChunk chunk = getChunkAt(pos);
+        if (chunk != null && chunk.isVisible())
+            return;
+        if (chunk == null) {
+            chunk = new TerrainChunk();
+            float chunkX = config.chunkEdgeLength * (int)Math.floor(pos.x / config.chunkEdgeLength);
+            float chunkZ = config.chunkEdgeLength * (int)Math.floor(pos.z / config.chunkEdgeLength);
+            Vector3 min = new Vector3(chunkX, pos.y-1, chunkZ);
+            Vector3 max = new Vector3(chunkX + config.chunkEdgeLength, pos.y+1, chunkZ + config.chunkEdgeLength);
+            chunk.boundingBox = new BoundingBox(min, max);
+            chunk.setState(TerrainChunk.ChunkState.Init);
+            long key = chunkKey(pos.x, pos.z);
+            if (!chunk.boundingBox.contains(pos)) {
+                System.err.printf("bounding box %s is wrong, does not contain %s%n", chunk.boundingBox, pos);
             }
+            if (chunks.containsKey(key)) {
+                System.err.println("duplicate key in terrain chunks");
+                throw new GdxRuntimeException("duplicate key in terrain chunks");
+            }
+            chunks.put(key, chunk);
+            JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         }
-        // create a new one
-        TerrainChunk chunk = new TerrainChunk();
-        float chunkX = MathUtils.floor(pos.x / config.chunkWidth) * config.chunkWidth;
-        float chunkZ = MathUtils.floor(pos.z / config.chunkHeight) * config.chunkHeight;
-        Vector3 min = new Vector3(chunkX, 0, chunkZ);
-        Vector3 max = new Vector3(chunkX + config.chunkWidth, 1, chunkZ * config.chunkHeight);
-        chunk.boundingBox = new BoundingBox(min, max);
-        chunk.boundingBox.ext(pos);
-        chunk.setState(TerrainChunk.ChunkState.Init);
-        chunks.add(chunk);
         loadChunk(chunk, waitForIt);
     }
 
     protected void loadChunk(TerrainChunk chunk, boolean waitForIt) {
         if (chunk.isVisible()) return;
+        //System.out.printf("loading chunk %s (%d/%d), waiting=%s%n", chunk, (int)(chunk.boundingBox.getCenterX() / config.chunkEdgeLength), (int)(chunk.boundingBox.getCenterZ() / config.chunkEdgeLength), waitForIt);
         if (!chunk.isPrepared()) {
             if (!chunk.isPreparing()) {
                 chunk.futureShape = prepareChunkAsync(chunk);
@@ -223,6 +249,7 @@ public class Terrain {
             try {
                 chunk.futureShape.get();
             } catch (Exception e) {
+                System.err.println("cannot prepare terrain chunk");
                 LOG.log(Level.WARNING, "Cannot prepare terrain chunk", e);
             }
         }
@@ -231,9 +258,11 @@ public class Terrain {
 
     protected void activateChunk(TerrainChunk chunk) {
         if (!chunk.isPrepared()) {
+            System.err.println("activate called on chunk that is not prepared");
             LOG.log(Level.WARNING, "Cannot activate a chunk that is not prepared.");
             return;
         }
+        //System.out.printf("activate chunk %s%n", chunk);
         Vector3 localInertia = new Vector3();
         chunk.shape.calculateLocalInertia(0, localInertia);
         btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(0, null, chunk.shape, localInertia);
@@ -244,20 +273,23 @@ public class Terrain {
         info.dispose();
         chunk.collisionObject = rigidBody;
         chunk.setState(TerrainChunk.ChunkState.Visible);
+        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
     }
 
     protected Future<btBvhTriangleMeshShape> prepareChunkAsync(TerrainChunk chunk) {
         chunk.setState(TerrainChunk.ChunkState.InPreparation);
+        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         return Async.submit(() -> prepareChunk(chunk));
     }
 
     protected btBvhTriangleMeshShape prepareChunk(TerrainChunk chunk) {
         chunk.setState(TerrainChunk.ChunkState.InPreparation);
+        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         // for physics we need the position only
         int vertexSize = 3;
         // how many vertices should be used
-        int vy = MathUtils.ceil(config.chunkHeight * config.chunkResolution);
-        int vx = MathUtils.ceil(config.chunkWidth * config.chunkResolution);
+        int vy = MathUtils.ceil(config.chunkEdgeLength * config.chunkResolution)+1;
+        int vx = MathUtils.ceil(config.chunkEdgeLength * config.chunkResolution)+1;
 
         FloatBuffer vb = BufferUtils.newFloatBuffer(vx * vy * vertexSize);
 
@@ -304,6 +336,7 @@ public class Terrain {
         chunk.boundingBox.update();
 
         chunk.setState(TerrainChunk.ChunkState.Prepared);
+        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         return shape;
     }
 
@@ -332,38 +365,33 @@ public class Terrain {
         ((TextureAttribute)modelInstance.materials.first().get(TerrainTextureAttribute.Alpha1)).textureDescription.texture = alpha;
     }
 
-    private TerrainChunk getChunkAt(Vector3 pos) {
-        for (TerrainChunk chunk : chunks) {
-            if (chunk.boundingBox.contains(pos))
-                return chunk;
-        }
-        return null;
-    }
-
     public void update(Vector3 pos) {
+        JMapVisualizer.clear();
+        for (TerrainChunk chunk : chunks.values()) {
+            JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
+        }
         // check for neighboring terrain chunks
-        currentPos.set(pos);
-        currentPos.y = getHeightAt(currentPos.x, currentPos.z);
-        TerrainChunk currentChunk = getChunkAt(currentPos);
-        if (currentChunk == null) return;
-        float rx = (currentPos.x - currentChunk.boundingBox.min.x) / currentChunk.boundingBox.getWidth();
-        float rz = (currentPos.z - currentChunk.boundingBox.min.z) / currentChunk.boundingBox.getDepth();
-        if (rx < config.chunkLoadRelDistance) {
-            tmpPos.set(currentPos).x -= currentChunk.boundingBox.getWidth();
-            ensureChunkLoaded(tmpPos, false);
+        TerrainChunk currentChunk = getChunkAt(pos);
+        if (currentChunk == null) {
+            System.err.printf("Found no current terrain chunk for %s!%n", pos);
+            return;
         }
-        if (rx > 1f - config.chunkLoadRelDistance) {
-            tmpPos.set(currentPos).x += currentChunk.boundingBox.getWidth();
-            ensureChunkLoaded(tmpPos, false);
-        }
-        if (rz < config.chunkLoadRelDistance) {
-            tmpPos.set(currentPos).z -= currentChunk.boundingBox.getHeight();
-            ensureChunkLoaded(tmpPos, false);
-        }
-        if (rz > 1f - config.chunkLoadRelDistance) {
-            tmpPos.set(currentPos).z += currentChunk.boundingBox.getHeight();
-            ensureChunkLoaded(tmpPos, false);
-        }
+        tmpPos.set(pos).add(0, 0, -config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(0, 0, config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(config.chunkLoadDistance, 0, -config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(config.chunkLoadDistance, 0, 0);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(config.chunkLoadDistance, 0, config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(-config.chunkLoadDistance, 0, -config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(-config.chunkLoadDistance, 0, 0);
+        ensureChunkLoaded(tmpPos, false);
+        tmpPos.set(pos).add(-config.chunkLoadDistance, 0, config.chunkLoadDistance);
+        ensureChunkLoaded(tmpPos, false);
         checkLoadedChunks(pos);
     }
 
@@ -371,23 +399,25 @@ public class Terrain {
         if (chunk.isVisible()) {
             Physics.currentPhysicsWorld.removeCollisionObject(chunk.collisionObject);
             chunk.setState(TerrainChunk.ChunkState.Prepared);
+            //System.out.printf("Terrain chunk %s removed from physics simulation.%n", chunk);
         }
     }
 
     public void checkLoadedChunks(Vector3 pos) {
-        for (TerrainChunk chunk : chunks) {
+        for (Map.Entry<Long, TerrainChunk> entry : chunks.entrySet()) {
+            TerrainChunk chunk = entry.getValue();
             if (!chunk.isVisible()) {
                 if (chunk.isPrepared() && System.currentTimeMillis() - chunk.lastStateChange > config.chunkDeletionTime)
-                    toBeRemoved.add(chunk);
+                    toBeRemoved.add(entry.getKey());
                 continue;
             }
-            float dx = Math.max(chunk.boundingBox.min.x - pos.x, currentPos.x - chunk.boundingBox.max.x) / chunk.boundingBox.getWidth();
-            float dz = Math.max(chunk.boundingBox.min.z - pos.z, currentPos.z - chunk.boundingBox.max.z) / chunk.boundingBox.getDepth();
-            if (dx > config.chunkUnloadRelDistance && dz > config.chunkUnloadRelDistance) {
+            float dx = Math.abs(chunk.boundingBox.getCenterX() - pos.x);
+            float dz = Math.abs(chunk.boundingBox.getCenterZ() - pos.z);
+            if (dx + dz > config.chunkUnloadDistance) {
                 unloadChunk(chunk);
             }
         }
-        toBeRemoved.forEach(c -> { chunks.removeValue(c, true); c.dispose(); });
+        toBeRemoved.forEach(c -> chunks.remove(c).dispose());
         toBeRemoved.clear();
     }
 

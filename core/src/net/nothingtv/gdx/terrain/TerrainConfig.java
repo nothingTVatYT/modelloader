@@ -33,20 +33,20 @@ public class TerrainConfig {
     /**
      * width and height for a terrain chunk usd for physics
      */
-    public float chunkWidth, chunkHeight;
+    public float chunkEdgeLength;
     /**
      * resolution of the physics collision mesh in vertex per unit
      */
     public float chunkResolution = 1;
 
     /**
-     * relative distance (normalized to 0..1 using the chunk size) at which a new terrain chunk is loaded
+     * distance at which a new terrain chunk is loaded
      */
-    public float chunkLoadRelDistance = 0.1f;
+    public float chunkLoadDistance = 250;
     /**
      * relative distance (normalized to 0..1 using the chunk size) at which a terrain chunk is removed from the physics world
      */
-    public float chunkUnloadRelDistance = 1f;
+    public float chunkUnloadDistance = 500;
     /**
      * delete the terrain chunk after this tim in seconds after the last state changed
      */

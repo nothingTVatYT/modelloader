@@ -39,6 +39,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private JSplatGenerator splatGeneratorUI;
     private JModelViewer modelViewer;
     private InventoryView inventoryView;
+    private final Schedule schedule = new Schedule();
 
     public PhysicsTest(Game game) {
         super(game);
@@ -86,8 +87,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         float uvScale = 400f * tf;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
+        terrainConfig.chunkLoadDistance = 100;
         terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
-        terrainConfig.erosionIterations = 0;
         terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
 
         terrainConfig.addLayer(new Texture(layer1Tex), uvScale);
@@ -137,6 +138,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         player.moveTo(initialPos);
         // make sure the collision object is at the initial position
         terrain.init(initialPos);
+        schedule.everyMilliSeconds(250, () -> terrain.update(player.getPosition()));
+        schedule.everyMilliSeconds(500, () -> JMapVisualizer.setCursor(player.getPosition().x, player.getPosition().z));
+        JMapVisualizer.setTerrain(terrain);
 
         if (screenConfig.usePlayerController) {
             BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);
@@ -159,7 +163,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             speedLabel.addAction(new Action() {
                 @Override
                 public boolean act(float delta) {
-                    speedLabel.setText(String.format("%2.2f m/s", playerController.getCurrentSpeed()));
+                    speedLabel.setText(String.format("%2.2f m/s (%d/%d)", playerController.getCurrentSpeed(),
+                            (int)(player.getPosition().x / terrainConfig.chunkEdgeLength),
+                            (int)(player.getPosition().z / terrainConfig.chunkEdgeLength)
+                            ));
                     return false;
                 }
             });
@@ -240,7 +247,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             if (debugDrawer.getDebugMode() > 0)
                 debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_NoDebug);
             else
-                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_FastWireframe|btIDebugDraw.DebugDrawModes.DBG_DrawWireframe);
+                debugDrawer.setDebugMode(btIDebugDraw.DebugDrawModes.DBG_DrawAabb);
         }
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT)) {
             PickResult picked = Physics.pick(camera, 100);
@@ -294,6 +301,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             ball.moveTo(newPos);
         }
         if (player.getPosition().y < -200) {
+            terrainObject.terrain.ensureChunkLoaded(initialPos, true);
             player.moveTo(initialPos);
         }
 
@@ -302,7 +310,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             splatGeneratorUI.resetRequest();
         }
 
-        terrainObject.terrain.update(player.getPosition());
+        schedule.update();
     }
 
     @Override

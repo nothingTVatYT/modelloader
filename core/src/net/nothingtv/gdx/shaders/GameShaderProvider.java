@@ -18,13 +18,13 @@ public class GameShaderProvider extends PBRShaderProvider {
 
     @Override
     protected Shader createShader(Renderable renderable) {
-        System.out.printf("GameShaderProvider.createShader(Renderable): create shader for material %s%n", renderable.material.id);
+        //System.out.printf("GameShaderProvider.createShader(Renderable): create shader for material %s%n", renderable.material.id);
         return super.createShader(renderable);
     }
 
     @Override
     protected PBRShader createShader(Renderable renderable, PBRShaderConfig config, String prefix) {
-        System.out.printf("GameShaderProvider.createShader(Renderable, Config, Prefix): create shader for material %s%n", renderable.material.id);
+        //System.out.printf("GameShaderProvider.createShader(Renderable, Config, Prefix): create shader for material %s%n", renderable.material.id);
         if( renderable.meshPart.mesh.isInstanced()) {
             prefix += "#define instanced\n";
             config.vertexShader = Gdx.files.internal("shaders/pbr/pbr.vs.glsl").readString();
