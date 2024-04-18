@@ -163,7 +163,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
             playerController.getPlayer().moveTo(initialPos);
             playerController.init();
-            playerController.grabMouse();
+            //playerController.grabMouse();
             addInputController(playerController);
 
             footSteps = new FootStepsSFX(playerController);
@@ -207,8 +207,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.add(grass1, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
         foliage.add(grass2, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, new Vector3(94, 0, 201), 60, 120, terrain, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
-        foliage.setCameraMinDist(10);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
 
