@@ -13,14 +13,16 @@ import com.badlogic.gdx.graphics.g3d.decals.Decal;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
-import com.badlogic.gdx.scenes.scene2d.Action;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.utils.Align;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
 import net.nothingtv.gdx.inventory.GameItem;
 import net.nothingtv.gdx.inventory.Inventory;
+import net.nothingtv.gdx.objects.PlayerInfo;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
 import net.nothingtv.gdx.ui.InventoryView;
+import net.nothingtv.gdx.ui.PlayerInfoView;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject floor;
@@ -39,6 +41,8 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private JSplatGenerator splatGeneratorUI;
     private JModelViewer modelViewer;
     private InventoryView inventoryView;
+    private PlayerInfo playerInfo;
+    private PlayerInfoView playerInfoView;
     private final Schedule schedule = new Schedule();
 
     public PhysicsTest(Game game) {
@@ -52,6 +56,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.usePlayerController = true;
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
+        screenConfig.showFPS = false;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
         super.init();
     }
@@ -140,6 +145,15 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrain.init(initialPos);
         schedule.everyMilliSeconds(250, () -> terrain.update(player.getPosition()));
 
+        playerInfo = new PlayerInfo();
+        playerInfo.playerObject = player;
+        playerInfo.displayName = player.name;
+        playerInfo.icon = new TextureRegion(new Texture(Gdx.files.internal("textures/head-profile.png")));
+
+        playerInfoView = new PlayerInfoView(playerInfo, skin);
+        playerInfoView.setPosition(0, Gdx.graphics.getHeight(), Align.topLeft);
+        stage.addActor(playerInfoView);
+
         if (screenConfig.usePlayerController) {
             BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);
             if (screenConfig.useKinematicController) {
@@ -157,6 +171,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
             showCrossHair(true);
 
+            /*
             speedLabel = new Label("00.00 m/s", skin);
             speedLabel.addAction(new Action() {
                 @Override
@@ -170,6 +185,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             });
             table.row();
             table.add(speedLabel);
+             */
         } else {
             camera.position.set(0, 24, -5);
             camera.lookAt(0, 23, 0);
