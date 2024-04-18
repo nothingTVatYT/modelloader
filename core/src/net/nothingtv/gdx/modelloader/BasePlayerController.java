@@ -13,8 +13,8 @@ import net.nothingtv.gdx.tools.SceneObject;
 public class BasePlayerController extends InputAdapter implements Disposable {
 
     public static class ControllerConfig {
-        public float maxWalkingSpeed = 8f;
-        public float maxRunningSpeed = 24f;
+        public float maxWalkingSpeed = 6f;
+        public float maxRunningSpeed = 12f;
         public final PlayerObject player;
         public final Camera camera;
         public Vector3 eyeOffset = new Vector3(0, 1, 0.2f);
@@ -22,7 +22,7 @@ public class BasePlayerController extends InputAdapter implements Disposable {
         public float turningSpeed = 60f;
         public float minVelocity2 = 0.05f;
         public float accelerationForce = 10f;
-        public float jumpForce = 50f;
+        public float jumpForce = 15f;
         public float breakForce = 5f;
         public boolean simulateSideFriction = true;
 
