@@ -25,8 +25,6 @@ import net.nothingtv.gdx.ui.InventoryView;
 import net.nothingtv.gdx.ui.PlayerInfoView;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
-    private SceneObject floor;
-    private SceneObject box;
     private SceneObject ball;
     private TerrainObject terrainObject;
     private Foliage foliage;
@@ -68,16 +66,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Inventory.init();
         inventoryView = new InventoryView(stage, skin);
 
-        floor = add("floor", BaseModels.createBox(10, 1, 10, BaseMaterials.whiteColor()));
-        wrapRigidBody(floor, 10, BaseShapes.createBoxShape(floor.modelInstance));
-        floor.setLinearFactor(SceneObject.LockY);
-        floor.setAngularFactor(SceneObject.LockAll);
-        floor.moveTo(new Vector3(0, 20, 0));
-        System.out.printf("added %s with %s (rigid body: %s)%n", floor.name, floor.boundingBox, floor.physicsBoundingBox);
-        box = add("box", BaseModels.createBox(1, 1, 1, BaseMaterials.color(Color.RED)));
-        wrapRigidBody(box, 1, BaseShapes.createBoxShape(box.modelInstance));
-        box.move(new Vector3(0, 23, 0));
-        box.rotate(Vector3.X, 25f);
         ball = add("ball", BaseModels.createSphere(1, BaseMaterials.emit(Color.GREEN)));
         wrapRigidBody(ball, 1, BaseShapes.createSphereShape(ball.modelInstance));
         ball.moveTo(new Vector3(30, 30, 30));
@@ -305,9 +293,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
             showCrossHair(playerController.isMouseGrabbed());
         }
-        Vector3 randomTranslation = new Vector3(MathUtils.sin(gameTime), 0, 0);
-        Vector3 diff = new Vector3(randomTranslation).sub(floor.modelInstance.transform.getTranslation(new Vector3())).scl(15);
-        floor.addForce(diff);
 
         // add a mini game ;)
         if (ball.getPosition().y < -200) {
