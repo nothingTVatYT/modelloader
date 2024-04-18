@@ -14,40 +14,14 @@ import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.BufferUtils;
-import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
-import java.util.Random;
 
-public class Foliage implements RenderableProvider, Disposable {
+public class Foliage implements RenderableProvider {
 
     public static int RandomizeYRotation = 1;
-
-    @Override
-    public void dispose() {
-        for (FoliageType foliageType : foliageTypes)
-            if (foliageType.dataUpdater != null)
-                foliageType.dataUpdater.cancel();
-    }
-
-    public static class FoliageType {
-        public Model model;
-        public Array<Matrix4> transforms;
-        public Vector3 center;
-        public float radius;
-        public int numberInstances;
-        public Terrain terrain;
-        public long seed;
-        ModelInstance modelInstance;
-        FloatBuffer instanceData;
-        QuadTreeTransforms quadTree;
-        Array<Array<Matrix4>> subTransforms;
-        boolean sharedInstanceData;
-        InstanceDataUpdater dataUpdater;
-        long flags;
-    }
 
     public static class FoliageArea {
         public Model model;
@@ -72,18 +46,12 @@ public class Foliage implements RenderableProvider, Disposable {
 
     private final HashMap<Model, FoliageModelData> foliagePerModel = new HashMap<>();
 
-    private final Array<FoliageType> foliageTypes;
     private final Array<FoliageArea> areas = new Array<>();
     private final Array<FoliageArea> visibleAreas = new Array<>();
-    private final Random rnd = new Random();
     private Camera camera;
     private float cameraMaxDist2 = 512*512;
     private final Vector3 lastPosition = new Vector3();
     private final Vector3 lastDirection = new Vector3();
-
-    public Foliage() {
-        foliageTypes = new Array<>();
-    }
 
     public void setCamera(Camera camera) {
         this.camera = camera;
@@ -107,28 +75,6 @@ public class Foliage implements RenderableProvider, Disposable {
         area.sharedInstanceData = area.model.nodes.size == 1;
         area.visible = false;
         areas.add(area);
-    }
-
-    public void add(Model model, Array<Vector3> positions, long flags) {
-        FoliageType type = new FoliageType();
-        type.model = model;
-        type.transforms = new Array<>(positions.size);
-        type.numberInstances = positions.size;
-        for (Vector3 pos : positions) {
-            Matrix4 mat = new Matrix4().translate(pos);
-            if ((flags & RandomizeYRotation) != 0)
-                mat.rotate(0, 1, 0, rnd.nextFloat(360));
-            if (model.meshes.size > 1 && model.nodes.size > 1) {
-                type.subTransforms = new Array<>(model.meshes.size-1);
-                for (int i = 1; i < model.meshes.size; i++) {
-                    Matrix4 subMat = new Matrix4(model.nodes.get(i).localTransform).mul(mat);
-                    type.subTransforms.get(i).add(subMat);
-                }
-            }
-            type.transforms.add(mat.tra());
-        }
-        type.sharedInstanceData = type.model.nodes.size == 1;
-        foliageTypes.add(type);
     }
 
     @Override
@@ -222,83 +168,6 @@ public class Foliage implements RenderableProvider, Disposable {
         for (FoliageModelData fmd : foliagePerModel.values()) {
             if (!fmd.areas.isEmpty())
                 fmd.modelInstance.getRenderables(renderables, pool);
-        }
-    }
-
-    static class InstanceDataUpdater implements Runnable {
-
-        FoliageType type;
-        Camera camera;
-        volatile boolean canceled;
-        volatile boolean hasNewData;
-        FloatBuffer mats;
-        long resetAt;
-        Array<Matrix4> toBeRendered = new Array<>();
-
-        InstanceDataUpdater(FoliageType type, Camera camera) {
-            this.type = type;
-            this.camera = camera;
-        }
-
-        public synchronized void calculateNext(int milliSeconds) {
-            resetAt = System.currentTimeMillis() + milliSeconds;
-            hasNewData = false;
-            notify();
-        }
-
-        public void cancel() {
-            canceled = true;
-        }
-
-        public FloatBuffer getBuffer() {
-            return mats;
-        }
-
-        @Override
-        public void run() {
-            canceled = false;
-            hasNewData = false;
-            calculateBuffer();
-            while (!canceled) {
-                if (resetAt > 0) {
-                    if (System.currentTimeMillis() >= resetAt) {
-                        calculateBuffer();
-                        resetAt = 0;
-                        continue;
-                    }
-                    try {
-                        Thread.sleep(Math.min(100, resetAt - System.currentTimeMillis()));
-                        continue;
-                    } catch (InterruptedException e) {
-                        continue;
-                    }
-                }
-                synchronized (this) {
-                    try {
-                        wait(100);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        void calculateBuffer() {
-            if (type.transforms != null)
-                calculateCulling();
-        }
-
-        void calculateCulling() {
-            mats = type.instanceData;
-            mats.rewind();
-            mats.limit(type.transforms.size * 16);
-            toBeRendered.clear();
-            type.quadTree.inFrustum(camera, toBeRendered);
-            for (Matrix4 transform : toBeRendered) {
-                mats.put(transform.getValues());
-            }
-            mats.flip();
-            hasNewData = true;
         }
     }
 }

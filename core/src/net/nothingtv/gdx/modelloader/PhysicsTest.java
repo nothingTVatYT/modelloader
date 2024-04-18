@@ -163,7 +163,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
             playerController.getPlayer().moveTo(initialPos);
             playerController.init();
-            //playerController.grabMouse();
+            playerController.grabMouse();
             addInputController(playerController);
 
             footSteps = new FootStepsSFX(playerController);
@@ -353,8 +353,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     public void dispose() {
         if (playerController != null)
             playerController.dispose();
-        if (foliage != null)
-            foliage.dispose();
         if (modelViewer != null)
             modelViewer.dispose();
         super.dispose();
