@@ -139,8 +139,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         // make sure the collision object is at the initial position
         terrain.init(initialPos);
         schedule.everyMilliSeconds(250, () -> terrain.update(player.getPosition()));
-        schedule.everyMilliSeconds(500, () -> JMapVisualizer.setCursor(player.getPosition().x, player.getPosition().z));
-        JMapVisualizer.setTerrain(terrain);
 
         if (screenConfig.usePlayerController) {
             BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);

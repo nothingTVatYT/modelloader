@@ -15,7 +15,6 @@ import com.badlogic.gdx.utils.BufferUtils;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 import net.nothingtv.gdx.tools.Async;
-import net.nothingtv.gdx.tools.JMapVisualizer;
 import net.nothingtv.gdx.tools.Physics;
 
 import java.nio.FloatBuffer;
@@ -232,7 +231,6 @@ public class Terrain {
                 throw new GdxRuntimeException("duplicate key in terrain chunks");
             }
             chunks.put(key, chunk);
-            JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         }
         loadChunk(chunk, waitForIt);
     }
@@ -273,18 +271,15 @@ public class Terrain {
         info.dispose();
         chunk.collisionObject = rigidBody;
         chunk.setState(TerrainChunk.ChunkState.Visible);
-        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
     }
 
     protected Future<btBvhTriangleMeshShape> prepareChunkAsync(TerrainChunk chunk) {
         chunk.setState(TerrainChunk.ChunkState.InPreparation);
-        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         return Async.submit(() -> prepareChunk(chunk));
     }
 
     protected btBvhTriangleMeshShape prepareChunk(TerrainChunk chunk) {
         chunk.setState(TerrainChunk.ChunkState.InPreparation);
-        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         // for physics we need the position only
         int vertexSize = 3;
         // how many vertices should be used
@@ -336,7 +331,6 @@ public class Terrain {
         chunk.boundingBox.update();
 
         chunk.setState(TerrainChunk.ChunkState.Prepared);
-        JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
         return shape;
     }
 
@@ -366,10 +360,6 @@ public class Terrain {
     }
 
     public void update(Vector3 pos) {
-        JMapVisualizer.clear();
-        for (TerrainChunk chunk : chunks.values()) {
-            JMapVisualizer.add(chunk.boundingBox, chunk.state.ordinal());
-        }
         // check for neighboring terrain chunks
         TerrainChunk currentChunk = getChunkAt(pos);
         if (currentChunk == null) {
