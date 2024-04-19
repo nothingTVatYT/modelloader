@@ -2,9 +2,6 @@
 
 #include <compat.fs.glsl>
 #include <functions.glsl>
-#ifdef iridescenceFlag
-#include <iridescence.glsl>
-#endif
 #include <splat_material.glsl>
 #include <env.glsl>
 #ifndef unlitFlag
@@ -131,18 +128,10 @@ void main() {
 		specularColor,
 		getThickness(),
 		specularWeight
-#ifdef iridescenceFlag
-		, 0.0, 0.0, 0.0, vec3(0.0), vec3(0.0)
-#endif
     );
-
-#ifdef iridescenceFlag
-    pbrSurface = getIridescenceInfo(pbrSurface);
-#endif
 
     vec3 f_diffuse = vec3(0.0);
     vec3 f_specular = vec3(0.0);
-    vec3 f_transmission = vec3(0.0);
 
     // Calculate lighting contribution from image based lighting source (IBL)
 
@@ -150,13 +139,11 @@ void main() {
     PBRLightContribs contribIBL = getIBLContribution(pbrSurface, n, reflection);
     f_diffuse += contribIBL.diffuse * u_ambientLight;
     f_specular += contribIBL.specular * u_ambientLight;
-    f_transmission += contribIBL.transmission * u_ambientLight;
     vec3 ambientColor = vec3(0.0, 0.0, 0.0);
 #elif defined(USE_IBL)
     PBRLightContribs contribIBL = getIBLContribution(pbrSurface, n, reflection);
     f_diffuse += contribIBL.diffuse;
     f_specular += contribIBL.specular;
-    f_transmission += contribIBL.transmission;
     vec3 ambientColor = vec3(0.0, 0.0, 0.0);
 #elif defined(ambientLightFlag)
     vec3 ambientColor = u_ambientLight;
@@ -171,7 +158,6 @@ void main() {
     f_specular = mix(f_specular, f_specular * ao, u_OcclusionStrength);
 #endif
 
-
 #if (numDirectionalLights > 0)
     // Directional lights calculation
     PBRLightContribs contrib0 = getDirectionalLightContribution(pbrSurface, u_dirLights[0]);
@@ -179,18 +165,15 @@ void main() {
     float shadows = getShadow();
     f_diffuse += contrib0.diffuse * shadows;
     f_specular += contrib0.specular * shadows;
-    f_transmission += contrib0.transmission * shadows; // TODO does transmission affected by shadows ?
 #else
     f_diffuse += contrib0.diffuse;
     f_specular += contrib0.specular;
-    f_transmission += contrib0.transmission;
 #endif
 
     for(int i=1 ; i<numDirectionalLights ; i++){
     	PBRLightContribs contrib = getDirectionalLightContribution(pbrSurface, u_dirLights[i]);
         f_diffuse += contrib.diffuse;
         f_specular += contrib.specular;
-        f_transmission += contrib.transmission;
     }
 #endif
 
@@ -200,7 +183,6 @@ void main() {
     	PBRLightContribs contrib = getPointLightContribution(pbrSurface, u_pointLights[i]);
     	f_diffuse += contrib.diffuse;
     	f_specular += contrib.specular;
-    	f_transmission += contrib.transmission;
     }
 #endif // numPointLights
 
@@ -210,31 +192,11 @@ void main() {
     	PBRLightContribs contrib = getSpotLightContribution(pbrSurface, u_spotLights[i]);
     	f_diffuse += contrib.diffuse;
     	f_specular += contrib.specular;
-    	f_transmission += contrib.transmission;
     }
 #endif // numSpotLights
 
-    // mix diffuse with transmission
-#ifdef transmissionFlag
-    f_diffuse = mix(f_diffuse, f_transmission, getTransmissionFactor());
-#endif
-
     vec3 color = ambientColor + f_diffuse + f_specular;
 
-    // Add emissive
-#if defined(emissiveTextureFlag) && defined(emissiveColorFlag)
-    vec3 emissive = SRGBtoLINEAR(texture2D(u_emissiveTexture, v_emissiveUV)).rgb * u_emissiveColor.rgb;
-#elif defined(emissiveTextureFlag)
-    vec3 emissive = SRGBtoLINEAR(texture2D(u_emissiveTexture, v_emissiveUV)).rgb;
-#elif defined(emissiveColorFlag)
-    vec3 emissive = u_emissiveColor.rgb;
-#endif
-
-#if defined(emissiveTextureFlag) || defined(emissiveColorFlag)
-    color += emissive;
-#endif
-
-    
     // final frag color
 #ifdef GAMMA_CORRECTION
     out_FragColor = vec4(pow(color,vec3(1.0/GAMMA_CORRECTION)), baseColor.a);
@@ -253,16 +215,7 @@ void main() {
 	out_FragColor.rgb = mix(out_FragColor.rgb, u_fogColor.rgb, fog * u_fogColor.a);
 #endif
 
-    // Blending and Alpha Test
-#ifdef blendedFlag
-	out_FragColor.a = baseColor.a * u_opacity;
-	#ifdef alphaTestFlag
-		if (out_FragColor.a <= u_alphaTest)
-			discard;
-	#endif
-#else
 	out_FragColor.a = 1.0;
-#endif
 
 	applyClippingPlane();
 
