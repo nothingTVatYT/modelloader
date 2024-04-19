@@ -336,8 +336,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
     @Override
     public void dispose() {
-        if (playerController != null)
-            playerController.dispose();
         if (modelViewer != null)
             modelViewer.dispose();
         super.dispose();

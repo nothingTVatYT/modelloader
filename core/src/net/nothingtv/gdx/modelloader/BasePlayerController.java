@@ -6,11 +6,10 @@ import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.Disposable;
 import net.nothingtv.gdx.tools.PlayerObject;
 import net.nothingtv.gdx.tools.SceneObject;
 
-public class BasePlayerController extends InputAdapter implements Disposable {
+public class BasePlayerController extends InputAdapter {
 
     public static class ControllerConfig {
         public float maxWalkingSpeed = 6f;
@@ -196,7 +195,4 @@ public class BasePlayerController extends InputAdapter implements Disposable {
 
     protected void applyMovement(float delta) {}
 
-    @Override
-    public void dispose() {
-    }
 }
