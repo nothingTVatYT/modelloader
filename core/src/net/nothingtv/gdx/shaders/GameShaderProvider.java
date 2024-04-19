@@ -30,7 +30,7 @@ public class GameShaderProvider extends PBRShaderProvider {
             config.vertexShader = Gdx.files.internal("shaders/pbr/pbr.vs.glsl").readString();
             return new MyPBRShader(renderable, config, prefix);
         }
-        if (renderable.material.has(TerrainTextureAttribute.Alpha1)) {
+        if (renderable.material.has(TerrainTextureAttribute.Diffuse2)) {
             config.vertexShader = ShaderParser.parse(Gdx.files.internal("shaders/pbr/pbr_terrain.vs.glsl"));
             config.fragmentShader = ShaderParser.parse(Gdx.files.internal("shaders/pbr/pbr_terrain.fs.glsl"));
             return new TerrainPBRShader(renderable, config, TerrainPBRShader.createPrefix(renderable, prefix));

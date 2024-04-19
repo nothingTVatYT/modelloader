@@ -4,42 +4,11 @@
 #include <functions.glsl>
 #include <splat_material.glsl>
 #include <env.glsl>
-#ifndef unlitFlag
 #include <lights.glsl>
 #include <shadows.glsl>
-#endif
 #ifdef USE_IBL
 #include <ibl.glsl>
 #endif
-
-#ifdef unlitFlag
-
-void main() {
-	vec4 baseColor = getBaseColor();
-    
-    vec3 color = baseColor.rgb;
-
-    // final frag color
-#ifdef GAMMA_CORRECTION
-    out_FragColor = vec4(pow(color,vec3(1.0/GAMMA_CORRECTION)), baseColor.a);
-#else
-    out_FragColor = vec4(color, baseColor.a);
-#endif
-
-	// Blending and Alpha Test
-#ifdef blendedFlag
-	out_FragColor.a = baseColor.a * u_opacity;
-#ifdef alphaTestFlag
-	if (out_FragColor.a <= u_alphaTest)
-		discard;
-#endif
-#else
-	out_FragColor.a = 1.0;
-#endif
-	applyClippingPlane();
-}
-
-#else
 
 void main() {
 	
@@ -48,13 +17,6 @@ void main() {
     // or from a metallic-roughness map
     float perceptualRoughness = u_MetallicRoughnessValues.y;
     float metallic = u_MetallicRoughnessValues.x;
-#ifdef metallicRoughnessTextureFlag
-    // Roughness is stored in the 'g' channel, metallic is stored in the 'b' channel.
-    // This layout intentionally reserves the 'r' channel for (optional) occlusion map data
-    vec4 mrSample = texture2D(u_MetallicRoughnessSampler, v_metallicRoughnessUV);
-    perceptualRoughness = mrSample.g * perceptualRoughness;
-    metallic = mrSample.b * metallic;
-#endif
     perceptualRoughness = clamp(perceptualRoughness, c_MinRoughness, 1.0);
     metallic = clamp(metallic, 0.0, 1.0);
     // Roughness is authored as perceptual roughness; as is convention,
@@ -63,38 +25,13 @@ void main() {
 
     vec4 baseColor = getBaseColor();
     
-#ifdef iorFlag
-    vec3 f0 = vec3(pow(( u_ior - 1.0) /  (u_ior + 1.0), 2.0));
-#else
     vec3 f0 = vec3(0.04); // from ior 1.5 value
-#endif
 
     // Specular
-#ifdef specularFlag
-    float specularFactor = u_specularFactor;
-#ifdef specularFactorTextureFlag
-    specularFactor *= texture2D(u_specularFactorSampler, v_specularFactorUV).a;
-#endif
-#ifdef specularColorFlag
-    vec3 specularColorFactor = u_specularColorFactor;
-#else
-    vec3 specularColorFactor = vec3(1.0);
-#endif
-#ifdef specularTextureFlag
-    specularColorFactor *= SRGBtoLINEAR(texture2D(u_specularColorSampler, v_specularColorUV)).rgb;
-#endif
-    // Compute specular
-    vec3 dielectricSpecularF0 = min(f0 * specularColorFactor, vec3(1.0));
-    f0 = mix(dielectricSpecularF0, baseColor.rgb, metallic);
-    vec3 specularColor = f0;
-    float specularWeight = specularFactor;
-    vec3 diffuseColor = mix(baseColor.rgb, vec3(0), metallic);
-#else
     float specularWeight = 1.0;
     vec3 diffuseColor = baseColor.rgb * (vec3(1.0) - f0);
     diffuseColor *= 1.0 - metallic;
     vec3 specularColor = mix(f0, baseColor.rgb, metallic);
-#endif
 
 
     // Compute reflectance.
@@ -109,7 +46,7 @@ void main() {
     vec3 surfaceToCamera = u_cameraPosition.xyz - v_position;
     float eyeDistance = length(surfaceToCamera);
 
-    vec3 n = getNormal();                             // normal at surface point
+    vec3 n = normalize(v_normal);                             // normal at surface point
     vec3 v = surfaceToCamera / eyeDistance;        // Vector from surface point to camera
     vec3 reflection = -normalize(reflect(v, n));
 
@@ -126,7 +63,7 @@ void main() {
 		alphaRoughness,
 		diffuseColor,
 		specularColor,
-		getThickness(),
+		0.0,
 		specularWeight
     );
 
@@ -203,7 +140,7 @@ void main() {
 #else
     out_FragColor = vec4(color, baseColor.a);
 #endif
-    
+
 #ifdef fogFlag
 #ifdef fogEquationFlag
     float fog = (eyeDistance - u_fogEquation.x) / (u_fogEquation.y - u_fogEquation.x);
@@ -220,5 +157,3 @@ void main() {
 	applyClippingPlane();
 
 }
-
-#endif
