@@ -32,6 +32,11 @@ public class BaseShapes {
         return new btCapsuleShape(radius, height);
     }
 
+    public static btConvexShape createCapsuleShape(float radius, float totalHeight) {
+        float height = totalHeight - 2 * radius;
+        return new btCapsuleShape(radius, height);
+    }
+
     public static void dumpRigidBody(btRigidBody rigidBody) {
         Vector3 translation = new Vector3();
         Quaternion rotation = new Quaternion();

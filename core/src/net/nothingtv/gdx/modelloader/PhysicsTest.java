@@ -217,7 +217,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         System.out.printf("first animation is called %s%n", anim);
         AnimationController animationController = new AnimationController(npcInstance);
         animationController.setAnimation(anim, -1);
-        NpcObject npc1 = addNpc("npc1", npcInstance);
+        NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.72f);
         npc1.moveTo(npcLocation);
         updatables.add((camera, v) -> animationController.update(v));
 

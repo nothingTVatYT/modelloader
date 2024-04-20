@@ -14,6 +14,7 @@ import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.physics.bullet.collision.*;
@@ -482,10 +483,12 @@ public abstract class BasicSceneManagerScreen implements Screen {
         return new PlayerObject("Player", modelInstance);
     }
 
-    public NpcObject addNpc(String name, ModelInstance modelInstance) {
+    public NpcObject addNpc(String name, ModelInstance modelInstance, float radius, float totalHeight) {
         sceneManager.getRenderableProviders().add(modelInstance);
         NpcObject npc = new NpcObject(name, modelInstance);
-        wrapRigidBody(npc, 75, BaseShapes.createCapsuleShape(modelInstance));
+        npc.boundingBox = new BoundingBox(new Vector3(-radius, -totalHeight/2, -radius), new Vector3(radius, totalHeight/2, radius));
+        wrapRigidBody(npc, 75, BaseShapes.createCapsuleShape(radius, totalHeight));
+        ((DefaultMotionState)npc.motionState).rigidBodyOffset.set(0, totalHeight/2, 0);
         npc.setAngularFactor(SceneObject.LockAll);
         updatables.add(npc);
 
