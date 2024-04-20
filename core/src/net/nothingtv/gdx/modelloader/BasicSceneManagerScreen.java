@@ -28,6 +28,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
+import com.badlogic.gdx.utils.Array;
 import net.mgsx.gltf.scene3d.attributes.FogAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRCubemapAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
@@ -36,6 +37,7 @@ import net.mgsx.gltf.scene3d.lights.DirectionalShadowLight;
 import net.mgsx.gltf.scene3d.scene.CascadeShadowMap;
 import net.mgsx.gltf.scene3d.scene.SceneManager;
 import net.mgsx.gltf.scene3d.scene.SceneSkybox;
+import net.mgsx.gltf.scene3d.scene.Updatable;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderConfig;
 import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
@@ -83,6 +85,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected AssetManager assetManager;
     protected Thread physicsUpdateThread;
     protected volatile boolean visible;
+    protected final Array<Updatable> updatables = new Array<>();
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -170,7 +173,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         depthConfig.numBones = pbrConfig.numBones;
         depthConfig.numBoneWeights = pbrConfig.numBoneWeights;
 
-        sceneManager = new SceneManager(new GameShaderProvider(pbrConfig), new MyPBRDepthShaderProvider());
+        sceneManager = new SceneManager(new GameShaderProvider(pbrConfig), new MyPBRDepthShaderProvider(depthConfig));
 
         sceneManager.setCamera(camera);
         sceneManager.setAmbientLight(screenConfig.ambientLightBrightness);
@@ -424,6 +427,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         if (screenConfig.usePhysics && physicsUpdateThread == null)
             updatePhysics(delta);
         updateScene(delta);
+        updatables.forEach(e -> e.update(camera, delta));
     }
 
     @Override
@@ -476,6 +480,16 @@ public abstract class BasicSceneManagerScreen implements Screen {
     public PlayerObject addPlayer(ModelInstance modelInstance) {
         sceneManager.getRenderableProviders().add(modelInstance);
         return new PlayerObject("Player", modelInstance);
+    }
+
+    public NpcObject addNpc(String name, ModelInstance modelInstance) {
+        sceneManager.getRenderableProviders().add(modelInstance);
+        NpcObject npc = new NpcObject(name, modelInstance);
+        wrapRigidBody(npc, 75, BaseShapes.createCapsuleShape(modelInstance));
+        npc.setAngularFactor(SceneObject.LockAll);
+        updatables.add(npc);
+
+        return npc;
     }
 
     /**

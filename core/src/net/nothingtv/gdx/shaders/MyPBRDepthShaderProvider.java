@@ -5,15 +5,14 @@ import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.Shader;
 import com.badlogic.gdx.graphics.g3d.shaders.DepthShader;
 import net.mgsx.gltf.scene3d.shaders.PBRCommon;
+import net.mgsx.gltf.scene3d.shaders.PBRDepthShader;
 import net.mgsx.gltf.scene3d.shaders.PBRDepthShaderProvider;
-import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 
 public class MyPBRDepthShaderProvider extends PBRDepthShaderProvider {
 
 
-    public MyPBRDepthShaderProvider() {
-
-        super(PBRShaderProvider.createDefaultDepthConfig());
+    public MyPBRDepthShaderProvider(PBRDepthShader.Config config) {
+        super(config);
     }
 
     @Override

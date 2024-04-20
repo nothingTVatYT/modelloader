@@ -8,13 +8,16 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Model;
+import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
+import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.utils.Align;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
+import net.mgsx.gltf.scene3d.scene.SceneAsset;
 import net.nothingtv.gdx.inventory.GameItem;
 import net.nothingtv.gdx.inventory.Inventory;
 import net.nothingtv.gdx.objects.PlayerInfo;
@@ -119,7 +122,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             splatGeneratorUI.setTexture(3, layer4Tex.readBytes());
         }
 
-        player = addPlayer(BaseModels.createCapsule(0.3f, 2f, BaseMaterials.color(Color.WHITE)));
+        player = addPlayer(BaseModels.createCapsule(0.3f, 1.3f, BaseMaterials.color(Color.WHITE)));
         player.mass = 75;
         if (!screenConfig.useKinematicController)
             wrapRigidBody(player, player.mass, BaseShapes.createCapsuleShape(player.modelInstance));
@@ -157,7 +160,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
             }
             playerController.getPlayer().moveTo(initialPos);
             playerController.init();
-            playerController.grabMouse();
+            //playerController.grabMouse();
             addInputController(playerController);
 
             footSteps = new FootStepsSFX(playerController);
@@ -205,6 +208,18 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         foliage.setCamera(camera);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
+
+        // add a model
+        Vector3 npcLocation = new Vector3(initialPos).add(0, 4, 7);
+        SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/MH-male-Idle.glb"));
+        ModelInstance npcInstance = new ModelInstance(sceneAsset.scene.model);
+        String anim = npcInstance.animations.first().id;
+        System.out.printf("first animation is called %s%n", anim);
+        AnimationController animationController = new AnimationController(npcInstance);
+        animationController.setAnimation(anim, -1);
+        NpcObject npc1 = addNpc("npc1", npcInstance);
+        npc1.moveTo(npcLocation);
+        updatables.add((camera, v) -> animationController.update(v));
 
         showStats(screenConfig.showStats);
     }
