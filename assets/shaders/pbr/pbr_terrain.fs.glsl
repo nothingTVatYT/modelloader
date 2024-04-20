@@ -1,14 +1,47 @@
 #line 1
 
-#include <compat.fs.glsl>
+#define textureCubeLodEXT textureLod
+#define texture2DLodEXT textureLod
+
+#define varying in
+out vec4 out_FragColor;
+#define textureCube texture
+#define texture2D texture
+
 #include <functions.glsl>
 #include <splat_material.glsl>
-#include <env.glsl>
-#include <lights.glsl>
-#include <shadows.glsl>
+
+#ifdef fogFlag
+uniform vec4 u_fogColor;
+#ifdef fogEquationFlag
+uniform vec3 u_fogEquation;
+#endif
+#endif // fogFlag
+
+#ifdef ambientLightFlag
+uniform vec3 u_ambientLight;
+#endif // ambientLightFlag
+
+uniform vec4 u_cameraPosition;
+uniform mat4 u_worldTrans;
+in vec3 v_position;
+
+uniform mat4 u_projViewTrans;
+
+//-----------
+#include <terrain_lights.glsl>
+
+#include <terrain_shadows.glsl>
 #ifdef USE_IBL
 #include <ibl.glsl>
 #endif
+
+#define heightBegin2 0.1
+#define heightEnd2 0.7
+#define heightBegin3 0.7
+#define heightEnd3 1.0
+#define slopeBegin3 0.21
+#define slopeEnd3 1.0
 
 void main() {
 	
@@ -23,8 +56,24 @@ void main() {
     // convert to material roughness by squaring the perceptual roughness [2].
     float alphaRoughness = perceptualRoughness * perceptualRoughness;
 
-    vec4 baseColor = getBaseColor();
-    
+// terrain parameters:
+// {resolution:1024,layers:[{},{heightBegin:0.3,heightEnd:0.5},{elevationWeight:1,heightBegin:0.1,heightEnd:0.7},{elevationWeight:1,heightBegin:0.7,heightEnd:1,slopeWeight:1,slopeBegin:0.21,slopeEnd:1}]}
+
+    float relHeight = (v_position.y + 5.0) / 50.0;
+    float weight2 = max(0.0, ((heightEnd2 - heightBegin2) - abs(relHeight - heightEnd2)) / (heightEnd2 - heightBegin2));
+    float weight3h = max(0.0, ((heightEnd3 - heightBegin3) - abs(relHeight - heightEnd3)) / (heightEnd3 - heightBegin3));
+    float weight3s = max(0.0, ((slopeEnd3 - slopeBegin3) - abs(v_normal.y - slopeEnd3)) / (slopeEnd3 - slopeBegin3));
+    float weight3 = max(weight3h, weight3s);
+    float weight0 = max(0.0, 1.0 - weight2 - weight3);
+
+    vec4 diffuse = weight0 * texture2D(u_diffuse4Texture, v_diffuseUV * u_uv4Scale) +
+        weight2 * texture2D(u_diffuse2Texture, v_diffuseUV * u_uv2Scale) +
+        weight3 * texture2D(u_diffuseTexture, v_diffuseUV * u_uv1Scale);
+
+    vec4 baseColor = SRGBtoLINEAR(diffuse);
+    //vec4 baseColor = vec4(weight0, weight2, weight3, 1.0);
+    //vec4 baseColor = getBaseColor();
+
     vec3 f0 = vec3(0.04); // from ior 1.5 value
 
     // Specular
@@ -88,13 +137,6 @@ void main() {
     vec3 ambientColor = vec3(0.0, 0.0, 0.0);
 #endif
 
-    // Apply ambient occlusion only to ambient light
-#ifdef occlusionTextureFlag
-    float ao = texture2D(u_OcclusionSampler, v_occlusionUV).r;
-    f_diffuse = mix(f_diffuse, f_diffuse * ao, u_OcclusionStrength);
-    f_specular = mix(f_specular, f_specular * ao, u_OcclusionStrength);
-#endif
-
 #if (numDirectionalLights > 0)
     // Directional lights calculation
     PBRLightContribs contrib0 = getDirectionalLightContribution(pbrSurface, u_dirLights[0]);
@@ -153,7 +195,4 @@ void main() {
 #endif
 
 	out_FragColor.a = 1.0;
-
-	applyClippingPlane();
-
 }

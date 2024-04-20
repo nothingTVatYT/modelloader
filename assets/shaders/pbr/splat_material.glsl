@@ -1,7 +1,4 @@
-#ifdef normalFlag
-out vec3 v_normal;
-#endif //normalFlag
-
+in vec3 v_normal;
 // texCoord unit mapping
 
 #ifndef v_diffuseUV

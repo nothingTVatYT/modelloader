@@ -12,4 +12,5 @@ public class ScreenConfig {
     public boolean useKinematicController = false;
     public boolean useDecals = true;
     public boolean showStats = false;
+    public boolean useIBL = true;
 }

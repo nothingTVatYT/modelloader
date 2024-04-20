@@ -55,6 +55,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         screenConfig.ambientLightBrightness = 0.3f;
         screenConfig.showStats = false;
         screenConfig.showFPS = false;
+        screenConfig.useIBL = true;
         //Gdx.app.setLogLevel(Application.LOG_DEBUG);
         super.init();
     }
@@ -77,7 +78,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         FileHandle layer4Tex = hi ? Gdx.files.internal("assets/textures/Rock031_2K_Color.png") : Gdx.files.internal("assets/textures/Rock031_1K_Color.png");
 
         int tf = 1 << (GeneralSettings.current.setting.ordinal() -1);
-        float uvScale = 400f * tf;
+        float uvScale = 1f;
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.chunkLoadDistance = 100;

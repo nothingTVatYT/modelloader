@@ -142,8 +142,8 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             vertexBuffer.put(tmpNormal.x);
             vertexBuffer.put(tmpNormal.y);
             vertexBuffer.put(tmpNormal.z);
-            vertexBuffer.put(tmpVector.x / terrain.config.width * uvScale);
-            vertexBuffer.put(tmpVector.z / terrain.config.height * uvScale);
+            vertexBuffer.put(tmpVector.x * uvScale);
+            vertexBuffer.put(tmpVector.z * uvScale);
         }
         vertexBuffer.flip();
 

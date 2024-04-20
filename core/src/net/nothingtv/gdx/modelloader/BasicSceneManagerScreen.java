@@ -211,9 +211,11 @@ public abstract class BasicSceneManagerScreen implements Screen {
         // This texture is provided by the library, no need to have it in your assets.
         brdfLUT = new Texture(Gdx.files.classpath("net/mgsx/gltf/shaders/brdfLUT.png"));
 
-        sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
-        sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
-        sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+        if (screenConfig.useIBL) {
+            sceneManager.environment.set(new PBRTextureAttribute(PBRTextureAttribute.BRDFLUTTexture, brdfLUT));
+            sceneManager.environment.set(PBRCubemapAttribute.createSpecularEnv(specularCubemap));
+            sceneManager.environment.set(PBRCubemapAttribute.createDiffuseEnv(diffuseCubemap));
+        }
         sceneManager.environment.set(FogAttribute.createFog(camera.far * 0.7f, camera.far * 1.1f, 1f));
         sceneManager.environment.set(ColorAttribute.createFog(0.7f, 0.7f, 0.7f, 1f));
 
