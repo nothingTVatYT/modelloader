@@ -38,7 +38,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private float fov = 120;
     private float uvScale = 0.1f;
     private int rays = 80;
-    private float depthFactor = 1.1f;
+    private float depthFactor = 1.07f;
     private Matrix4 camMatrix = new Matrix4();
     private int arcs;
     private Vector3 tmpVector = new Vector3();
@@ -64,7 +64,8 @@ public class TerrainInstance extends ModelInstance implements Updatable {
 
     public void proceduralNodes(Camera camera, float delta) {
         if (procNode == null) {
-            rays = Math.max((int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor)), 60);
+            arcs = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
+            rays = Math.max(arcs * 2, 60);
             nodes.forEach(n -> n.parts.forEach(p -> p.enabled = false));
             procNode = new Node();
             NodePart procPart = new NodePart();
@@ -72,7 +73,6 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             procMeshPart = new MeshPart();
 
             // calculate the segment grid in local space
-            arcs = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
             segmentGrid = new float[2 * rays * arcs];
             procVertices = new float[8 * rays * arcs];
             procIndices = new short[6 * (rays-1) * (arcs-1)];
