@@ -92,8 +92,8 @@ public class Physics {
                         minDist = dist;
                     }
                 }
-                if (collisionObject != null && collisionObject.userData != null) {
-                    pickResult.pickedObject = (SceneObject) collisionObject.userData;
+                if (collisionObject != null && collisionObject.userData instanceof SceneObject so) {
+                    pickResult.pickedObject = so;
                 }
             }
             resultCallback.dispose();

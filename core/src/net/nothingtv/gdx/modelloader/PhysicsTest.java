@@ -21,7 +21,9 @@ import net.nothingtv.gdx.objects.PlayerInfo;
 import net.nothingtv.gdx.terrain.*;
 import net.nothingtv.gdx.tools.*;
 import net.nothingtv.gdx.ui.InventoryView;
+import net.nothingtv.gdx.ui.PlayerConsole;
 import net.nothingtv.gdx.ui.PlayerInfoView;
+import net.nothingtv.gdx.ui.TestConsoleListener;
 
 public class PhysicsTest extends BasicSceneManagerScreen {
     private SceneObject ball;
@@ -40,6 +42,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
     private InventoryView inventoryView;
     private PlayerInfo playerInfo;
     private PlayerInfoView playerInfoView;
+    private PlayerConsole console;
     private final Schedule schedule = new Schedule();
 
     public PhysicsTest(Game game) {
@@ -136,6 +139,14 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         playerInfoView = new PlayerInfoView(playerInfo, skin);
         playerInfoView.setPosition(0, Gdx.graphics.getHeight(), Align.topLeft);
         stage.addActor(playerInfoView);
+
+        console = new PlayerConsole(skin);
+        console.setPosition(0, 0, Align.bottomLeft);
+        stage.addActor(console);
+        PlayerConsole.setListener(new TestConsoleListener());
+
+        // test the console
+        PlayerConsole.printf("Welcome, %s%n", player.name);
 
         if (screenConfig.usePlayerController) {
             BasePlayerController.ControllerConfig controllerConfig = new BasePlayerController.ControllerConfig(player, camera);
@@ -264,7 +275,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
                 }
             }
         }
-        if (Gdx.input.isKeyJustPressed(Input.Keys.I)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.I) && (Gdx.input.isKeyPressed(Input.Keys.CONTROL_LEFT) || Gdx.input.isKeyPressed(Input.Keys.CONTROL_RIGHT))) {
             if (inventoryView.isVisible())
                 inventoryView.hideInventory();
             else

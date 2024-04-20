@@ -33,7 +33,7 @@ public class InventoryView implements InventoryViewListener {
     }
 
     public void showInventory(Inventory inventory) {
-        float y = 0;
+        float y = 120;
         for (GameItemContainer container : inventory.getContainers()) {
             if (!containerViews.containsKey(container.containerId)) {
                 InventoryContainerView view = showContainer(container);

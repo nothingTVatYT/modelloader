@@ -12,7 +12,7 @@ public class CachingHeightSampler implements HeightSampler {
         long requested;
     }
 
-    public HeightSampler heightSampler;
+    public final HeightSampler heightSampler;
     public final int capacity;
     private final ConcurrentHashMap<Long, CachedValue> cache;
     private long lastCleanUp;
