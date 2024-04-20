@@ -1,10 +1,13 @@
 package net.nothingtv.gdx.terrain;
 
-import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g3d.Material;
+import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.attributes.IntAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
-import com.badlogic.gdx.graphics.g3d.model.Node;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
@@ -95,22 +98,21 @@ public class Terrain {
     private final ConcurrentHashMap<Long, TerrainChunk> chunks = new ConcurrentHashMap<>();
     private final List<Long> toBeRemoved = new ArrayList<>();
     private final Vector3 tmpPos = new Vector3();
-
-    private float minHeight;
-    private float maxHeight;
+    private float minHeight = 0f;
 
     public Terrain(TerrainConfig config) {
         this.config = config;
         if (config.heightSampler instanceof DefaultHeightSampler defaultHeightSampler)
             defaultHeightSampler.terrain = this;
+        minHeight = config.heightSampler.getMinHeight();
     }
 
     public float getMinHeight() {
-        return minHeight;
+        return getHeightSampler().getMinHeight();
     }
 
     public float getMaxHeight() {
-        return maxHeight;
+        return getHeightSampler().getMaxHeight();
     }
 
     public TerrainInstance createModelInstance() {
@@ -148,33 +150,12 @@ public class Terrain {
             }
         }
         material.set(IntAttribute.createCullFace(GL20.GL_BACK));
-        Texture splatMap = new Texture(config.splatMap);
-        splatMap.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        material.set(TerrainTextureAttribute.createAlpha1(splatMap));
 
+        // create a dummy model, the dynamic one is created in TerrainInstance on the fly
         ModelBuilder modelBuilder = new ModelBuilder();
-        modelBuilder.begin();
-        Mesh mesh;
-        minHeight = Float.MAX_VALUE;
-        maxHeight = -Float.MAX_VALUE;
-        if (config.terrainDivideFactor == 1) {
-            mesh = createMesh(config.width, config.height, 0, 0, 1f, 1f, 0, 0, config.scale);
-            modelBuilder.part("terrain", mesh, GL20.GL_TRIANGLES, material);
-        } else {
-            int d = config.terrainDivideFactor;
-            int partWidth = config.width/d;
-            int partHeight = config.height/d;
-            for (int z = 0; z < d; z++)
-                for (int x = 0; x < d; x++) {
-                    Node node = modelBuilder.node();
-                    node.id = String.format("terrain-%d-%d", x, z);
-                    node.translation.set(x * partWidth * config.scale, 0, z * partHeight * config.scale);
-                    mesh = createMesh(partWidth, partHeight, x * partWidth, z * partHeight, 1f/d, 1f/d, x*1f/d, z*1f/d, config.scale);
-                    modelBuilder.part(node.id, mesh, GL20.GL_TRIANGLES, material);
-                }
-        }
+        Model dummyModel = modelBuilder.createBox(config.width, 1f, config.height, material, VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal|VertexAttributes.Usage.TextureCoordinates);
 
-        modelInstance = new TerrainInstance(modelBuilder.end(), this);
+        modelInstance = new TerrainInstance(dummyModel, this);
         return modelInstance;
     }
 
@@ -409,77 +390,5 @@ public class Terrain {
         }
         toBeRemoved.forEach(c -> chunks.remove(c).dispose());
         toBeRemoved.clear();
-    }
-
-    private Mesh createMesh(int width, int height, int offsetX, int offsetZ, float scaleU, float scaleV, float offsetU, float offsetV, float scale) {
-        getHeightSampler();
-
-        // position + normal + tex coordinates
-        float[] vertices = new float[(width+1) * (height+1) * 8];
-        int index = 0;
-        for (int y = 0; y < height+1; y++) {
-            for (int x = 0; x < width+1; x++) {
-                float v = heightSampler.getHeight(x + offsetX, y + offsetZ);
-                vertices[index++] = x * scale;
-                vertices[index++] = v;
-                vertices[index++] = y * scale;
-                vertices[index++] = 0;
-                vertices[index++] = 1f;
-                vertices[index++] = 0;
-                vertices[index++] = (float)x / width * scaleU + offsetU;
-                vertices[index++] = (float)y / height * scaleV + offsetV;
-                minHeight = Math.min(minHeight, v);
-                maxHeight = Math.max(maxHeight, v);
-            }
-        }
-
-        // update normals (normal = Vec3(2*(R-L), 2*(B-T), -4).Normalize())
-        index = 0;
-        float ph;
-        Vector3 p = new Vector3();
-        for (int y = 0; y < height+1; y++) {
-            for (int x = 0; x < width+1; x++) {
-                // this vertex
-                ph = vertices[index+1];
-                // the vertex to the right
-                float hr = x < width ? vertices[index+9] : ph;
-                // the vertex above
-                float ha = y > 0 ? vertices[index-8*(width+1)+1] : ph;
-                // the vertex to the left
-                float hl = x > 0 ? vertices[index-7] : ph;
-                // the vertex below
-                float hb = y < height ? vertices[index+8*(width+1)+1] : ph;
-                p.set(2 * (hr-hl), 4, 2 * (hb-ha)).nor();
-                index += 3;
-                vertices[index++] = p.x;
-                vertices[index++] = p.y;
-                vertices[index++] = p.z;
-                index += 2;
-            }
-        }
-
-        // we create width x height vertices forming width-1 x height-1 quads or 2 x (width-1) x (height-1) triangles
-        int triangles = 2 * (width) * (height);
-        short[] indices = new short[triangles * 3];
-        index = 0;
-        short yOffset = (short)(width+1);
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // top left triangles are 0,width,1 and 1,width,width+1
-                // the following are offset by x and y*yOffset
-                indices[index++] = (short)(x + y * yOffset);
-                indices[index++] = (short)(yOffset + x + y * yOffset);
-                indices[index++] = (short)(1 + x + y * yOffset);
-                indices[index++] = (short)(1 + x + y * yOffset);
-                indices[index++] = (short)(yOffset + x + y * yOffset);
-                indices[index++] = (short)(yOffset + 1 + x + y * yOffset);
-            }
-        }
-        Mesh mesh = new Mesh(true, vertices.length, indices.length,
-                VertexAttribute.Position(), VertexAttribute.Normal(), VertexAttribute.TexCoords(0));
-        mesh.setVertices(vertices);
-        mesh.setIndices(indices);
-        //System.out.printf("created mesh for %dx%d with %d vertices and %d indices%n", width, height, vertices.length/8, indices.length);
-        return mesh;
     }
 }

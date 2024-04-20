@@ -16,4 +16,14 @@ public class DefaultHeightSampler implements HeightSampler {
     public float getHeight(float x, float z) {
         return 0;
     }
+
+    @Override
+    public float getMinHeight() {
+        return 0;
+    }
+
+    @Override
+    public float getMaxHeight() {
+        return 0;
+    }
 }

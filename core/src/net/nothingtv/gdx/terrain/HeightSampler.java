@@ -17,4 +17,7 @@ public interface HeightSampler {
      * @return the height at this location
      */
     float getHeight(float x, float z);
+
+    float getMinHeight();
+    float getMaxHeight();
 }

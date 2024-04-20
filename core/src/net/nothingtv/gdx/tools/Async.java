@@ -17,7 +17,11 @@ public class Async {
     private final ExecutorService executor;
 
     private Async() {
-        executor = Executors.newCachedThreadPool();
+        executor = Executors.newCachedThreadPool(r -> {
+            Thread thr = new Thread(r);
+            thr.setDaemon(true);
+            return thr;
+        });
     }
 
     private void internalShutDown() {

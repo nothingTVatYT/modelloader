@@ -10,6 +10,7 @@ public class NoiseHeightSampler extends DefaultHeightSampler {
     private float waveLength;
     private float mapWidth, mapHeight;
     private float exponent;
+    private float maxHeight;
 
     public NoiseHeightSampler(int seed, float heightScale, int octaves, float waveLength, float exponent) {
         this.seed = seed;
@@ -17,6 +18,15 @@ public class NoiseHeightSampler extends DefaultHeightSampler {
         this.octaves = octaves;
         this.waveLength = waveLength;
         this.exponent = exponent;
+        float e = 0;
+        float gain = 0;
+        float factor;
+        for (int i = 0; i < octaves; i++) {
+            factor = 1f/(1<<i);
+            e += factor * 1.5f; // or whatever the noise function returns
+            gain += factor;
+        }
+        this.maxHeight = (float)Math.pow(e / gain, exponent) * heightScale;
     }
 
     @Override
@@ -41,4 +51,8 @@ public class NoiseHeightSampler extends DefaultHeightSampler {
         return (float)Math.pow(e / gain, exponent) * heightScale;
     }
 
+    @Override
+    public float getMaxHeight() {
+        return maxHeight;
+    }
 }

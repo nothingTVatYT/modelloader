@@ -5,7 +5,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -82,8 +81,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.chunkLoadDistance = 100;
-        terrainConfig.heightSampler = new NoiseHeightSampler(1, 5, 4, 8, 4f);
-        terrainConfig.splatMap = new Pixmap(Gdx.files.internal("assets/textures/splatmap.png"));
+        terrainConfig.heightSampler = new CachingHeightSampler(new NoiseHeightSampler(1, 5, 4, 8, 4f), 10000);
 
         terrainConfig.addLayer(new Texture(layer1Tex), uvScale);
         terrainConfig.addLayer(new Texture(layer2Tex), uvScale);
@@ -91,10 +89,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         terrainConfig.addLayer(new Texture(layer4Tex), uvScale);
         Terrain terrain = new Terrain(terrainConfig);
         terrainObject = add("terrain", terrain.createModelInstance(), terrain);
-        terrainObject.getTerrainInstance().drawMode = TestSettings.terrainDrawMode;
-        terrainObject.getTerrainInstance().calculateBoundingBoxes();
-        //if (!hi)
-            terrainObject.getTerrainInstance().minUpdateTime = 0.1f;
 
         if (useSplatGenerator) {
             TerrainSplatGenerator.Configuration splatConfig = TerrainSplatGenerator.createDefaultConfiguration(4);
