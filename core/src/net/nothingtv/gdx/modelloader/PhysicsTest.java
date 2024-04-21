@@ -221,6 +221,10 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         npc1.moveTo(npcLocation);
         updatables.add((camera, v) -> animationController.update(v));
 
+        modelViewer = new JModelViewer();
+        modelViewer.setVisible(true);
+        modelViewer.showModel(sceneAsset);
+
         showStats(screenConfig.showStats);
     }
 
