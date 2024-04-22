@@ -1,6 +1,7 @@
 package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.Mesh;
+import com.badlogic.gdx.graphics.g3d.model.Node;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -197,6 +198,9 @@ public class JModelViewer extends JFrame {
                         } catch (IllegalAccessException e) {
                             children.add("<cannot access " + field.getName() + ">");
                         }
+                    }
+                    if (obj instanceof Node node) {
+                        node.getChildren().forEach(children::add);
                     }
                 }
                 cachedChildren.put(obj, children);

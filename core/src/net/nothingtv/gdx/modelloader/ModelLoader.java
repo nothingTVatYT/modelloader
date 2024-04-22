@@ -5,9 +5,10 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.*;
-import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
+import com.badlogic.gdx.graphics.g3d.model.NodeAnimation;
 import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
@@ -26,6 +27,7 @@ import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.tools.BaseMaterials;
 import net.nothingtv.gdx.tools.BaseModels;
+import net.nothingtv.gdx.tools.JModelViewer;
 
 public class ModelLoader extends ScreenAdapter {
 	private final boolean useIBL = true;
@@ -43,15 +45,18 @@ public class ModelLoader extends ScreenAdapter {
 	private final Stage stage;
 	private final Skin skin;
 	private final Label fpsLabel;
-	private final AnimationController animationController;
 	private final FirstPersonCameraController cameraController;
 	private final Environment environment;
 	private final GLProfiler glProfiler;
 	private final StringBuilder statistics;
 	private boolean isFullscreen;
+	private boolean useModelViewer;
 	private int width;
 	private int height;
 	private boolean renderShadows = true;
+	private JModelViewer modelViewer;
+	private final AnimatedModelInstance npc;
+	private final Vector3 npcLocation = new Vector3();
 
 	public ModelLoader () {
 		statistics = new StringBuilder();
@@ -89,11 +94,25 @@ public class ModelLoader extends ScreenAdapter {
 		modelPosition = new Vector3(5, 0.5f, 5);
 
 		SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/Walking.glb"));
-		ModelInstance modelInstance = new ModelInstance(sceneAsset.scene.model);
-		animationController = new AnimationController(modelInstance);
-		animationController.setAnimation("mixamo.com", -1);
-		modelInstance.transform.setTranslation(modelPosition);
-		renderInstances.add(modelInstance);
+		npc = new AnimatedModelInstance(sceneAsset.scene.model);
+		System.out.printf("Animations found: %d%n", npc.animations.size);
+		String animationId = npc.animations.first().id;
+		npc.animationController.setAnimation(animationId, -1);
+		npc.transform.setTranslation(modelPosition);
+		renderInstances.add(npc);
+
+		System.out.printf("first node in modelInstance.nodes: %s%n", npc.nodes.first().id);
+		for (NodeAnimation na : npc.animations.first().nodeAnimations) {
+			if (na.translation != null && !na.translation.isEmpty()) {
+				System.out.printf("NodeAnimation with a translation: %s%n", na.node.id);
+			}
+		}
+
+		if (useModelViewer) {
+			modelViewer = new JModelViewer();
+			modelViewer.setVisible(true);
+			modelViewer.showModel(sceneAsset.scene.model);
+		}
 
 		camera = new PerspectiveCamera(60f, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		float d = 500f;
@@ -128,10 +147,10 @@ public class ModelLoader extends ScreenAdapter {
 		//skybox = new SceneSkybox(environmentCubemap);
 		//sceneManager.setSkyBox(skybox);
 
-		Model floor = BaseModels.createBox(100, 1, 100, BaseMaterials.colorPBR(Color.CHARTREUSE));
+		Model floor = BaseModels.createBox(100, 1, 100, BaseMaterials.debugMaterial());
 		renderInstances.add(new ModelInstance(floor));
 
-		modelInstance.transform.setTranslation(modelPosition);
+		npc.transform.setTranslation(modelPosition);
 
 		Vector3 camPosition = new Vector3(modelPosition).add(0, 2, -4);
 		camera.position.set(camPosition);
@@ -169,8 +188,10 @@ public class ModelLoader extends ScreenAdapter {
 	public void render(float deltaTime) {
 		cameraController.update(deltaTime);
 
-		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE))
+		if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
+			dispose();
 			Gdx.app.exit();
+		}
 		if (Gdx.input.isKeyJustPressed(Input.Keys.F10)) {
 			if (isFullscreen) {
 				Gdx.graphics.setWindowedMode(width, height);
@@ -185,7 +206,12 @@ public class ModelLoader extends ScreenAdapter {
 
 		// render
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-		animationController.update(deltaTime);
+		npc.update(deltaTime);
+
+		// smoothly keep the npc on the floor
+		npc.transform.getTranslation(npcLocation);
+		npcLocation.y = MathUtils.lerp(npcLocation.y, 0.5f, deltaTime);
+		npc.transform.setTranslation(npcLocation);
 
 		shadowLight.begin();
 		shadowBatch.begin(shadowLight.getCamera());
@@ -214,11 +240,14 @@ public class ModelLoader extends ScreenAdapter {
 
 	@Override
 	public void dispose() {
+		if (modelViewer != null)
+			modelViewer.dispose();
 		environmentCubemap.dispose();
 		diffuseCubemap.dispose();
 		specularCubemap.dispose();
 		brdfLUT.dispose();
-		skybox.dispose();
+		if (skybox != null)
+			skybox.dispose();
 		glProfiler.disable();
 	}
 }
