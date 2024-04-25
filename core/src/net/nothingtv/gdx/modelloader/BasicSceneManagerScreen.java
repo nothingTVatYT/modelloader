@@ -483,7 +483,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         return new PlayerObject("Player", modelInstance);
     }
 
-    public NpcObject addNpc(String name, ModelInstance modelInstance, float radius, float totalHeight) {
+    public NpcObject addNpc(String name, AnimatedModelInstance modelInstance, float radius, float totalHeight) {
         sceneManager.getRenderableProviders().add(modelInstance);
         NpcObject npc = new NpcObject(name, modelInstance);
         npc.boundingBox = new BoundingBox(new Vector3(-radius, -totalHeight/2, -radius), new Vector3(radius, totalHeight/2, radius));

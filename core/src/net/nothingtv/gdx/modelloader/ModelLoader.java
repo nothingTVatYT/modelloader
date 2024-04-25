@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g3d.utils.FirstPersonCameraController;
 import com.badlogic.gdx.graphics.profiling.GLProfiler;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.DebugDrawer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
@@ -27,6 +29,7 @@ import net.mgsx.gltf.scene3d.shaders.PBRShaderProvider;
 import net.mgsx.gltf.scene3d.utils.IBLBuilder;
 import net.nothingtv.gdx.tools.BaseMaterials;
 import net.nothingtv.gdx.tools.BaseModels;
+import net.nothingtv.gdx.tools.Debug;
 import net.nothingtv.gdx.tools.JModelViewer;
 
 public class ModelLoader extends ScreenAdapter {
@@ -57,6 +60,8 @@ public class ModelLoader extends ScreenAdapter {
 	private JModelViewer modelViewer;
 	private final AnimatedModelInstance npc;
 	private final Vector3 npcLocation = new Vector3();
+	private final Vector3 cameraTarget = new Vector3();
+	private DebugDrawer debugDrawer;
 
 	public ModelLoader () {
 		statistics = new StringBuilder();
@@ -68,6 +73,10 @@ public class ModelLoader extends ScreenAdapter {
 			height = Math.round(height * 0.75f);
 			isFullscreen = true;
 		}
+
+		Bullet.init();
+		debugDrawer = new DebugDrawer();
+		Debug debug = new Debug(debugDrawer);
 
 		PBRShaderConfig config = PBRShaderProvider.createDefaultConfig();
 		config.numBones = 60;
@@ -122,7 +131,7 @@ public class ModelLoader extends ScreenAdapter {
 		// setup light
 		float lightIntensity = 1;
 		environment = new Environment();
-		shadowLight = new DirectionalShadowLight(2048, 2048, 10,  10, 1, 1000);
+		shadowLight = new DirectionalShadowLight(2048, 2048, 100,  100, 1, 1000);
 		shadowLight.set(lightIntensity, lightIntensity, lightIntensity, new Vector3(-0.4f, -0.4f, -0.4f));
 		environment.add(shadowLight);
 		environment.shadowMap = shadowLight;
@@ -161,11 +170,14 @@ public class ModelLoader extends ScreenAdapter {
 		cameraController.autoUpdate = true;
 		Gdx.input.setInputProcessor(cameraController);
 
+		/*
 		ModelInstance instance = new ModelInstance(BaseModels.createBox(1, 1, 1, BaseMaterials.whiteColorPBR()));
 		Vector3 boxLoc = new Vector3(modelPosition);
 		boxLoc.add(3, 0.5f, 0);
 		instance.transform.setTranslation(boxLoc);
 		renderInstances.add(instance);
+
+		 */
 
 		ModelInstance sphereInstance = new ModelInstance(BaseModels.createSphere(0.1f, BaseMaterials.colorPBR(Color.FIREBRICK)));
 		sphereInstance.transform.setTranslation(modelPosition);
@@ -212,6 +224,17 @@ public class ModelLoader extends ScreenAdapter {
 		npc.transform.getTranslation(npcLocation);
 		npcLocation.y = MathUtils.lerp(npcLocation.y, 0.5f, deltaTime);
 		npc.transform.setTranslation(npcLocation);
+		if (npcLocation.x > 48 || npcLocation.z > 48 || npcLocation.x < -48 || npcLocation.z < -48) {
+			npc.transform.rotate(Vector3.Y, 90 * deltaTime);
+		}
+
+		if (camera.position.dst2(npcLocation) > 10) {
+			cameraTarget.set(npcLocation).add(0, 3, 0);
+			camera.position.lerp(cameraTarget, deltaTime * 0.1f);
+			camera.lookAt(npcLocation);
+			camera.up.set(0, 1, 0);
+			camera.update();
+		}
 
 		shadowLight.begin();
 		shadowBatch.begin(shadowLight.getCamera());
@@ -224,6 +247,10 @@ public class ModelLoader extends ScreenAdapter {
 		modelBatch.begin(camera);
 		modelBatch.render(renderInstances, environment);
 		modelBatch.end();
+
+		debugDrawer.begin(camera);
+		Debug.instance.drawDebugs();
+		debugDrawer.end();
 
 		fpsLabel.setText(getStatistics());
 		stage.act(Gdx.graphics.getDeltaTime());

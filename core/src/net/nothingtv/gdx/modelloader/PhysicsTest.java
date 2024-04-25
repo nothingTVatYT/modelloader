@@ -8,9 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.Model;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.decals.Decal;
-import com.badlogic.gdx.graphics.g3d.utils.AnimationController;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.linearmath.btIDebugDraw;
@@ -211,15 +209,12 @@ public class PhysicsTest extends BasicSceneManagerScreen {
 
         // add a model
         Vector3 npcLocation = new Vector3(initialPos).add(0, 4, 7);
-        SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/MH-male-Idle.glb"));
-        ModelInstance npcInstance = new ModelInstance(sceneAsset.scene.model);
-        String anim = npcInstance.animations.first().id;
-        System.out.printf("first animation is called %s%n", anim);
-        AnimationController animationController = new AnimationController(npcInstance);
-        animationController.setAnimation(anim, -1);
+        SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/MH-male-Walk.glb"));
+        AnimatedModelInstance npcInstance = new AnimatedModelInstance(sceneAsset.scene.model);
+        npcInstance.animationController.setAnimation(npcInstance.animations.first().id, -1);
         NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.72f);
         npc1.moveTo(npcLocation);
-        updatables.add((camera, v) -> animationController.update(v));
+        //updatables.add(npc1);
 
         modelViewer = new JModelViewer();
         modelViewer.setVisible(true);

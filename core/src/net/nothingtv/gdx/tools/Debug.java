@@ -1,6 +1,7 @@
 package net.nothingtv.gdx.tools;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.physics.bullet.DebugDrawer;
@@ -9,12 +10,13 @@ import java.util.HashMap;
 
 public class Debug {
 
-    enum RequestType { Line, Quad, Box }
+    enum RequestType { Line, Quad, Box, Transform }
     static class DrawRequest {
         String id;
         RequestType type;
         Vector3[] points;
         Vector3 color;
+        Matrix4 transform;
     }
 
     public static Debug instance;
@@ -73,6 +75,14 @@ public class Debug {
         requests.put(id, req);
     }
 
+    public void drawTransform(String id, Matrix4 transform) {
+        DrawRequest req = new DrawRequest();
+        req.id = id;
+        req.type = RequestType.Transform;
+        req.transform = new Matrix4(transform);
+        requests.put(id, req);
+    }
+
     public void drawDebugs() {
         for (DrawRequest request : requests.values())
             switch (request.type) {
@@ -84,6 +94,7 @@ public class Debug {
                     debugDrawer.drawLine(request.points[3], request.points[0], request.color);
                 }
                 case Box -> debugDrawer.drawBox(request.points[0], request.points[1], request.color);
+                case Transform -> debugDrawer.drawTransform(request.transform, 1);
             }
     }
 }
