@@ -85,6 +85,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     protected GLProfiler glProfiler;
     protected AssetManager assetManager;
     protected Thread physicsUpdateThread;
+    private CascadeShadowMap csm;
     protected volatile boolean visible;
     protected final Array<Updatable> updatables = new Array<>();
 
@@ -193,7 +194,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
             sceneManager.environment.add(directionalShadowLight);
             sceneManager.environment.set( new PBRFloatAttribute(PBRFloatAttribute.ShadowBias, shadowBias)); // reduce shadow acne
 
-            CascadeShadowMap csm = new CascadeShadowMap(3);
+            csm = new CascadeShadowMap(3);
             csm.setCascades(camera, directionalShadowLight, 0, 4);
             csm.lights.add(directionalShadowLight);
             sceneManager.setCascadeShadowMap(csm);
@@ -427,6 +428,8 @@ public abstract class BasicSceneManagerScreen implements Screen {
         updateController(delta);
         if (screenConfig.usePhysics && physicsUpdateThread == null)
             updatePhysics(delta);
+        if (csm != null)
+            csm.setCascades(camera, directionalShadowLight, 0, 4);
         updateScene(delta);
         updatables.forEach(e -> e.update(camera, delta));
     }

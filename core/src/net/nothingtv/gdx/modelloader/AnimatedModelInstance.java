@@ -53,10 +53,10 @@ public class AnimatedModelInstance extends ModelInstance {
     public void calculateTransforms() {
         if (inAnimationUpdate) {
             rootNodeAnimation.node.localTransform.getTranslation(tmp1);
+            System.out.printf("tmp1 is %s%n", tmp1);
             if (animationController.current.time > timeBeforeUpdate)
                 tmp1.sub(previousTranslation);
             //tmp1.rot(transform);
-            System.out.printf("tmp1 is %s%n", tmp1);
             rootTransform.translate(tmp1);
             Debug.instance.drawTransform("root", rootTransform);
             rootNodeAnimation.node.localTransform.getTranslation(previousTranslation);

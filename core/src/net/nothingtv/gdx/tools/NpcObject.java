@@ -24,7 +24,7 @@ public class NpcObject extends SceneObject implements Updatable {
         this.animatedModelInstance = modelInstance;
         rootTargetTransform.set(modelInstance.transform);
         rootTargetTransform.setToLookAt(getForward(), Vector3.Y);
-        //this.animatedModelInstance.setRootTransform(rootTargetTransform);
+        this.animatedModelInstance.setRootTransform(rootTargetTransform);
     }
 
     public NpcObject(String name, ModelInstance modelInstance, btRigidBody rigidBody, BoundingBox boundingBox) {
