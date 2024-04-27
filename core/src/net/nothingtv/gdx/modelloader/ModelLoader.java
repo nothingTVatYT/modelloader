@@ -103,7 +103,7 @@ public class ModelLoader extends ScreenAdapter {
 		modelPosition = new Vector3(5, 0.5f, 5);
 
 		SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/Walking.glb"));
-		npc = new AnimatedModelInstance(sceneAsset.scene.model);
+		npc = new AnimatedModelInstance(sceneAsset.scene.model, "");
 		System.out.printf("Animations found: %d%n", npc.animations.size);
 		String animationId = npc.animations.first().id;
 		npc.animationController.setAnimation(animationId, -1);

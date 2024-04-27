@@ -23,7 +23,6 @@ public class NpcObject extends SceneObject implements Updatable {
         super(name, modelInstance);
         this.animatedModelInstance = modelInstance;
         rootTargetTransform.set(modelInstance.transform);
-        rootTargetTransform.setToLookAt(getForward(), Vector3.Y);
         this.animatedModelInstance.setRootTransform(rootTargetTransform);
     }
 
@@ -39,12 +38,15 @@ public class NpcObject extends SceneObject implements Updatable {
 
     @Override
     public void update(Camera camera, float v) {
+        rigidBody.getWorldTransform().getTranslation(physicsPos);
+        rootTargetTransform.getTranslation(pos);
+        pos.y = physicsPos.y;
+        rootTargetTransform.setTranslation(pos);
         animatedModelInstance.update(v);
-        Debug.instance.drawTransform("root", rootTargetTransform);
         rootTargetTransform.getTranslation(pos);
         pos.sub(rigidBody.getWorldTransform().getTranslation(physicsPos)).add(((DefaultMotionState)motionState).rigidBodyOffset).scl(10 * mass);
+        pos.y = 0;
         addForce(pos);
-        //rigidBody.proceedToTransform(rootTargetTransform);
         if (!walking) {
             // counteract horizontal sliding
             velocityXZ.set(rigidBody.getLinearVelocity());

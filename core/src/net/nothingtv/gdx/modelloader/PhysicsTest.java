@@ -210,9 +210,11 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         // add a model
         Vector3 npcLocation = new Vector3(initialPos).add(0, 4, 7);
         SceneAsset sceneAsset = new GLBLoader().load(Gdx.files.internal("models/MH-male-Walk.glb"));
-        AnimatedModelInstance npcInstance = new AnimatedModelInstance(sceneAsset.scene.model);
+        AnimatedModelInstance npcInstance = new AnimatedModelInstance(sceneAsset.scene.model, "Game_engine");
         npcInstance.animationController.setAnimation(npcInstance.animations.first().id, -1);
-        NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.72f);
+        npcInstance.transform.setTranslation(npcLocation);
+        sceneManager.getRenderableProviders().add(npcInstance);
+        NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.68f);
         npc1.moveTo(npcLocation);
         //updatables.add(npc1);
 

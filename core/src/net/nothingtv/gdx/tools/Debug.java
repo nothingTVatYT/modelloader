@@ -17,6 +17,7 @@ public class Debug {
         Vector3[] points;
         Vector3 color;
         Matrix4 transform;
+        float factor;
     }
 
     public static Debug instance;
@@ -76,10 +77,15 @@ public class Debug {
     }
 
     public void drawTransform(String id, Matrix4 transform) {
+        drawTransform(id, transform, 1);
+    }
+
+    public void drawTransform(String id, Matrix4 transform, float orthoLen) {
         DrawRequest req = new DrawRequest();
         req.id = id;
         req.type = RequestType.Transform;
         req.transform = new Matrix4(transform);
+        req.factor = orthoLen;
         requests.put(id, req);
     }
 
@@ -94,7 +100,7 @@ public class Debug {
                     debugDrawer.drawLine(request.points[3], request.points[0], request.color);
                 }
                 case Box -> debugDrawer.drawBox(request.points[0], request.points[1], request.color);
-                case Transform -> debugDrawer.drawTransform(request.transform, 1);
+                case Transform -> debugDrawer.drawTransform(request.transform, request.factor);
             }
     }
 }

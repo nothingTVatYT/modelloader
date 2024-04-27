@@ -30,6 +30,8 @@ public class SelectScreen extends ScreenAdapter {
 
         table.add(createMenuButton("Model Loader", () -> game.setScreen(new ModelLoader()))).row();
 
+        table.add(createMenuButton("Root Motion Test", () -> game.setScreen(new RootMotionTest()))).row();
+
         table.add(createMenuButton("Shadow Test", () -> game.setScreen(new ShadowTest()))).row();
 
         table.add(createMenuButton("_Game/Physics Test", () -> game.setScreen(new PhysicsTest(game)))).row();

@@ -5,6 +5,7 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.decals.CameraGroupStrategy;
 import com.badlogic.gdx.graphics.g3d.decals.DecalBatch;
@@ -88,6 +89,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
     private CascadeShadowMap csm;
     protected volatile boolean visible;
     protected final Array<Updatable> updatables = new Array<>();
+    protected final Array<RenderableProvider> controlledRenderables = new Array<>();
 
     public BasicSceneManagerScreen(Game game) {
         this.game = game;
@@ -429,7 +431,7 @@ public abstract class BasicSceneManagerScreen implements Screen {
         if (screenConfig.usePhysics && physicsUpdateThread == null)
             updatePhysics(delta);
         if (csm != null)
-            csm.setCascades(camera, directionalShadowLight, 0, 4);
+            csm.setCascades(camera, directionalShadowLight, 250f, 4);
         updateScene(delta);
         updatables.forEach(e -> e.update(camera, delta));
     }
@@ -528,7 +530,12 @@ public abstract class BasicSceneManagerScreen implements Screen {
     }
 
     public void wrapRigidBody(SceneObject sceneObject, float mass, btCollisionShape collisionShape) {
-        DefaultMotionState motionState = new DefaultMotionState(sceneObject.modelInstance);
+        DefaultMotionState motionState;
+        if (sceneObject instanceof NpcObject npcObject) {
+            motionState = new AnimatedMotionState((AnimatedModelInstance) npcObject.modelInstance);
+        } else {
+            motionState = new DefaultMotionState(sceneObject.modelInstance);
+        }
         Vector3 localInertia = new Vector3();
         collisionShape.calculateLocalInertia(mass, localInertia);
         btRigidBody.btRigidBodyConstructionInfo info = new btRigidBody.btRigidBodyConstructionInfo(mass, motionState, collisionShape, localInertia);
