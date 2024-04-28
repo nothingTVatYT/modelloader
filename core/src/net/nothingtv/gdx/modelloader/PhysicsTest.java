@@ -216,7 +216,6 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         sceneManager.getRenderableProviders().add(npcInstance);
         NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.68f);
         npc1.moveTo(npcLocation);
-        //updatables.add(npc1);
 
         modelViewer = new JModelViewer();
         modelViewer.setVisible(true);

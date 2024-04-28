@@ -38,6 +38,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private int arcs;
     private final Vector3 tmpVector = new Vector3();
     private final Vector3 tmpNormal = new Vector3();
+    private float lastCameraAngle;
 
     public TerrainInstance(Model model, Terrain terrain) {
         super(model);
@@ -46,6 +47,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
 
     public void proceduralNodes(Camera camera) {
         if (procNode == null) {
+            lastCameraAngle = Float.MAX_VALUE;
             arcs = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
             rays = Math.max(arcs * 2, 60);
             nodes.forEach(n -> n.parts.forEach(p -> p.enabled = false));
@@ -110,6 +112,9 @@ public class TerrainInstance extends ModelInstance implements Updatable {
         //camMatrix.idt().trn(camera.position.x, 0, camera.position.z).rotateTowardDirection(dir, Vector3.Y);
         camMatrix.setToLookAt(camera.direction, Vector3.Y);
         float cameraAngle = new Quaternion().setFromMatrix(camMatrix).getAngleAround(Vector3.Y);
+        if (Math.abs(lastCameraAngle - cameraAngle) < 2)
+            return;
+        lastCameraAngle = cameraAngle;
         for (int i = 0; i < procVertices.length/8; i++) {
             tmpVector.set(segmentGrid[i*2], 0, segmentGrid[i*2+1]);
             tmpVector.rotate(Vector3.Y, 180-cameraAngle);
