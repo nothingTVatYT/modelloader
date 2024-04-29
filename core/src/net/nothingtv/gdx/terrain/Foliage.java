@@ -63,12 +63,12 @@ public class Foliage implements RenderableProvider {
         cameraMaxDist2 = dist * dist;
     }
 
-    public void add(Model model, Vector3 center, float radius, int numberInstances, Terrain terrain, long flags) {
+    public void add(Model model, Vector3 center, float radius, float density, Terrain terrain, long flags) {
         FoliageArea area = new FoliageArea();
         area.model = model;
         area.center = new Vector3(center);
         area.radius = radius;
-        area.numberInstances = numberInstances;
+        area.numberInstances = Math.round(MathUtils.PI * radius * radius * density);
         area.terrain = terrain;
         area.flags = flags;
         area.seed = (long)Float.floatToIntBits(center.x) ^ (long)Float.floatToIntBits(center.y) << 3 ^ (long)Float.floatToIntBits(center.z) << 6;

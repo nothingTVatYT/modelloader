@@ -30,12 +30,10 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private short[] procIndices;
     private Node procNode;
     private MeshPart procMeshPart;
-    private float fov = 120;
+    private final float fov = 120;
     private float uvScale = 0.1f;
-    private int rays = 80;
-    private float depthFactor = 1.07f;
+    private final float depthFactor;
     private final Matrix4 camMatrix = new Matrix4();
-    private int arcs;
     private final Vector3 tmpVector = new Vector3();
     private final Vector3 tmpNormal = new Vector3();
     private float lastCameraAngle;
@@ -43,13 +41,14 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     public TerrainInstance(Model model, Terrain terrain) {
         super(model);
         this.terrain = terrain;
+        this.depthFactor = terrain.config.depthFactor;
     }
 
     public void proceduralNodes(Camera camera) {
         if (procNode == null) {
             lastCameraAngle = Float.MAX_VALUE;
-            arcs = (int)Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
-            rays = Math.max(arcs * 2, 60);
+            int arcs = (int) Math.ceil(Math.log(camera.far) / Math.log(depthFactor));
+            int rays = Math.max(arcs * 2, 30);
             nodes.forEach(n -> n.parts.forEach(p -> p.enabled = false));
             procNode = new Node();
             NodePart procPart = new NodePart();
@@ -59,13 +58,13 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             // calculate the segment grid in local space
             segmentGrid = new float[2 * rays * arcs];
             procVertices = new float[8 * rays * arcs];
-            procIndices = new short[6 * (rays-1) * (arcs-1)];
+            procIndices = new short[6 * (rays -1) * (arcs -1)];
 
             System.out.printf("TerrainInstance: create a segment of %d rays and %d arcs%n", rays, arcs);
 
             Vector3[] localRay = new Vector3[rays];
             for (int i = 0; i < rays; i++) {
-                float a = (float)(i-(rays-1)/2) / rays * fov;
+                float a = (float)(i-(rays -1)/2) / rays * fov;
                 localRay[i] = new Vector3(MathUtils.sinDeg(a), 0, MathUtils.cosDeg(a));
             }
 
@@ -79,15 +78,15 @@ public class TerrainInstance extends ModelInstance implements Updatable {
             }
 
             int ii = 0;
-            for (int a = 0; a < (arcs-1); a++) {
-                for (int r = 0; r < (rays-1); r++) {
+            for (int a = 0; a < (arcs -1); a++) {
+                for (int r = 0; r < (rays -1); r++) {
                     // top left triangles are 0,width,1 and 1,width,width+1
                     // the following are offset by r and a*rays
                     procIndices[ii++] = (short)(r + a * rays);
                     procIndices[ii++] = (short)(rays + r + a * rays);
                     procIndices[ii++] = (short)(1 + r + a * rays);
                     procIndices[ii++] = (short)(rays + r + a * rays);
-                    procIndices[ii++] = (short)(rays+1 + r + a * rays);
+                    procIndices[ii++] = (short)(rays +1 + r + a * rays);
                     procIndices[ii++] = (short)(1 + r + a * rays);
                 }
             }

@@ -85,6 +85,7 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         TerrainConfig terrainConfig = new TerrainConfig(1024/tf, 1024/tf, tf);
         terrainConfig.terrainDivideFactor = 8;
         terrainConfig.chunkLoadDistance = 100;
+        terrainConfig.depthFactor = 1.07f;
         terrainConfig.heightSampler = new CachingHeightSampler(new NoiseHeightSampler(1, 5, 4, 8, 4f), 10000);
 
         terrainConfig.addLayer(new Texture(layer1Tex), uvScale);
@@ -195,14 +196,14 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
-        foliage.add(tree1, foliageCenter, 30, 30, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, foliageCenter, 30, 0.001f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
-        foliage.add(grass0, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
+        foliage.add(grass0, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.z += 0.5f;
-        foliage.add(grass1, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
+        foliage.add(grass1, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
-        foliage.add(grass2, foliageCenter, 100, 3000, terrain, Foliage.RandomizeYRotation);
-        foliage.add(tree1, new Vector3(94, 0, 201), 60, 120, terrain, Foliage.RandomizeYRotation);
+        foliage.add(grass2, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, new Vector3(94, 0, 201), 60, 0.001f, terrain, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
@@ -217,9 +218,9 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         NpcObject npc1 = addNpc("npc1", npcInstance, 0.3f, 1.68f);
         npc1.moveTo(npcLocation);
 
-        modelViewer = new JModelViewer();
+        /*modelViewer = new JModelViewer();
         modelViewer.setVisible(true);
-        modelViewer.showModel(sceneAsset);
+        modelViewer.showModel(sceneAsset);*/
 
         showStats(screenConfig.showStats);
     }

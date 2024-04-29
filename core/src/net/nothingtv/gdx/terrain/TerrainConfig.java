@@ -9,6 +9,7 @@ import com.badlogic.gdx.utils.Array;
  */
 public class TerrainConfig {
 
+
     public static class TerrainLayer {
         /**
          * diffuse color texture of this layer
@@ -38,6 +39,11 @@ public class TerrainConfig {
      * resolution of the physics collision mesh in vertex per unit
      */
     public float chunkResolution = 1;
+
+    /**
+     * increase arcs distances by this factor
+     */
+    public float depthFactor = 1.07f;
 
     /**
      * distance at which a new terrain chunk is loaded
