@@ -136,6 +136,9 @@ public class Foliage implements RenderableProvider {
                     }
                     fmd.transforms = BufferUtils.newFloatBuffer(currentMaxInstances * 16);
                     fmd.currentMaxInstances = currentMaxInstances;
+                } else {
+                    fmd.transforms.position(0);
+                    fmd.transforms.limit(fmd.transforms.capacity());
                 }
                 Matrix4 tmpMatrix = new Matrix4();
                 for (FoliageArea area : fmd.areas) {

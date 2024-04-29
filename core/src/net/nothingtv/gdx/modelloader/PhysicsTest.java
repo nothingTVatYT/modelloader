@@ -196,14 +196,14 @@ public class PhysicsTest extends BasicSceneManagerScreen {
         Model grass0 = new GLBLoader().load(Gdx.files.internal("models/grass0.glb")).scene.model;
         Model grass1 = new GLBLoader().load(Gdx.files.internal("models/grass1.glb")).scene.model;
         Model grass2 = new GLBLoader().load(Gdx.files.internal("models/grass2.glb")).scene.model;
-        foliage.add(tree1, foliageCenter, 30, 0.001f, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, foliageCenter, 30, 0.01f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
         foliage.add(grass0, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.z += 0.5f;
         foliage.add(grass1, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
         foliageCenter.x += 0.5f;
         foliage.add(grass2, foliageCenter, 100, 0.1f, terrain, Foliage.RandomizeYRotation);
-        foliage.add(tree1, new Vector3(94, 0, 201), 60, 0.001f, terrain, Foliage.RandomizeYRotation);
+        foliage.add(tree1, new Vector3(94, 0, 201), 60, 0.01f, terrain, Foliage.RandomizeYRotation);
         foliage.setCamera(camera);
         foliage.setCameraMaxDist(GeneralSettings.current.foliageMaxDistance);
         add(foliage);
