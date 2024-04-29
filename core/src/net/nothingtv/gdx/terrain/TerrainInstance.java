@@ -37,6 +37,7 @@ public class TerrainInstance extends ModelInstance implements Updatable {
     private final Vector3 tmpVector = new Vector3();
     private final Vector3 tmpNormal = new Vector3();
     private float lastCameraAngle;
+    private final Vector3 lastCamPosition = new Vector3();
 
     public TerrainInstance(Model model, Terrain terrain) {
         super(model);
@@ -111,9 +112,10 @@ public class TerrainInstance extends ModelInstance implements Updatable {
         //camMatrix.idt().trn(camera.position.x, 0, camera.position.z).rotateTowardDirection(dir, Vector3.Y);
         camMatrix.setToLookAt(camera.direction, Vector3.Y);
         float cameraAngle = new Quaternion().setFromMatrix(camMatrix).getAngleAround(Vector3.Y);
-        if (Math.abs(lastCameraAngle - cameraAngle) < 2)
+        if (Math.abs(lastCameraAngle - cameraAngle) < 5f && camera.position.dst2(lastCamPosition) < 2f)
             return;
         lastCameraAngle = cameraAngle;
+        lastCamPosition.set(camera.position);
         for (int i = 0; i < procVertices.length/8; i++) {
             tmpVector.set(segmentGrid[i*2], 0, segmentGrid[i*2+1]);
             tmpVector.rotate(Vector3.Y, 180-cameraAngle);
