@@ -3,6 +3,7 @@ package net.nothingtv.gdx.terrain;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 
 /**
  * Holds the configuration of the terrain
@@ -83,6 +84,8 @@ public class TerrainConfig {
     public Array<TerrainLayer> layers = new Array<>(4);
 
     public TerrainConfig(int width, int height, float scale) {
+        if (width < 4 || height < 4)
+            throw new GdxRuntimeException("terrain size is too small: " + width + "/" + height);
         this.width = width;
         this.height = height;
         this.scale = scale;
